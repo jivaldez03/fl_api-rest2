@@ -1,0 +1,12 @@
+// para subir y publica en heroku hay que actualizar git y github
+https://www.youtube.com/watch?v=4hS0YOZD-g4
+
+uvicorn main_fapirest:app --reload --host localhost --port 3000
+git add .
+git commit -m 'sssss'
+git branch -M main
+git remote add origin https://github.com/jivaldez03/fl_api-rest.git
+git push -u origin main
+
+
+git push origin main // para update del codigo en git despues del git branch
