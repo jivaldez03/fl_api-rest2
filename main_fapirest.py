@@ -299,7 +299,7 @@ def get_user_words2(user_id:str, idSCat:int):
             for gia, value in enumerate(sdict['slSource']):
                 npackage.append((value, sdict["slTarget"][gia], gia + 1, prnFileName, prnLink))
 
-    return npackage
+    return {"message": npackage}
 
 
 if __name__ == "__main__":
