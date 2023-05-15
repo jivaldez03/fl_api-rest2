@@ -1,12 +1,12 @@
 from neo4j import GraphDatabase
-from _neo4j import create_neo4j_app as App
+from _neo4j import create_neo4j_app as createApp
 
 
 def connectNeo4j(user, description):
     #uri = 'neo4j://localhost:7687'
     #driver = GraphDatabase.driver(uri, auth=('neo4j', 'sistemas'))
     #session = driver.session()
-    app,session = App()
+    app,session = createApp()
     logofaccess = "create (n:Log {user: '" + user + "', trx: '" + description + "'}) " \
                             "set n.ctInsert = datetime() " \
                             "return n"

@@ -13,17 +13,26 @@ pip install uvicorn
 uvicorn main:app --reload --host 
 uvicorn main_fapirest:app --reload --host localhost --port 3000
 """
-from fastapi import HTTPException #, FastAPI
+#from fastapi import HTTPException #, FastAPI
 from app import create_app
-from app.model.md_books import Book
-from uuid import  uuid4 as uuid
+#from app.model.md_books import Book
+#from uuid import  uuid4 as uuid
 from random import randint 
 from _neo4j import neo4j_operations as trx
 
-from requests import get as geturl
+from app.auth.base import api_router
+
+#from requests import get as geturl
+
+def include_router(app):   
+	app.include_router(api_router)   # login + auth
+        
 
 app = create_app()
+include_router(app)
 
+        
+appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
 
 """
 import requests
@@ -130,6 +139,7 @@ def get_categories2(user_id):
 
     return {'message': listcat}
 
+"""
 @app.get("/get_/user_words/{user_id} {idSCatName}")
 def get_user_words(user_id, idSCatName):
     if randint(1,10) < 5:
@@ -155,7 +165,7 @@ def get_user_words(user_id, idSCatName):
         npackage.append((value, sdict["slTarget"][gia], gia + 1, prnFileName, prnLink))
     return npackage
 
-"""
+
 @app.get("/get_/get_testing_Heroku")
 def get_testing_Heroku(user_id, idSCatName):
     s_url = 'https://fl-api-rest.herokuapp.com/get_/user_words2/ijcesar%2012'
@@ -236,10 +246,10 @@ def get_user_words_neo(user_id, idSCatName):
 @app.get("/get_/user_words2/{user_id} {idSCat}")
 def get_user_words2(user_id:str, idSCat:int):  
     user = 'admin'
-    app = None
+    appNeo = None
     session = None
     if session == None:
-        app, session, log = trx.connectNeo4j(user, 'cat&subcat updating')
+        appNeo, session, log = trx.connectNeo4j(user, 'cat&subcat updating')
 
     ne04j_statement_pre = "match (o:Organization)<-[]-(c:Category)" + \
                             "<-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) " + \
