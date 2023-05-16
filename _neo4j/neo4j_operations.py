@@ -1,7 +1,7 @@
 from neo4j import GraphDatabase
-from _neo4j import create_neo4j_app as createApp
+#from _neo4j import create_neo4j_app as createApp
 
-
+"""
 def connectNeo4j(user, description):
     #uri = 'neo4j://localhost:7687'
     #driver = GraphDatabase.driver(uri, auth=('neo4j', 'sistemas'))
@@ -15,6 +15,7 @@ def connectNeo4j(user, description):
     #for x in log:
     #    print('log:', x)
     return app, session, log
+"""
 
 def q01(session):
     q01 = 'match (n:English)-->(s:Spanish) return n.word, s.word'
@@ -44,6 +45,42 @@ def get_sugcategories(session, user):
         print(nodedic["scat.idCat"], nodedic["scat.idSCat"], nodedic["scat.name"])
         scatdic[nodedic["scat.idSCat"]] =  nodedic["scat.name"]
     return scatdic
+
+
+# login de usuario
+def login_validate_user_pass_trx(session, login, keypass):
+    def login_validate_user_pass(session, login):
+        query = "match (us:User {userId: '" + login + "'}) return us.userId, us.name, us.keypass"
+        nodes = session.run(query)
+        return nodes
+
+    resp = login_validate_user_pass(session, login)
+    #print(f"resp: {type(resp)} {resp}")
+    result = {}
+    for elem in resp:
+        result=dict(elem) #print(f"elem: {type(elem)} {elem}")
+        break
+    return result
+
+def create_new_word_sound(tx, session, word, bfield):
+    print(f"\nsession: {session} \n")
+    tx.run("merge (ws: word_sound {word:$updateword}) set ws.binfile=$newfile,ws.actived='yes' ", 
+                    updateword = word, newfile = bfield)
+    
+def unload_word_sound(tx, session, word):
+    print(f"\nsession: {session} \n")
+    tx.run("match (ws: word_sound {word:$updateword}) return ws.binfile", 
+                updateword = word) #, newfile = bfield)
+    
+
+def transaction_newsound(app, word, bfield):
+    with app.driver.session() as session:
+        session.write_transaction(create_new_word_sound, session, word, bfield)
+
+def transaction_unloadsound(app, word):
+    with app.driver.session() as session:
+        session.write_transaction(unload_word_sound, session, word)
+        
 
 def main():
     pass

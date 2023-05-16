@@ -14,11 +14,13 @@ uvicorn main:app --reload --host
 uvicorn main_fapirest:app --reload --host localhost --port 3000
 """
 #from fastapi import HTTPException #, FastAPI
-from app import create_app
+from app import create_app, app_fastapi as app
 #from app.model.md_books import Book
 #from uuid import  uuid4 as uuid
 from random import randint 
 from _neo4j import neo4j_operations as trx
+from _neo4j import appNeo, session, log
+
 
 from app.auth.base import api_router
 
@@ -28,11 +30,11 @@ def include_router(app):
 	app.include_router(api_router)   # login + auth
         
 
-app = create_app()
+#app = create_app()
 include_router(app)
 
         
-appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
+#appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
 
 """
 import requests
@@ -100,6 +102,7 @@ def get_categories_subc(user_id):
 
 @app.get("/get_/categories2/{user_id}")
 def get_categories2(user_id):
+    global appNeo, session, log
     listcat = [{ 'category': 'Anathomy'
                         , 'idCat': 'cat.01.01'
                         , 'subcategories' : [
@@ -110,10 +113,10 @@ def get_categories2(user_id):
                 }
                ]
     user = 'admin'
-    app = None
-    session = None
+    #app = None
+    #session = None
     if session == None:
-        app, session, log = trx.connectNeo4j(user, 'cat&subcat updating')
+        appNeo, session, log = trx.connectNeo4j(user, 'cat&subcat updating')
 
     ne04j_statement = "match (o:Organization {idOrg:'DTL-01'})<-[]-(c:Category)<--(s:SubCategory) " + \
                         "with c, s.name as subcategory, s.idSCat as idSCat " + \
@@ -244,10 +247,11 @@ def get_user_words_neo(user_id, idSCatName):
 """
 
 @app.get("/get_/user_words2/{user_id} {idSCat}")
-def get_user_words2(user_id:str, idSCat:int):  
+def get_user_words2(user_id:str, idSCat:int):
+    global appNeo, session, log
     user = 'admin'
-    appNeo = None
-    session = None
+    #appNeo = None
+    #session = None
     if session == None:
         appNeo, session, log = trx.connectNeo4j(user, 'cat&subcat updating')
 
@@ -264,16 +268,16 @@ def get_user_words2(user_id:str, idSCat:int):
     npackage = []
     continueflag = False
     for node in nodes:
-        print("---------------en ciclo nodes")
+        #print("---------------en ciclo nodes")
         continueflag = True
         sdict = dict(node) 
         lgSource = sdict["lSource"]
         lgTarget = sdict["lTarget"]
         idOrg = sdict["idOrg"]
         idSCatName = sdict["idSCatName"]
-        print(f"results for idSCat : ", lgSource, lgTarget, idOrg, idSCatName)
+        #print(f"results for idSCat : ", lgSource, lgTarget, idOrg, idSCatName)
         idSCatName = idSCatName.replace("/","").replace(" ","")
-        print(f"results for idSCat : ", lgSource, lgTarget, idOrg, idSCatName)
+        #print(f"results for idSCat : ", lgSource, lgTarget, idOrg, idSCatName)
     if continueflag:
         if idSCat == 1:
             ne04j_statement = "match (u:User {alias:'" + user_id + "'}) " + \
@@ -286,7 +290,7 @@ def get_user_words2(user_id:str, idSCat:int):
                     "with u, collect(n.word) as ewlist, collect(swlist) as swlist " + \
                     "return u.alias as idUser, 'words' as subCat, " + \
                             "ewlist[0..8] as slSource, swlist[0..8] as slTarget"
-        elif idSCat != 1:
+        else: # if idSCat != 1:
             ne04j_statement = "match (u:User {alias:'" + user_id + "'}) " + \
                         "match (c:Category)-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) " + \
                         "match (s)-[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]-" + \

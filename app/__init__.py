@@ -13,3 +13,5 @@ def create_app():
         allow_headers=["*"],
         )
     return app
+
+app_fastapi = create_app()

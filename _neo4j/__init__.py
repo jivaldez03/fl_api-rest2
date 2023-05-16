@@ -1,4 +1,5 @@
 from neo4j import GraphDatabase
+#from _neo4j.neo4j_operations import connectNeo4j
 from .config import Config as cfg
 
 class App:
@@ -59,4 +60,24 @@ class App:
 def create_neo4j_app():
     app = App(cfg.URI, cfg.USERNAME, cfg.SECRET_KEY)
     return app, app.driver.session(database="neo4j")
+
+
+def connectNeo4j(user, description):
+    #uri = 'neo4j://localhost:7687'
+    #driver = GraphDatabase.driver(uri, auth=('neo4j', 'sistemas'))
+    #session = driver.session()
+    app,session = create_neo4j_app()
+    logofaccess = "create (n:Log {user: '" + user + "', trx: '" + description + "'}) " \
+                            "set n.ctInsert = datetime() " \
+                            "return n"
+    log = session.run(logofaccess)
+    #print('type-log:', type(log))
+    #for x in log:
+    #    print('log:', x)
+    return app, session, log
+
+#app = create_neo4j_app() # create_app()
+
+print(f"\n\n************************\nconexión a neo4j\n************************")
+appNeo, session, log = connectNeo4j('admin', 'starting session')
 
