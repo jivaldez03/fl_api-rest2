@@ -1,21 +1,4 @@
 from neo4j import GraphDatabase
-#from _neo4j import create_neo4j_app as createApp
-
-"""
-def connectNeo4j(user, description):
-    #uri = 'neo4j://localhost:7687'
-    #driver = GraphDatabase.driver(uri, auth=('neo4j', 'sistemas'))
-    #session = driver.session()
-    app,session = createApp()
-    logofaccess = "create (n:Log {user: '" + user + "', trx: '" + description + "'}) " \
-                            "set n.ctInsert = datetime() " \
-                            "return n"
-    log = session.run(logofaccess)
-    #print('type-log:', type(log))
-    #for x in log:
-    #    print('log:', x)
-    return app, session, log
-"""
 
 def q01(session):
     q01 = 'match (n:English)-->(s:Spanish) return n.word, s.word'
@@ -49,17 +32,22 @@ def get_sugcategories(session, user):
 
 # login de usuario
 def login_validate_user_pass_trx(session, login, keypass):
-    def login_validate_user_pass(session, login):
-        query = "match (us:User {userId: '" + login + "'}) return us.userId, us.name, us.keypass"
-        nodes = session.run(query)
+    def login_validate_user_pass(session, login):        
+        query = "match (us:User {userId: $login}) return us.userId, us.name, us.keypass limit 1"
+        """
+        session.run("CREATE (a:Person {name: $name})", parameters("name", name));
+        result = tx.run(query, {"name": "Alice", "age": 33})
+        result = tx.run(query, {"name": "Alice"}, age=33)
+        result = tx.run(query, name="Alice", age=33)
+        """
+        nodes = session.run(query, login=login)
         return nodes
 
     resp = login_validate_user_pass(session, login)
     #print(f"resp: {type(resp)} {resp}")
     result = {}
     for elem in resp:
-        result=dict(elem) #print(f"elem: {type(elem)} {elem}")
-        break
+        result=dict(elem) #print(f"elem: {type(elem)} {elem}")        
     return result
 
 def create_new_word_sound(tx, session, word, bfield):

@@ -289,7 +289,13 @@ def get_user_words2(user_id:str, idSCat:int):
                     "with u, n, collect(s.word) as swlist " + \
                     "with u, collect(n.word) as ewlist, collect(swlist) as swlist " + \
                     "return u.alias as idUser, 'words' as subCat, " + \
-                            "ewlist[0..8] as slSource, swlist[0..8] as slTarget"
+                    "ewlist[0..10] as slSource, " + \
+                    "swlist[0..10] as slTarget"
+            """            
+                    "optional match (wp:WordSound:" + lgSource + ")<-[pron:PRONUNCIATION]-(n)" + \
+                    "with u, collect(n.word) as ewlist, collect(wp) as wplist, collect(swlist) as swlist " + \                    
+                    "wplist[0..10] as wpSource, " + \
+            """
         else: # if idSCat != 1:
             ne04j_statement = "match (u:User {alias:'" + user_id + "'}) " + \
                         "match (c:Category)-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) " + \
@@ -305,15 +311,42 @@ def get_user_words2(user_id:str, idSCat:int):
         nodes, log = trx.neo4j_exec(session, user,
                             log_description="getting words for user",
                             statement=ne04j_statement)
+        
+        words = []
         for node in nodes:
             sdict = dict(node)        
-            #print(dict(node))
             npackage = []
             prnFileName, prnLink = '', ''
             for gia, value in enumerate(sdict['slSource']):
-                npackage.append((value, sdict["slTarget"][gia], gia + 1, prnFileName, prnLink))
+                npackage.append([value, sdict["slTarget"][gia], gia + 1, prnFileName, prnLink])
+                words.append(value)
 
-    return {"message": npackage}
+        ne04j_statement = "with " + str(list(words)) + " as wordlist " + \
+                        "unwind wordlist as wordtext " + \
+                        "match(wp:WordSound:English {word:wordtext}) " + \
+                        "return wp.word, wp.binfile, wp.actived, wp.example"
+        nodes, log = trx.neo4j_exec(session, user,
+                            log_description="getting words pronunciation",
+                            statement=ne04j_statement)
+        result = []
+        for gia, element in enumerate(npackage):
+            binfile = None
+            example = ''
+            for node in nodes:
+                sdict = dict(node)
+                if element[0] == sdict['wp.word']:
+                    binfile = sdict['wp.binfile']
+                    example = sdict.get('wp.example', '')
+                    break
+            dict_pronunciation = {'example': example,
+                                  'pronunciation': binfile.decode("ISO-8859-1")} #utf-8")}
+            element.append(dict_pronunciation)
+            result.append(element)
+
+            #    npackage.append((value, sdict["slTarget"][gia], gia + 1, prnFileName, prnLink))
+            #    words.append(value)
+
+    return {"message": result}
 
 
 if __name__ == "__main__":
