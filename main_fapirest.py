@@ -15,6 +15,8 @@ uvicorn main_fapirest:app --reload --host localhost --port 3000
 """
 #from fastapi import HTTPException #, FastAPI
 from app import create_app, app_fastapi as app
+from fastapi import Response
+
 #from app.model.md_books import Book
 #from uuid import  uuid4 as uuid
 from random import randint 
@@ -289,8 +291,8 @@ def get_user_words2(user_id:str, idSCat:int):
                     "with u, n, collect(s.word) as swlist " + \
                     "with u, collect(n.word) as ewlist, collect(swlist) as swlist " + \
                     "return u.alias as idUser, 'words' as subCat, " + \
-                    "ewlist[0..10] as slSource, " + \
-                    "swlist[0..10] as slTarget"
+                    "ewlist[0..8] as slSource, " + \
+                    "swlist[0..8] as slTarget"
             """            
                     "optional match (wp:WordSound:" + lgSource + ")<-[pron:PRONUNCIATION]-(n)" + \
                     "with u, collect(n.word) as ewlist, collect(wp) as wplist, collect(swlist) as swlist " + \                    
@@ -324,7 +326,7 @@ def get_user_words2(user_id:str, idSCat:int):
         ne04j_statement = "with " + str(list(words)) + " as wordlist " + \
                         "unwind wordlist as wordtext " + \
                         "match(wp:WordSound:English {word:wordtext}) " + \
-                        "return wp.word, wp.binfile, wp.actived, wp.example"
+                        "return wp.word, id(wp) as idNode, wp.actived, wp.example"  # wp.binfile,
         nodes, log = trx.neo4j_exec(session, user,
                             log_description="getting words pronunciation",
                             statement=ne04j_statement)
@@ -335,11 +337,12 @@ def get_user_words2(user_id:str, idSCat:int):
             for node in nodes:
                 sdict = dict(node)
                 if element[0] == sdict['wp.word']:
-                    binfile = sdict['wp.binfile']
+                    #binfile = sdict['wp.binfile']
+                    idNode = sdict["idNode"]
                     example = sdict.get('wp.example', '')
                     break
             dict_pronunciation = {'example': example,
-                                  'pronunciation': binfile.decode("ISO-8859-1")} #utf-8")}
+                                  'pronunciation': idNode } # binfile.decode("ISO-8859-1")} #utf-8")}
             element.append(dict_pronunciation)
             result.append(element)
 
@@ -348,6 +351,31 @@ def get_user_words2(user_id:str, idSCat:int):
 
     return {"message": result}
 
+
+@app.get("/get_/user_word_pron2/{word} {idWord}")
+def get_user_word_pron2(word, idWord):
+    global appNeo, session, log
+    user = 'admin'
+    #appNeo = None
+    #session = None
+    if session == None:
+        appNeo, session, log = trx.connectNeo4j(user, 'cat&subcat updating')
+
+    statement = "match (ws:WordSound {word: '" +  word + "'}) " + \
+                "where id(ws) = " + str(idWord) + " " + \
+                "return ws.binfile limit 1"  # ws.word, ws.actived, 
+    print(f"statement pronun: {statement}")
+    nodes, log = trx.neo4j_exec(session, user,
+                        log_description="getting pronunciation word",
+                        statement=statement)
+    for ele in nodes:
+        elems = dict(ele)
+        #print(type(f), type(ele), ele, elems['ws.word'], elems['ws.actived'])
+        #fw=open('savedfile4.mp3','wb')
+        #fw.write(elems['ws.binfile'])
+        #fw.close()
+        return Response(elems['ws.binfile'])
+    # return nodes
 
 if __name__ == "__main__":
 	app.run(host='0.0.0.0', port=3000, debug=True)

@@ -8,11 +8,25 @@ router = APIRouter()
 def login_user(user, keypass):
     result = login_validate_user_pass_trx(session, user, keypass)
     if len(result) == 0:
-        resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us'}
+        resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us', "username": "", 
+                    "age":0, 
+                    "country_birth": "", 
+                    "country_res": ""
+                }
     elif keypass == result["us.keypass"]:
-        resp_dict ={'status': 'OK', 'text': 'successful access'}
+        resp_dict ={'status': 'OK', 
+                    'text': 'successful access', 
+                    "username": result["us.name"], 
+                    "age":0, 
+                    "country_birth": result["us.country_birth"], 
+                    "country_res": result["us.country_res"]
+                }
     else:
-        resp_dict ={'status': 'ERROR', 'text': 'invalid user or password'}
+        resp_dict ={'status': 'ERROR', 'text': 'invalid user or password', "username": "",  
+                    "age":0, 
+                    "country_birth": "", 
+                    "country_res": ""
+                }
     return resp_dict
 
 

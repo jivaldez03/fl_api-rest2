@@ -33,7 +33,8 @@ def get_sugcategories(session, user):
 # login de usuario
 def login_validate_user_pass_trx(session, login, keypass):
     def login_validate_user_pass(session, login):        
-        query = "match (us:User {userId: $login}) return us.userId, us.name, us.keypass limit 1"
+        query = "match (us:User {userId: $login}) " +  \
+                "return us.userId, us.name, us.keypass, us.age,  us.country_birth, us.country_res limit 1"
         """
         session.run("CREATE (a:Person {name: $name})", parameters("name", name));
         result = tx.run(query, {"name": "Alice", "age": 33})
