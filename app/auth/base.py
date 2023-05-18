@@ -1,7 +1,4 @@
 from fastapi import APIRouter
-
-#from .user_acc import route_general_pages
-#from .user_acc import route_users
 from . import user_acc
 
 api_router = APIRouter()

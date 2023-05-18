@@ -79,5 +79,6 @@ def connectNeo4j(user, description):
 #app = create_neo4j_app() # create_app()
 
 print(f"\n\n************************\nconexión a neo4j\n************************")
-appNeo, session, log = connectNeo4j('admin', 'starting session')
+user = 'admin'
+appNeo, session, log = connectNeo4j(user, 'starting session')
 

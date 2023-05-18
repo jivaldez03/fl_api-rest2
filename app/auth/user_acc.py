@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from _neo4j.neo4j_operations import login_validate_user_pass_trx
-from _neo4j import appNeo, session, log
+from _neo4j import appNeo, session, log, user
 
 router = APIRouter()
 

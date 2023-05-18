@@ -25,12 +25,15 @@ from _neo4j import appNeo, session, log
 
 
 from app.auth.base import api_router
+from app.ui_oper_gr.base import api_router as api_oper_gr_router
+from app.ui_oper_lv.base import api_router as api_oper_lv_router
 
 #from requests import get as geturl
 
-def include_router(app):   
+def include_router(app):
 	app.include_router(api_router)   # login + auth
-        
+	app.include_router(api_oper_gr_router)   # ui - operaciones generales        
+	app.include_router(api_oper_lv_router)   # ui - operaciones de registro de avance
 
 #app = create_app()
 include_router(app)
