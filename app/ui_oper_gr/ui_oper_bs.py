@@ -88,11 +88,6 @@ def get_user_words(user_id:str, idSCat:int, new_package:int=1, pkgname:str=None,
                             "return u.alias as idUser, 'words' as subCat, " + \
                                     "ewlist[0.." + str(capacity) + "] as slSource, " + \
                                     "swlist[0.." + str(capacity) + "] as slTarget"
-                
-                nodes, log = neo4j_exec(session, user,
-                                    log_description="getting words for user",
-                                    statement=ne04j_statement)
-                #print (f"old pack: {ne04j_statement}")
             else:
                 ne04j_statement = "match (u:User {userId:'" + user_id + "'}) " + \
                         "match (pkg:Package {packageId:'" + pkgname + "', idSCat:" + str(idSCat) + "})-[:PACKAGED]->(u) " + \
@@ -107,13 +102,14 @@ def get_user_words(user_id:str, idSCat:int, new_package:int=1, pkgname:str=None,
                                 "ewlist[0.." + str(capacity) + "] as slSource, " + \
                                 "swlist[0.." + str(capacity) + "] as slTarget"
 
+            print(f"neo4j:state: {ne04j_statement}")
             nodes, log = neo4j_exec(session, user,
                                 log_description="getting words for user",
                                 statement=ne04j_statement)
         else:                                                                   # new words package is required
             if idSCat == 1:
                 ne04j_statement = "match (u:User {userId:'" + user_id + "'}) " + \
-                        "optional match (pkg:Package)-[:PACKAGED]->(u) " + \
+                        "optional match (pkg:Package {status:'open', idSCat:1})-[:PACKAGED]->(u) " + \
                         "unwind pkg.words as pkgwords " + \
                         "with u, collect(pkgwords) as pkgwords " + \
                         "match (n:Word:" + lgSource + ")-[tes:TRANSLATOR]->" + \
@@ -133,7 +129,7 @@ def get_user_words(user_id:str, idSCat:int, new_package:int=1, pkgname:str=None,
                 """
             else: # if idSCat != 1:                                            # new subcategory package is required
                 ne04j_statement = "match (u:User {userId:'" + user_id + "'}) " + \
-                        "optional match (pkg:Package {idSCat:" + str(idSCat) + "})-[:PACKAGED]->(u) " + \
+                        "optional match (pkg:Package {status:'open', idSCat:" + str(idSCat) + "})-[:PACKAGED]->(u) " + \
                         "unwind pkg.words as pkgwords " + \
                         "with u, collect(pkgwords) as pkgwords " + \
                         "match (c:Category)-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) " + \
@@ -171,7 +167,8 @@ def get_user_words(user_id:str, idSCat:int, new_package:int=1, pkgname:str=None,
                             "merge (pkg:Package {userId:'" + user_id + "', packageId:'" + pkgname + "'})" + \
                             "-[pkgd:PACKAGED]->(u) " + \
                             "set pkg.words=wordlist, pkg.idSCat=" + str(idSCat) + "," + \
-                                "pkg.SubCat='" + idSCatName + "', pkg.ctInsert = datetime('"+ dtexec + "') "  + \
+                                "pkg.status='open', pkg.SubCat='" + idSCatName + "', " + \
+                                "pkg.ctInsert = datetime('"+ dtexec + "') "  + \
                             "return count(pkg) as pkg_qty"
         else:
             ne04j_statement = "with " + str(list(words)) + " as wordlist " + \
@@ -179,7 +176,8 @@ def get_user_words(user_id:str, idSCat:int, new_package:int=1, pkgname:str=None,
                             "merge (pkg:Package {userId:'" + user_id + "', packageId:'" + pkgname + "'})" + \
                             "-[pkgd:PACKAGED]->(u) " + \
                             "set pkg.words=wordlist, pkg.idSCat=" + str(idSCat) + "," + \
-                                "pkg.SubCat='" + idSCatName + "', pkg.ctInsert = datetime('"+ dtexec + "') "  + \
+                                "pkg.status='open', pkg.SubCat='" + idSCatName + "', " + \
+                                "pkg.ctInsert = datetime('"+ dtexec + "') "  + \
                             "return count(pkg) as pkg_qty"
 
         nodes, log = neo4j_exec(session, user,
@@ -238,3 +236,26 @@ def get_user_word_pron2(word, idWord):
         #fw.close()
         return Response(elems['ws.binfile'])
 
+
+@router.get("/get_/user_packagelist/{user_Id}")
+def get_user_packagelist(user_id:str):
+    global appNeo, session, log, user
+
+    statement = "match (pkg:Package {userId:'" +  user_id + "', status:'open'}) " + \
+                "match (pkg:Package {userId:'jivaldez03', status:'open'}) " + \
+                "match (sc:SubCategory {idSCat:pkg.idSCat})-[:CAT_SUBCAT]->(c) " + \
+                "return pkg.packageId,sc.idSCat, sc.name, c.idCat, c.name"
+    
+    nodes, log = neo4j_exec(session, user,
+                        log_description="getting opened packages",
+                        statement=statement)
+    listPack = []
+    for node in nodes:
+        sdict = dict(node)        
+        subcat_list = []
+        ndic = {'packageId': sdict["pkg.packageId"]
+                , 'Category': sdict["c.name"], 'idCat' : sdict["c.idCat"]
+                , 'SubCat': sdict["sc.name"], 'idSCat' : sdict["sc.idSCat"]                
+        }
+        listPack.append(ndic)
+    return {'message': listPack}
