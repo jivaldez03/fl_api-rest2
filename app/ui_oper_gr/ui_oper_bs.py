@@ -44,8 +44,39 @@ def get_categories(user_id):
     return {'message': listcat}
 
 
+@router.get("/get_/dashboard/{user_id}")
+def get_dashboad_table(user_id):
+    global appNeo, session, log, user
+
+    neo4j_statement = "match (es:Word:English) " + \
+        "match (c:Category {idCat:1})<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) " + \
+        "with c, sc, count(es.word) as wordsSC " + \
+        "optional match (pkg:Package {userId:'" + user_id + "',status:'close',idSCat:sc.idSCat}) " + \
+        "optional match (pkg)<-[rst:STUDY]-(pkgS:PackageStudy) " + \
+        "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, " + \
+                "sum(size(pkg.words)) as learned " + \
+        "union " + \
+        "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + user_id + "'}) " + \
+        "match (og)<-[rsub:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-(sc:SubCategory )-[esr]-(es:ElemSubCat:English) " + \
+        "-[tr]-(ws:ElemSubCat:Spanish) " + \
+        "with c, sc, count(es.word) as wordsSC " + \
+        "order by sc.idSCat, c.name, sc.name " + \
+        "optional match (pkg:Package {userId:'" + user_id + "',status:'close',idSCat:sc.idSCat}) " + \
+        "optional match (pkg)<-[rst:STUDY]-(pkgS:PackageStudy) " + \
+        "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, " + \
+                "sum(size(pkg.words)) as learned"
+    
+    nodes, log = neo4j_exec(session, user_id,
+                 log_description="getting data for dashboard table",
+                 statement=neo4j_statement)
+    listcat = []
+    for node in nodes:
+        listcat.append(dict(node))
+        #print(dict(node))
+    return {'message': listcat}
+
 @router.get("/get_/user_words/{user_id} {idSCat}")
-def get_user_words(user_id:str, idSCat:int, new_package:int=1, pkgname:str=None, capacity:int=8):
+def get_user_words(user_id:str, idSCat:int, new_package:int=0, pkgname:str=None, capacity:int=8):
     global appNeo, session, log, user
 
     dtexec = funcs._getdatime_T()    
@@ -240,22 +271,37 @@ def get_user_word_pron2(word, idWord):
 @router.get("/get_/user_packagelist/{user_Id}")
 def get_user_packagelist(user_id:str):
     global appNeo, session, log, user
-
-    statement = "match (pkg:Package {userId:'" +  user_id + "', status:'open'}) " + \
-                "match (pkg:Package {userId:'jivaldez03', status:'open'}) " + \
-                "match (sc:SubCategory {idSCat:pkg.idSCat})-[:CAT_SUBCAT]->(c) " + \
-                "return pkg.packageId,sc.idSCat, sc.name, c.idCat, c.name"
     
+    statement = "match (u:User {userId:'" + user_id + "'}) " + \
+                "match (pkg:Package {userId: u.userId, status:'open'}) " + \
+                "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category) "  + \
+                "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) " + \
+                "with u, pkg, c,  pkgS.level as level, min(pkgS.grade[0] / toFloat(pkgS.grade[1])) as grade " + \
+                "with u, pkg, c,  max(level + '-,-' + toString(grade)) as level, count(DISTINCT level) as levs " + \
+                "return pkg.packageId, c.idCat as idCat, c.name as CatName,  " + \
+                        "pkg.SubCat as SCatName, " + \
+                        "pkg.idSCat as idSCat, " + \
+                        "split(level,'-,-')[0] as level, " + \
+                        "toFloat(split(level,'-,-')[1]) as grade, " + \
+                        "levs"
     nodes, log = neo4j_exec(session, user,
                         log_description="getting opened packages",
                         statement=statement)
     listPack = []
     for node in nodes:
-        sdict = dict(node)        
+        sdict = dict(node)                
         subcat_list = []
+        if sdict["grade"] == None:
+            ptg_errors = None
+        else:
+            ptg_errors = (sdict["grade"] - 1) * 100
         ndic = {'packageId': sdict["pkg.packageId"]
-                , 'Category': sdict["c.name"], 'idCat' : sdict["c.idCat"]
-                , 'SubCat': sdict["sc.name"], 'idSCat' : sdict["sc.idSCat"]                
+                , 'Category': sdict["CatName"], 'idCat' : sdict["idCat"]
+                , 'SubCat': sdict["SCatName"], 'idSCat' : sdict["idSCat"]
+                , 'distinct_levs': sdict["levs"]
+                , 'maxlevel': sdict["level"]
+                , 'ptg_errors' : ptg_errors
         }
+        # ndic["ptg_errors"] -= 1
         listPack.append(ndic)
     return {'message': listPack}
