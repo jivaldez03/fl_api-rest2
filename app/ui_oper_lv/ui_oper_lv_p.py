@@ -6,7 +6,7 @@ from _neo4j import appNeo, session, log, user
 router = APIRouter()
 
 
-@router.post("/level/{user_id} {pkgname} {updtime} {level} {cicksQty} {cardsQty}")
+@router.post("/level/{user_id} {pkgname} {updtime} {level} {clicksQty} {cardsQty}")
 def post_level(user_id, pkgname:str, updtime:str, level:str, clicksQty:int, cardsQty:int):
     global appNeo, session, log, user
     #"with 'jivaldez03' as user_id,  "
