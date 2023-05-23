@@ -11,6 +11,11 @@ pip install uvicorn
 //activar uvicorn
 
 uvicorn main:app --reload --host 
+
+
+cd Documents/proyectos/fl_api-rest2
+source __flapiR2/bin/activate
+
 uvicorn main_fapirest:app --reload --host localhost --port 3000
 """
 #from fastapi import HTTPException #, FastAPI
