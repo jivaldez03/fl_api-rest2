@@ -34,7 +34,8 @@ def get_sugcategories(session, user):
 def login_validate_user_pass_trx(session, login, keypass):
     def login_validate_user_pass(session, login):        
         query = "match (us:User {userId: $login}) " +  \
-                "return us.userId, us.name, us.keypass, us.age,  us.country_birth, us.country_res limit 1"
+                "return us.userId, us.name, us.keypass, us.age, \n" + \
+                    "us.nativeLang, us.country_birth, us.country_res limit 1"
         """
         session.run("CREATE (a:Person {name: $name})", parameters("name", name));
         result = tx.run(query, {"name": "Alice", "age": 33})
@@ -49,6 +50,25 @@ def login_validate_user_pass_trx(session, login, keypass):
     result = {}
     for elem in resp:
         result=dict(elem) #print(f"elem: {type(elem)} {elem}")        
+    return result 
+
+# chage user password
+def user_change_password(session, login, old_pass, new_pass):
+    def change_pass(session, login, old_pass, new_pass):        
+        query = "match (us:User {userId: $login, keypass: $oldpass}) \n" +  \
+                "set us.keypass = $newpass \n" + \
+                "return us.userId, us.keypass limit 1"
+        
+        nodes = session.run(query, login=login, oldpass = old_pass, newpass = new_pass)
+        return nodes
+
+    resp = change_pass(session, login, old_pass, new_pass)
+    #print(f"resp: {type(resp)} {resp}")
+    result = {}
+    for elem in resp:
+        #print(f"elem: {type(elem)} {elem}")     
+        result=dict(elem)
+    #print(f"result: {type(result)} {result}")
     return result
 
 def create_new_word_sound(tx, session, word, bfield):

@@ -114,6 +114,33 @@ def get_dashboard_table(user_id):
         #print(dict(node))
     return {'message': listcat}
 
+
+@router.get("/get_/config_uid/{user_id}")
+def get_config_uid(user_id):
+    global appNeo, session, log, user
+
+    neo4j_statement = "match (us:User {userId:'" + user_id + "'})-[r]-(rep:FirstContact) \n" + \
+                    "return us.userId as userId\n" + \
+                        ", us.name as name\n" + \
+                        ", us.birth_year as birth_year, us.month_year as month_year\n" + \
+                        ", us.country_birth as country_birth, us.country_res as country_res\n" + \
+                        ", us.nativeLang as native_lang\n" + \
+                        ", toString(us.ctInsert) as us_ctInsert, us.email as usemail, us.defaultCap as capacity\n" + \
+                        ", rep.contactId as contactId\n" + \
+                        ", rep.name as contactName\n" + \
+                        ", rep.phone as contactPhone\n" + \
+                        ", rep.email as contactEmail\n" 
+                    #"return us {.*}, rep {.*}"
+    
+    nodes, log = neo4j_exec(session, user_id,
+                 log_description="getting user data ",
+                 statement=neo4j_statement)    
+    
+    for node in nodes:
+        sdict = dict(node)
+    return sdict
+
+
 @router.get("/get_/user_words/{user_id} {pkgname}")
 def get_user_words(user_id:str, pkgname:str):
     global appNeo, session, log, user
