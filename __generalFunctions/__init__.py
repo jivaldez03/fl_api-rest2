@@ -1,6 +1,7 @@
 from datetime import datetime as dt
 from time import sleep as sleep
 from random import randint
+from re import compile, match
 
 def _getdatime():
     return str(dt.now())
@@ -21,4 +22,12 @@ def get_list_element(l_elements:list, index:int):
         return None
     else:
         return l_elements[index]
+    
+def reg_exp(exp_to_evaluate, text_to_check):
+    rege = compile(exp_to_evaluate)
+
+    if rege.match(text_to_check):
+        return True
+    else:
+        return False
     

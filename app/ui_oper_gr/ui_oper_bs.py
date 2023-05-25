@@ -319,12 +319,12 @@ def post_user_words(user_id:str, idSCat:int, pkgname:str=None, capacity:int=8):
     return result #pkgdescriptor
 
 
-@router.post("/pst_/user_words45/{user_id} {pkgname} {idSCat}")
-def post_user_words45(user_id:str, pkgname:str, idSCat:int, capacity:int=24):
+@router.post("/pst_/user_words4/{user_id} {pkgname} {idSCat}")
+def post_user_words4(user_id:str, pkgname:str, idSCat:int, capacity:int=24, level:str='lev04_01'):
     global appNeo, session, log, user
 
-    print(f'input-45: {user_id} - {pkgname} for get_user_words45')
-    dtexec = '45_' + funcs._getdatime_T()           # 'w_idSCat_1' as wSCat,  "1 as idSCat, \n" + \
+    print(f'input-4: {user_id} - {pkgname} for get_user_words4')
+    dtexec = '05_' + funcs._getdatime_T()           # 'w_idSCat_1' as wSCat,  "1 as idSCat, \n" + \
     if idSCat == 1:
         wSCat = 'words'
     else:
@@ -354,7 +354,56 @@ def post_user_words45(user_id:str, pkgname:str, idSCat:int, capacity:int=24):
                 # "pkg.words, lwords, pkgSource.words,  wSCat, capacity, dtexec"
 
     nodes, log = neo4j_exec(session, user,
-                    log_description="getting words for user level 4 or 5",
+                    log_description="getting words for user level 4",
+                    statement=neo4j_statement)
+    pkgwords = []
+    for node in nodes:
+        pkgwords = dict(node)
+        # pkgwords = sdict["pkgwords"]
+    
+    # print(f'params for l45: {user_id} {pkgwords}')
+    # now, getting the package using the same endpoint function to return words package
+    result = get_user_words(user_id, pkgwords["packageId"])
+    return result
+
+
+
+@router.post("/pst_/user_words5/{user_id} {pkgname} {idSCat}")
+def post_user_words5(user_id:str, pkgname:str, idSCat:int, capacity:int=24, level:str='lev05_01'):
+    global appNeo, session, log, user
+
+    print(f'input-5: {user_id} - {pkgname} for get_user_words5')
+    dtexec = '05_' + funcs._getdatime_T()           # 'w_idSCat_1' as wSCat,  "1 as idSCat, \n" + \
+    if idSCat == 1:
+        wSCat = 'words'
+    else:
+        wSCat = 'w_idSCat_' + str(idSCat)
+
+    neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
+            "'" + wSCat + "' as wSCat, \n" + \
+            "'" + user_id + "' as user_id, " + str(capacity) + " as capacity, \n" + \
+            "'" + dtexec + "' as dtexec \n" + \
+            "match (u:User {userId:user_id}) \n" + \
+            "with u.userId as userId, u[wSCat] as uwords, packageId, wSCat, capacity, dtexec \n" + \
+            "unwind uwords as words \n" + \
+            "with userId, words, packageId, dtexec, wSCat, capacity order by rand() \n" + \
+            "with userId, collect(words) as words, packageId, wSCat, capacity, dtexec \n" + \
+            "with userId, words[0..capacity] as lwords, packageId, wSCat, capacity, dtexec \n" + \
+            "match (u)-[rp:PACKAGED]-(pkgSource:Package {packageId:packageId}) \n" + \
+            "merge (pkg:Package {packageId: dtexec, userId: userId})-[pkgd:PACKAGED]->(u) \n" + \
+            "set pkg.words=(pkgSource.words + lwords)[0..capacity], \n" + \
+                "pkg.idSCat=pkgSource.idSCat, \n" + \
+                "pkg.status='open', \n" + \
+                "pkg.SubCat=pkgSource.SubCat, \n" + \
+                "pkg.source = pkgSource.source, \n" + \
+                "pkg.target = pkgSource.target, \n" + \
+                "pkg.ctInsert = datetime() \n" + \
+            "return userId, pkg.packageId as packageId limit 1" 
+                # ", pkgSource.packageId, \n" +  \"
+                # "pkg.words, lwords, pkgSource.words,  wSCat, capacity, dtexec"
+
+    nodes, log = neo4j_exec(session, user,
+                    log_description="getting words for user level 5",
                     statement=neo4j_statement)
     pkgwords = []
     for node in nodes:
@@ -565,21 +614,21 @@ def get_user_word_pron2(word, idWord):
         return Response(elems['ws.binfile'])
 
 
-@router.get("/get_/user_packagelist/{user_Id}")
-def get_user_packagelist(user_id:str):
+@router.get("/get_/user_packagelist/{user_Id} {idSCat}")
+def get_user_packagelist(user_id:str, idSCat:int):
     global appNeo, session, log, user
-    
-    statement = "match (u:User {userId:'" + user_id + "'}) " + \
-                "match (pkg:Package {userId: u.userId, status:'open'}) " + \
-                "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category) "  + \
-                "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) " + \
-                "with u, pkg, c,  pkgS.level as level, min(pkgS.grade[0] / toFloat(pkgS.grade[1])) as grade " + \
-                "with u, pkg, c,  max(level + '-,-' + toString(grade)) as level, count(DISTINCT level) as levs " + \
-                "return pkg.packageId, c.idCat as idCat, c.name as CatName,  " + \
-                        "pkg.SubCat as SCatName, " + \
-                        "pkg.idSCat as idSCat, " + \
-                        "split(level,'-,-')[0] as level, " + \
-                        "toFloat(split(level,'-,-')[1]) as grade, " + \
+    #user_id = 'jivaldez03'    idSCat=12
+    statement = "match (u:User {userId:'" + user_id + "'}) \n" + \
+                "match (pkg:Package {userId: u.userId, status:'open', idSCat:" + str(idSCat) + "}) \n" + \
+                "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category) \n"  + \
+                "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
+                "with u, pkg, c,  pkgS.level as level, min(pkgS.grade[0] / toFloat(pkgS.grade[1])) as grade \n" + \
+                "with u, pkg, c,  max(level + '-,-' + toString(grade)) as level, count(DISTINCT level) as levs \n" + \
+                "return pkg.packageId, c.idCat as idCat, c.name as CatName,  \n" + \
+                        "pkg.SubCat as SCatName, \n" + \
+                        "pkg.idSCat as idSCat, \n" + \
+                        "split(level,'-,-')[0] as level, \n" + \
+                        "toFloat(split(level,'-,-')[1]) as grade, \n" + \
                         "levs"
     nodes, log = neo4j_exec(session, user,
                         log_description="getting opened packages",

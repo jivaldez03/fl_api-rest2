@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
-#import __generalFunctions as funcs
+from __generalFunctions import reg_exp as rexp #  as funcs^(lev([0-9][0-9])(_)([09][0-9]))$
 
 router = APIRouter()
 
@@ -9,6 +9,12 @@ router = APIRouter()
 @router.post("/level/{user_id} {pkgname} {updtime} {level} {clicksQty} {cardsQty}")
 def post_level(user_id, pkgname:str, updtime:str, level:str, clicksQty:int, cardsQty:int):
     global appNeo, session, log, user
+
+    if not rexp("^(lev([0-9][0-9])(_)([09][0-9]))$", level):
+        #listcat = []
+        #return {'message': listcat}
+        pass
+        
     #"with 'jivaldez03' as user_id,  "
                       #  "'2023-05-17T18:32:37.490051' as pkgId,  "
                       #  "'2023-05-18T14:12:30' as dtexec,  "
