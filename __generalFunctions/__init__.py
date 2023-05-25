@@ -15,3 +15,10 @@ def _sleep(secs, init_range=0, end_range=10):
         secs = randint(init_range, end_range)
     sleep(secs)
     return secs
+
+def get_list_element(l_elements:list, index:int):
+    if len(l_elements) <= index:
+        return None
+    else:
+        return l_elements[index]
+    
