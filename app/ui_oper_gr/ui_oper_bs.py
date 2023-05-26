@@ -187,6 +187,8 @@ def get_user_words(user_id:str, pkgname:str):
     # creating the structure to return data
     pkgdescriptor = {}
     words = []
+    print(f"nodes type: {type(nodes)}")
+    print(f"logs for nodes: {log}")
     for node in nodes:
         sdict = dict(node)        
         npackage = []
