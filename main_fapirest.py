@@ -67,7 +67,7 @@ def index():
 def helloworld():
     return {'message': "hello world"}
 
-@app.get("/get_/categories/{user_id}")
+#@app.get("/get_/categories/{user_id}")
 def get_categories_subc(user_id):
     listcat = [{ 'category': 'Anathomy'
                         , 'idCat': 'cat.01.01'
@@ -107,7 +107,7 @@ def get_categories_subc(user_id):
     return {'message': listcat}
 
 
-@app.get("/get_/categories2/{user_id}")
+#@app.get("/get_/categories2/{user_id}")
 def get_categories2(user_id):
     global appNeo, session, log
     listcat = [{ 'category': 'Anathomy'
@@ -253,7 +253,7 @@ def get_user_words_neo(user_id, idSCatName):
     return npackage
 """
 
-@app.get("/get_/user_words2/{user_id} {idSCat}")
+#@app.get("/get_/user_words2/{user_id} {idSCat}")
 def get_user_words2(user_id:str, idSCat:int):
     global appNeo, session, log
     user = 'admin'
@@ -357,7 +357,7 @@ def get_user_words2(user_id:str, idSCat:int):
     return {"message": result}
 
 
-@app.get("/get_/user_word_pron2/{word} {idWord}")
+#@app.get("/get_/user_word_pron2/{word} {idWord}")
 def get_user_word_pron2(word, idWord):
     global appNeo, session, log
     user = 'admin'
