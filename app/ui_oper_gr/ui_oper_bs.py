@@ -151,6 +151,8 @@ def get_user_words(user_id:str, pkgname:str):
         pkgname = dtexec 
 
     npackage = []    
+
+    #"n.kowcomplete as kow, \n" + \
     ne04j_statement = "match (pkg:Package {packageId:'" + pkgname + "', idSCat:1}) " + \
                         "unwind pkg.words as pkgwords  \n" + \
                         "with pkg.packageId as pkgname, pkg.label as pkglabel, pkgwords as pkgwords, \n" + \
@@ -161,12 +163,11 @@ def get_user_words(user_id:str, pkgname:str):
                         "with pkgname, pkglabel, n, collect(distinct s.word) as swlist  \n" + \
                         "with pkgname, pkglabel, \n" + \
                             "collect(n.word) as ewlist, \n" + \
-                            "n.kowcomplete as kow, \n" + \
                             "collect(swlist) as swlist \n" + \
                         "optional match (pkgS:PackageStudy {packageId:pkgname}) \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "max(pkgS.level) as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, kow, swlist as slTarget  \n" + \
+                            "ewlist as slSource, ' ' as kow, swlist as slTarget  \n" + \
                         "union " + \
                         "match (pkg:Package {packageId:'" + pkgname + "'}) \n" + \
                         "unwind pkg.words as pkgwords  " + \
@@ -181,7 +182,7 @@ def get_user_words(user_id:str, pkgname:str):
                             "pkg.level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, ' ' as kow, swlist as slTarget"                        
 
-    #print(f"neo4j:state: {ne04j_statement}")
+    print(f"neo4j:state: {ne04j_statement}")
     nodes, log = neo4j_exec(session, user,
                         log_description="getting words for user",
                         statement=ne04j_statement)
