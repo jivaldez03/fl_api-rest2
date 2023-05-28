@@ -159,11 +159,14 @@ def get_user_words(user_id:str, pkgname:str):
                         "where source in labels(n) and target in labels(s) \n" + \
                         "with pkgname, pkglabel, n, s, tes order by n.wordranking, tes.sorded \n" + \
                         "with pkgname, pkglabel, n, collect(distinct s.word) as swlist  \n" + \
-                        "with pkgname, pkglabel, collect(n.word) as ewlist, collect(swlist) as swlist \n" + \
+                        "with pkgname, pkglabel, \n" + \
+                            "collect(n.word) as ewlist, \n" + \
+                            "n.kowcomplete as kow, \n" + \
+                            "collect(swlist) as swlist \n" + \
                         "optional match (pkgS:PackageStudy {packageId:pkgname}) \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "max(pkgS.level) as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, swlist as slTarget  \n" + \
+                            "ewlist as slSource, kow, swlist as slTarget  \n" + \
                         "union " + \
                         "match (pkg:Package {packageId:'" + pkgname + "'}) \n" + \
                         "unwind pkg.words as pkgwords  " + \
@@ -175,8 +178,8 @@ def get_user_words(user_id:str, pkgname:str):
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) \n" + \
                         "with pkg, s, ewlist, swlist, max(pkgS.level) as level, linktitles, links \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
-                            "pkg.level as maxlevel, linktitles, links, ewlist as slSource, swlist as slTarget"
-                        
+                            "pkg.level as maxlevel, linktitles, links, \n" + \
+                            "ewlist as slSource, ' ' as kow, swlist as slTarget"                        
 
     #print(f"neo4j:state: {ne04j_statement}")
     nodes, log = neo4j_exec(session, user,
@@ -197,10 +200,10 @@ def get_user_words(user_id:str, pkgname:str):
                           , "maxlevel":sdict["maxlevel"]
         }
         for gia, value in enumerate(sdict['slSource']):
-            prnFileName = funcs.get_list_element(sdict["links"], gia)
+            prnReference = funcs.get_list_element(sdict["linktitles"], gia)
             prnLink     = funcs.get_list_element(sdict["links"], gia)
-            npackage.append([value, funcs.get_list_element(sdict["slTarget"],gia), gia + 1, prnFileName, prnLink])
-            words.append(value)
+            npackage.append([value, funcs.get_list_element(sdict["slTarget"],gia), gia + 1, prnReference, prnLink])
+            words.append(value) # (value, sdict['kow']))
 
     result = get_pronunciationId(words, npackage)
 
