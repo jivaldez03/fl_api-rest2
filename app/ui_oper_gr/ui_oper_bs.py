@@ -15,7 +15,34 @@ def get_pronunciationId(words, npackage):
     nodes, log = neo4j_exec(session, user,
                         log_description="getting words pronunciation",
                         statement=ne04j_statement)
-    result = []
+    result = []    
+    for word in words:
+        idNode = None
+        example = ''
+        for node in nodes:
+            sdict = dict(node)
+            if word == sdict['wp.word']:
+                idNode = sdict["idNode"]
+                example = sdict.get('wp.example', '')
+                break
+        dict_pronunciation = {'example': example,
+                            'pronunciation': idNode} # binfile.decode("ISO-8859-1")} #utf-8")}
+        result.append(dict_pronunciation)
+    return result
+
+
+
+def get_pronunciationId_back(words, npackage):
+    # getting the WordSound id for each word and example
+    ne04j_statement = "with " + str(list(words)) + " as wordlist " + \
+                    "unwind wordlist as wordtext " + \
+                    "match(wp:WordSound:English {word:wordtext}) " + \
+                    "return wp.word, id(wp) as idNode, wp.actived, wp.example"  # wp.binfile,
+    
+    nodes, log = neo4j_exec(session, user,
+                        log_description="getting words pronunciation",
+                        statement=ne04j_statement)
+    result = []    
     for gia, element in enumerate(npackage):
         #binfile = None
         idNode = None
@@ -36,7 +63,6 @@ def get_pronunciationId(words, npackage):
         #    words.append(value)
     return result
 
-
 @router.get("/get_/categories/{user_id}")
 def get_categories(user_id):
     global appNeo, session, log, user
@@ -51,7 +77,6 @@ def get_categories(user_id):
                 }
                ]
     """
-
     ne04j_statement = "match (o:Organization {idOrg:'DTL-01'})<-[]-(c:Category)<--(s:SubCategory) " + \
                         "with c, s.name as subcategory, s.idSCat as idSCat " + \
                         "order by c.name, subcategory " + \
@@ -162,12 +187,14 @@ def get_user_words(user_id:str, pkgname:str):
                         "with pkgname, pkglabel, n, s, tes order by n.wordranking, tes.sorded \n" + \
                         "with pkgname, pkglabel, n, collect(distinct s.word) as swlist  \n" + \
                         "with pkgname, pkglabel, \n" + \
+                            "collect(COALESCE(n.kowcomplete, [])) as kow, \n" + \
+                            "collect(COALESCE(n.kowc, [])) as kowc, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
                         "optional match (pkgS:PackageStudy {packageId:pkgname}) \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "max(pkgS.level) as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, ' ' as kow, swlist as slTarget  \n" + \
+                            "ewlist as slSource, kow, kowc, swlist as slTarget  \n" + \
                         "union " + \
                         "match (pkg:Package {packageId:'" + pkgname + "'}) \n" + \
                         "unwind pkg.words as pkgwords  " + \
@@ -180,7 +207,7 @@ def get_user_words(user_id:str, pkgname:str):
                         "with pkg, s, ewlist, swlist, max(pkgS.level) as level, linktitles, links \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "pkg.level as maxlevel, linktitles, links, \n" + \
-                            "ewlist as slSource, ' ' as kow, swlist as slTarget"                        
+                            "ewlist as slSource, [] as kow, [] as kowc, swlist as slTarget"                        
 
     print(f"neo4j:state: {ne04j_statement}")
     nodes, log = neo4j_exec(session, user,
@@ -191,6 +218,7 @@ def get_user_words(user_id:str, pkgname:str):
     # creating the structure to return data
     pkgdescriptor = {}
     words = []
+    kow, kowc = [], []
     print(f"nodes type: {type(nodes)}")
     print(f"logs for nodes: {log}")
     for node in nodes:
@@ -200,14 +228,27 @@ def get_user_words(user_id:str, pkgname:str):
                           , "label": sdict["label"]
                           , "maxlevel":sdict["maxlevel"]
         }
+        kow = sdict["kow"]
+        kowc = sdict["kowc"]
         for gia, value in enumerate(sdict['slSource']):
             prnReference = funcs.get_list_element(sdict["linktitles"], gia)
             prnLink     = funcs.get_list_element(sdict["links"], gia)
             npackage.append([value, funcs.get_list_element(sdict["slTarget"],gia), gia + 1, prnReference, prnLink])
             words.append(value) # (value, sdict['kow']))
+    lpron = get_pronunciationId(words, npackage)
+    result = []      
+    for gia, element in enumerate(npackage):        
+        element.append(lpron[gia])
+        if len(kow) == 0:
+            isitaverb = (False, [])
+        else:
+            isitaverb = (('vb' in str(kowc[gia]).lower()), kow[gia])
+        section_extra = {"kow": isitaverb[1] # kow[gia] # list of different kind of word for the same word
+                        , "verb": isitaverb[0] # is it a verb?
+                        }
 
-    result = get_pronunciationId(words, npackage)
-
+        element.append(section_extra)
+        result.append(element)
     pkgdescriptor["message"] = result
     return pkgdescriptor
 
