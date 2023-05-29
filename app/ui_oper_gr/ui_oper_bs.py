@@ -233,7 +233,12 @@ def get_user_words(user_id:str, pkgname:str):
         for gia, value in enumerate(sdict['slSource']):
             prnReference = funcs.get_list_element(sdict["linktitles"], gia)
             prnLink     = funcs.get_list_element(sdict["links"], gia)
-            npackage.append([value, funcs.get_list_element(sdict["slTarget"],gia), gia + 1, prnReference, prnLink])
+            ltarget = funcs.get_list_element(sdict["slTarget"],gia)
+            if type(ltarget) == type(list()):
+                pass
+            else:
+                ltarget = [ltarget]
+            npackage.append([value, ltarget, gia + 1, prnReference, prnLink])
             words.append(value) # (value, sdict['kow']))
     lpron = get_pronunciationId(words, npackage)
     result = []      
