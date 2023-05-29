@@ -351,19 +351,23 @@ def post_user_words(user_id:str, idSCat:int, pkgname:str=None, capacity:int=8):
                     "-[pkgd:PACKAGED]->(u) \n" + \
                     "set pkg.words=wordlist, pkg.idSCat=" + str(idSCat) + ", \n" + \
                         "pkg.status='open', pkg.SubCat='" + idSCatName + "', \n" + \
+                        "pkg.label=' ', \n" + \
                         "pkg.source = '"+ lgSource + "', \n"  + \
-                        "pkg.tarjet = '"+ lgTarget + "', \n"  + \
+                        "pkg.target = '"+ lgTarget + "', \n"  + \
                         "pkg.ctInsert = datetime('"+ dtexec + "') "  + \
                     "return count(pkg) as pkg_qty"
+    
+    print(f"neo4j:state: {ne04j_statement}")
 
     nodes, log = neo4j_exec(session, user,
-                        log_description="getting words pronunciation",
+                        log_description="new word package",
                         statement=ne04j_statement)
     #                                                              end of create new data package
 
     # now, getting the package using the same endpoint function to return words package
     result = get_user_words(user_id, pkgname)
-    return result #pkgdescriptor
+
+    return result #pkgname #pkgdescriptor
 
 
 @router.post("/pst_/user_words4/{user_id} {pkgname} {idSCat}")
