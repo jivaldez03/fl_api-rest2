@@ -12,7 +12,6 @@ pip install uvicorn
 
 uvicorn main:app --reload --host 
 
-
 cd Documents/proyectos/fl_api-rest2
 source __flapiR2/bin/activate
 uvicorn main_fapirest:app --reload --host localhost --port 3000
@@ -32,10 +31,15 @@ from app.auth.base import api_router
 from app.ui_oper_gr.base import api_router as api_oper_gr_router
 from app.ui_oper_lv.base import api_router as api_oper_lv_router
 
+from app.dt_auth.base import api_router as dt_auth_router
+from app.dt_ui_oper_gr.base import api_router as dt_api_oper_gr_router
+
 def include_router(app):
 	app.include_router(api_router)   # login + auth
 	app.include_router(api_oper_gr_router)   # ui - operaciones generales        
-	app.include_router(api_oper_lv_router)   # ui - operaciones de registro de avance
+	app.include_router(api_oper_lv_router)   # ui - operaciones de registro de avance    
+	app.include_router(dt_auth_router)   # ui - testing
+	app.include_router(dt_api_oper_gr_router)   # ui - testing
 
 #app = create_app()
 include_router(app)
@@ -378,10 +382,10 @@ def get_user_word_pron2(word, idWord):
         #print(type(f), type(ele), ele, elems['ws.word'], elems['ws.actived'])
         #fw=open('savedfile4.mp3','wb')
         #fw.write(elems['ws.binfile'])
-        #fw.close()
+        #fw.close() 
         return Response(elems['ws.binfile'])
     # return nodes
 
 if __name__ == "__main__":
-	app.run(host='0.0.0.0', port=3000, debug=True)
-        
+    #print('GETENV:', getenv("SEC_KEY")) 
+    app.run(host='0.0.0.0', port=3000, debug=True)
