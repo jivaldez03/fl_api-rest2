@@ -16,6 +16,8 @@ router = APIRouter()
 @router.post("/login/")   # {user} {keypass}
 def login_user(datas: ForLogin):
     """
+    Function to create a new session \n
+
     this operation needs a input structure such as {userId, password}
     """
     global session
@@ -69,6 +71,13 @@ def login_user(datas: ForLogin):
 
 @router.post("/change_pass/")
 def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(None)):
+    """
+    Function for change the user password \n
+    {
+    "oldkeypass":str,
+    "newkeypass":str"
+    }
+    """
     global session
     token=funcs.validating_token(Authorization)    
 

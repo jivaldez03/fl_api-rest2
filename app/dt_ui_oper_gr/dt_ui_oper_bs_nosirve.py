@@ -5,22 +5,15 @@ from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 from random import shuffle as shuffle
 
-from app.model.md_params_oper import ForPackages as ForNewPackage
+from app.model.md_params_oper import ForNewPackage
 
 router = APIRouter()
 
-def get_pronunciationId(words, packagename, userId):
-    """
-    Function to identify and return the id() of pronunciation file
-    into the WordSound collection
-    """
+def get_pronunciationId(words, npackage):
     # getting the WordSound id for each word and example
     ne04j_statement = "with " + str(list(words)) + " as wordlist " + \
                     "unwind wordlist as wordtext " + \
-                    "match (pgk:Package {packageId:'" + packagename + "'})-\n" + \
-                    "[:PACKAGED]-(u:User {userId: '"+ userId +"'}) \n" + \
-                    "match(wp:WordSound {word:wordtext}) " + \
-                    "where pkg.source in labels(wp) \n" + \
+                    "match(wp:WordSound:English {word:wordtext}) " + \
                     "return wp.word, id(wp) as idNode, wp.actived, wp.example"  # wp.binfile,
     
     nodes, log = neo4j_exec(session, user,
@@ -44,10 +37,6 @@ def get_pronunciationId(words, packagename, userId):
 
 @router.get("/get_/categories/")
 def get_categories(Authorization: Optional[str] = Header(None)):
-    """
-    Function to get all categories and subcategories allowed for the user
-
-    """
     global appNeo, session, log 
 
     token=funcs.validating_token(Authorization)
@@ -79,10 +68,6 @@ def get_categories(Authorization: Optional[str] = Header(None)):
 
 @router.get("/get_/dashboard/")
 def get_dashboard_table(Authorization: Optional[str] = Header(None)):
-    """
-    Function to get how much has the user worked for each category
-
-    """
     global appNeo, session, log 
 
     token=funcs.validating_token(Authorization)
@@ -124,10 +109,6 @@ def get_dashboard_table(Authorization: Optional[str] = Header(None)):
 
 @router.get("/get_/config_uid/")
 def get_config_uid(Authorization: Optional[str] = Header(None)):
-    """"
-    Function to get some options or data of the user
-
-    """
     global appNeo, session, log 
 
     token=funcs.validating_token(Authorization)
@@ -154,12 +135,9 @@ def get_config_uid(Authorization: Optional[str] = Header(None)):
     return sdict
 
 
+
 @router.get("/get_/user_packagelist/{idSCat}")
 def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)):
-    """
-    Function to get opened package list in a specific SubCategory \n
-
-    """
     global appNeo, session, log 
 
     token=funcs.validating_token(Authorization)
@@ -169,15 +147,14 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
                 "match (pkg:Package {userId: u.userId, status:'open', idSCat:" + str(idSCat) + "}) \n" + \
                 "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category) \n"  + \
                 "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
-                "with u, pkg, c,  coalesce(pkgS.level,'lvl_10_01') as level, min(pkgS.grade[0] / toFloat(pkgS.grade[1])) as grade \n" + \
-                "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, count(DISTINCT level) as levs \n" + \
+                "with u, pkg, c,  pkgS.level as level, min(pkgS.grade[0] / toFloat(pkgS.grade[1])) as grade \n" + \
+                "with u, pkg, c,  max(level + '-,-' + toString(grade)) as level, count(DISTINCT level) as levs \n" + \
                 "return pkg.packageId, c.idCat as idCat, c.name as CatName,  \n" + \
                         "pkg.SubCat as SCatName, \n" + \
                         "pkg.idSCat as idSCat, \n" + \
                         "split(level,'-,-')[0] as level, \n" + \
                         "toFloat(split(level,'-,-')[1]) as grade, \n" + \
                         "levs"
-    print(statement)
     nodes, log = neo4j_exec(session, user,
                         log_description="getting opened packages",
                         statement=statement)
@@ -203,7 +180,7 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
     return {'message': listPack}
 
 
-def get_words(userId, pkgname):
+def get_words(userId, pkgname, dtexec):
     global app, session, log
 
     npackage = []
@@ -272,7 +249,7 @@ def get_words(userId, pkgname):
                 ltarget = [ltarget]
             npackage.append([value, ltarget, gia + 1, prnReference, prnLink])
             words.append(value) # (value, sdict['kow']))
-    lpron = get_pronunciationId(words, pkgname, userId)
+    lpron = get_pronunciationId(words, npackage)
     result = []      
     for gia, element in enumerate(npackage):        
         element.append(lpron[gia])
@@ -291,14 +268,6 @@ def get_words(userId, pkgname):
 
 @router.get("/get_/user_words/{pkgname}")
 def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None)):
-    """
-    Function to get the words into a specific package \n
-
-    {\n
-    pkgname: str  (package Code) \n
-    }
-
-    """
     global appNeo, session, log 
 
     token=funcs.validating_token(Authorization)
@@ -391,7 +360,7 @@ def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None)):
         result.append(element)
     """
     #pkgdescriptor["message"] = get_words(userId, pkgname, dtexec)
-    pkgdescriptor = get_words(userId, pkgname)
+    pkgdescriptor = get_words(userId, pkgname, dtexec)
 
     return pkgdescriptor
 
@@ -400,12 +369,8 @@ def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None)):
 def post_user_words(datas:ForNewPackage
                     , Authorization: Optional[str] = Header(None)):
     """
-    Function to create new words package \n
-
-    {\n
-        idScat:int,  \n
-        package:str=None, -> default = str(dt.now()),replace(' ', 'T')  = '2023-06-07T16:44:49.139573' \n
-        capacity:int=8    \n
+    create new words package
+    {idScat:int, package:str=None, capacity:int=8    
     }
     """
     global appNeo, session, log
@@ -531,20 +496,18 @@ def post_user_words(datas:ForNewPackage
     #                                                              end of create new data package
 
     # now, getting the package using the same endpoint function to return words package
-    pkgdescriptor = get_words(userId, pkgname)
+    pkgdescriptor = get_words(userId, pkgname, dtexec)
     return pkgdescriptor #pkgname #pkgdescriptor
 
 
 #@router.get("/get_/user_words4/{user_id} {pkgname}")
 def get_user_words4(userId:str, pkgname:str, level:str):
-    """"
-    internal function, it is not an endpoint
-    """
     global appNeo, session, log
     
     #dtexec = funcs._getdatime_T()    
     #if pkgname in ['', None]:        
     #    pkgname = dtexec 
+
 
     npackage = []    
 
@@ -596,10 +559,9 @@ def get_user_words4(userId:str, pkgname:str, level:str):
     for node in nodes:
         sdict = dict(node)        
         npackage = []
-
         pkgdescriptor = {"packageId": pkgname
                           , "label": sdict["label"]
-                          , "maxlevel":('lvl_50_01' if level == 'words50' else 'lvl_40_01') # sdict["maxlevel"]
+                          , "maxlevel":sdict["maxlevel"]
         }
         kow = sdict["kow"]
         kowc = sdict["kowc"]
@@ -613,7 +575,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                 ltarget = [ltarget]
             npackage.append([value, ltarget, gia + 1, prnReference, prnLink])
             words.append(value) # (value, sdict['kow']))
-    lpron = get_pronunciationId(words, pkgname, userId)
+    lpron = get_pronunciationId(words, npackage)
     result = []      
     for gia, element in enumerate(npackage):        
         element.append(lpron[gia])
@@ -638,12 +600,8 @@ def get_user_words4(userId:str, pkgname:str, level:str):
 def post_user_words4(datas:ForNewPackage
                     , Authorization: Optional[str] = Header(None)):
     """
-    Function to create the word list for level 4 (lvl_40_01) \n    
-    
-    {\n
-        idScat:int,  \n
-        package:str=None,  \n
-        capacity:int=24    // 8, 16, 24, 32, 40 \n
+    create new words package for level 4
+    {idScat:int, package:str=None, capacity:int=24    
     }
     """
     global appNeo, session, log
@@ -669,7 +627,7 @@ def post_user_words4(datas:ForNewPackage
             "'" + userId + "' as user_id, \n" + \
             str(capacity) + " as capacity \n" + \
             "match (u:User {userId:user_id}) \n" + \
-            "with u.userId as userId, COALESCE(u[wSCat],['.']) as uwords, packageId, wSCat, capacity \n" + \
+            "with u.userId as userId, u[wSCat] as uwords, packageId, wSCat, capacity \n" + \
             "unwind uwords as words \n" + \
             "with userId, words, packageId, wSCat, capacity order by rand() \n" + \
             "with userId, collect(words) as words, packageId, wSCat, capacity \n" + \
@@ -681,11 +639,6 @@ def post_user_words4(datas:ForNewPackage
             "create (pkgS:PackageStudy {level:'lvl_40_01'})-[rs:STUDY]->(pkg) \n" + \
             "set pkgS.studying_dt = datetime('" + dtexec + "'), \n" + \
                 "pkgS.grade = [0,capacity] \n" + \
-            "with userId, packageId, pkg \n" + \
-            "match (u2:User {userId:userId}) \n" + \
-            "where u2.words is null \n" + \
-            "match (pkg2:Package {packageId:packageId})-[]-(u2) \n" + \
-            "set pkg2.words40 = pkg.words40[0..-1] \n" + \
             "return userId, packageId limit 1 "
     print('exec neo4j:', neo4j_statement)
     nodes, log = neo4j_exec(session, user,
@@ -697,16 +650,12 @@ def post_user_words4(datas:ForNewPackage
     return result
 
 
-@router.post("/pst_/user_words5/")
+@router.post("/pst_/user_words5/{user_id} {pkgname} {idSCat}")
 def post_user_words5(datas:ForNewPackage
                     , Authorization: Optional[str] = Header(None)):
     """
-    Function to create the word list for level 5 (lvl_50_01) \n    
-    
-    {\n
-        idScat:int,  \n
-        package:str=None,  \n
-        capacity:int=24    // 8, 16, 24, 32, 40 \n
+    create new words package for level 5
+    {idScat:int, package:str=None, capacity:int=24    
     }
     """
     global appNeo, session, log
@@ -731,7 +680,7 @@ def post_user_words5(datas:ForNewPackage
             "'" + userId + "' as user_id, \n" + \
             str(capacity) + " as capacity \n" + \
             "match (u:User {userId:user_id}) \n" + \
-            "with u.userId as userId, COALESCE(u[wSCat],['.']) as uwords, packageId, wSCat, capacity \n" + \
+            "with u.userId as userId, u[wSCat] as uwords, packageId, wSCat, capacity \n" + \
             "unwind uwords as words \n" + \
             "with userId, words, packageId, wSCat, capacity order by rand() \n" + \
             "with userId, collect(words) as words, packageId, wSCat, capacity \n" + \
@@ -743,11 +692,6 @@ def post_user_words5(datas:ForNewPackage
             "create (pkgS:PackageStudy {level:'lvl_50_01'})-[rs:STUDY]->(pkg) \n" + \
             "set pkgS.studying_dt = datetime('" + dtexec + "'), \n" + \
                 "pkgS.grade = [0,capacity] \n" + \
-            "with userId, packageId, pkg \n" + \
-            "match (u2:User {userId:userId}) \n" + \
-            "where u2.words is null \n" + \
-            "match (pkg2:Package {packageId:packageId})-[]-(u2) \n" + \
-            "set pkg2.words50 = pkg.words50[0..-1] \n" + \
             "return userId, packageId limit 1 "
     print('exec neo4j:', neo4j_statement)
     nodes, log = neo4j_exec(session, user,
@@ -760,25 +704,14 @@ def post_user_words5(datas:ForNewPackage
 
 
 @router.get("/get_/user_word_pron/{word} {idWord}")
-def get_user_word_pron2(word, idWord
-                    , Authorization: Optional[str] = Header(None)):
-    """
-    Function to get the file .mp3 with the pronunciation example
-
-    params :  \n
-        word:str, \n
-        idWord: int
-    """
-    global appNeo, session, log
-
-    token=funcs.validating_token(Authorization) 
-    userId = token['userId']
+def get_user_word_pron2(word, idWord):
+    global appNeo, session, log, user
 
     statement = "match (ws:WordSound {word: '" +  word + "'}) " + \
                 "where id(ws) = " + str(idWord) + " " + \
                 "return ws.binfile limit 1"  # ws.word, ws.actived, 
-    #print(f"statement pronun: {statement}")
-    nodes, log = neo4j_exec(session, userId,
+    print(f"statement pronun: {statement}")
+    nodes, log = neo4j_exec(session, user,
                         log_description="getting pronunciation word",
                         statement=statement)
     for ele in nodes:

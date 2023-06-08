@@ -33,13 +33,15 @@ from app.ui_oper_lv.base import api_router as api_oper_lv_router
 
 from app.dt_auth.base import api_router as dt_auth_router
 from app.dt_ui_oper_gr.base import api_router as dt_api_oper_gr_router
+from app.dt_ui_oper_lv.base import api_router as dt_api_oper_lv_router
 
 def include_router(app):
-	app.include_router(api_router)   # login + auth
-	app.include_router(api_oper_gr_router)   # ui - operaciones generales        
-	app.include_router(api_oper_lv_router)   # ui - operaciones de registro de avance    
+	#app.include_router(api_router)   # login + auth
+	#app.include_router(api_oper_gr_router)   # ui - operaciones generales        
+	#app.include_router(api_oper_lv_router)   # ui - operaciones de registro de avance    
 	app.include_router(dt_auth_router)   # ui - testing
 	app.include_router(dt_api_oper_gr_router)   # ui - testing
+	app.include_router(dt_api_oper_lv_router)   # ui - testing
 
 #app = create_app()
 include_router(app)
@@ -67,7 +69,7 @@ class Book(BaseModel):
 def index():
     return "Hello EVERYBODY ..... dELTA-pHASE is now working for you"
 
-@app.get("/hello")
+#@app.get("/hello")
 def helloworld():
     return {'message': "hello world"}
 
@@ -361,7 +363,7 @@ def get_user_words2(user_id:str, idSCat:int):
     return {"message": result}
 
 
-@app.get("/get_/user_word_pron2/{word} {idWord}")
+#@app.get("/get_/user_word_pron2/{word} {idWord}")
 def get_user_word_pron2(word, idWord):
     global appNeo, session, log
     user = 'admin'

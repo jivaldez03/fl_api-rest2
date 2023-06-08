@@ -10,6 +10,18 @@ router = APIRouter()
 
 @router.post("/level/")
 def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(None)):
+    """
+    Function to record each task in the frontend
+
+    {\n
+        level:str , \n
+        package:str (pkgname), \n
+        upddtime: str ("2023-06-07T14:05:31.237751"), \n
+        clicksQty: int (quantity of clicks) ,\n
+        cardsQty : int (quantity of cards), \n
+    }
+
+    """
     global appNeo, session, log
 
     token=funcs.validating_token(Authorization)
