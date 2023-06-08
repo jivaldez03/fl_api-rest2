@@ -73,3 +73,18 @@ def validating_token(token):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Expired - Invalid Token"
         )
+
+def level_seq(level, forward=False):
+    llevel = (getenv("LEVEL_SEQUENCE")).split(',')    
+    if llevel.__contains__(level):
+        ix = llevel.index(level)
+        if forward:
+            return(llevel[ix+1])
+        else:            
+            return(llevel[ix-1])
+    return level
+    
+
+
+
+

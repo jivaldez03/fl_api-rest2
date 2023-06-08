@@ -170,13 +170,13 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
                 "match (pkg:Package {userId: u.userId, status:'open', idSCat:" + str(idSCat) + "}) \n" + \
                 "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
                 "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
-                "with u, pkg, c,  pkgS.level as level, min(pkgS.grade[1] / toFloat(pkgS.grade[0]))*100 as grade, coalesce(o.grademin,85.0) as mingrade \n" + \
-                "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, count(DISTINCT level) as levs, mingrade \n" + \
+                "with u, pkg, c,  pkgS.level as level, min(pkgS.grade[0] / toFloat(pkgS.grade[1])) as grade, coalesce(o.ptgmaxerrs,100.0-85.0) as maxerrs \n" + \
+                "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, count(DISTINCT level) as levs, maxerrs \n" + \
                 "return pkg.packageId, c.idCat as idCat, c.name as CatName, \n" + \
                 "pkg.SubCat as SCatName, \n" + \
                 "pkg.idSCat as idSCat, \n" + \
                 "split(level,'-,-')[0] as level, \n" + \
-                "toFloat(split(level,'-,-')[1]) as grade, levs, mingrade"
+                "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
 
     """
     statement = "match (u:User {userId:'" + userId + "'}) \n" + \
@@ -196,23 +196,33 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
     nodes, log = neo4j_exec(session, user,
                         log_description="getting opened packages",
                         statement=statement)
+
+    print("despues de ejecución de neo4")
     listPack = []
     for node in nodes:
-        sdict = dict(node)                
-        subcat_list = []
+        sdict = dict(node)    
+        #subcat_list = []
+        print('sdict:', sdict)
         if sdict["grade"] == None:
             ptg_errors = None
         else:
-            ptg_errors = (sdict["grade"] - 1) * 100
-            if ptg_errors < 0:
-                ptg = None
+            ptg_errors = float(sdict["grade"] - 1) * 100            
+            #if ptg_errors < 0:
+            #    ptg = None
+        if sdict["maxerrs"] > (ptg_errors if ptg_errors else 100):
+            maxlevel = sdict["level"]
+        else:
+            maxlevel = funcs.level_seq(sdict["level"], forward=False)
         ndic = {'packageId': sdict["pkg.packageId"]
                 , 'Category': sdict["CatName"], 'idCat' : sdict["idCat"]
                 , 'SubCat': sdict["SCatName"], 'idSCat' : sdict["idSCat"]
                 , 'distinct_levs': sdict["levs"]
-                , 'maxlevel': sdict["level"]
+                , 'maxlevel': maxlevel # sdict["level"]
                 , 'ptg_errors' : ptg_errors
+                , 'maxptg_errs':sdict["maxerrs"]
         }
+        print('levelseq: ', funcs.level_seq(sdict["level"], forward=False))
+
         # ndic["ptg_errors"] -= 1
         listPack.append(ndic)
     return {'message': listPack}
