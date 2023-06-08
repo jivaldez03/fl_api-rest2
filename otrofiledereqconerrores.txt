@@ -2,6 +2,7 @@ bcrypt==3.2.0
 blinker==1.4
 chardet==4.0.0
 click==8.0.3
+command-not-found==0.3
 cryptography==3.4.8
 cupshelpers==1.0
 dbus-python==1.2.18
