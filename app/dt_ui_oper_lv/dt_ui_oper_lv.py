@@ -33,9 +33,10 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     clicksQty= datas.clicksQty
     cardsQty = datas.cardsQty
 
+    print('levelclick:', level, clicksQty, cardsQty)
     if funcs.level_seq(level, forward=False, position=True) == 1:
         clicksQty = cardsQty
-
+    print('levelclick2:', level, clicksQty, cardsQty)
     """
     if not rexp("^(lev([0-9][0-9])(_)([09][0-9]))$", level):
         #listcat = []
