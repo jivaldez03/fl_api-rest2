@@ -10,7 +10,7 @@ class ForPackages(BaseModel):
 class ForClosePackages(BaseModel):
     package: str=None
     updtime: str=str(dt.now()).replace(' ','T')
-    level: str 
+    level: str = None
     clicksQty: int
     cardsQty: int 
 

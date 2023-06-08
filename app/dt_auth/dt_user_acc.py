@@ -32,7 +32,7 @@ def login_user(datas: ForLogin):
                 }
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect user or password",
+            detail="Incorrect user or password"
             #headers={"WWW-Authenticate": "Basic"},
         )
     elif datas.password == result["us.keypass"]:
@@ -63,7 +63,7 @@ def login_user(datas: ForLogin):
                 }
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect user or password",
+            detail="Incorrect user or password"
             #headers={"WWW-Authenticate": "Basic"},
         )    
     return resp_dict

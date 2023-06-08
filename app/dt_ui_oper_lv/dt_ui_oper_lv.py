@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, HTTPException, status
 from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
@@ -20,7 +20,6 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
         clicksQty: int (quantity of clicks) ,\n
         cardsQty : int (quantity of cards), \n
     }
-
     """
     global appNeo, session, log
 
@@ -33,8 +32,13 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     clicksQty= datas.clicksQty
     cardsQty = datas.cardsQty
 
-    print('levelclick:', level, clicksQty, cardsQty)
-    if level == 'lvl_10_01': #funcs.level_seq(level, forward=False, position=True) == 1:
+    #validating if level is valid
+    levelSeqPosition = funcs.validating_exist_level(level)
+
+    print('levelclick:', level, clicksQty, cardsQty, 'position:', levelSeqPosition)
+    #print(funcs.level_seq(level, forward=False, position=True))
+    #if funcs.level_seq(level, forward=False, position=True) == 1: #level == 'lvl_10_01': #funcs.level_seq(level, forward=False, position=True) == 1:
+    if levelSeqPosition == 1:
         clicksQty = cardsQty
     print('levelclick2:', level, clicksQty, cardsQty)
     """

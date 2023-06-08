@@ -75,20 +75,38 @@ def validating_token(token):
         )
 
 def level_seq(level, forward=False, position=False):
+    """
+    forward = True, return the next level,
+    forward = False, return the previous level
+    position = True, return the position of the level into the sequence
+    """
     llevel = (getenv("LEVEL_SEQUENCE")).split(',')   
-    print('lllleeeevel:', llevel, position) 
-    if llevel.__contains__(level):
+    #print('lllleeeevel:', llevel, level, llevel.__contains__(level)
+    # , 'forward: ', forward, 'position:', position) 
+    if llevel[1:].__contains__(level):    # llevel[0] = None
         ix = llevel.index(level)
-        print('ixxxxxxxxxxxxxxxx:', ix)
+        #print('ixxxxxxxxxxxxxxxx:', ix)
         if position:
             return ix
         elif forward:
             return(llevel[ix+1])
         else:            
-            return(llevel[ix-1])
-    return level
+            return(llevel[ix-1])        
+    return -1
     
-
+def validating_exist_level(level):
+    levelSeqPosition = level_seq(level, forward=False, position=True)
+    if levelSeqPosition > 0:
+        pass
+    else:
+        if level == None:
+            level = "None"
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,   #HTTP_401_UNAUTHORIZED,
+            detail="level (" + level + ") is a wrong format or data"            
+            #headers={"WWW-Authenticate": "Basic"},
+        )
+    return levelSeqPosition
 
 
 

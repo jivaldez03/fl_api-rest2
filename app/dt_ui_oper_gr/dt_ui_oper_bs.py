@@ -170,8 +170,11 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
                 "match (pkg:Package {userId: u.userId, status:'open', idSCat:" + str(idSCat) + "}) \n" + \
                 "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
                 "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
-                "with u, pkg, c,  pkgS.level as level, min(pkgS.grade[0] / toFloat(pkgS.grade[1])) as grade, coalesce(o.ptgmaxerrs,100.0-85.0) as maxerrs \n" + \
-                "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, count(DISTINCT level) as levs, maxerrs \n" + \
+                "with u, pkg, c,  pkgS.level as level, \n" + \
+                "max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
+                "coalesce(o.ptgmaxerrs,100.0-85.0) as maxerrs \n" + \
+                "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, \n" + \
+                "count(DISTINCT level) as levs, maxerrs \n" + \
                 "return pkg.packageId, c.idCat as idCat, c.name as CatName, \n" + \
                 "pkg.SubCat as SCatName, \n" + \
                 "pkg.idSCat as idSCat, \n" + \
@@ -206,9 +209,9 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
         if sdict["grade"] == None:
             ptg_errors = None
         else:
-            ptg_errors = float(sdict["grade"] - 1) * 100            
-            #if ptg_errors < 0:
-            #    ptg = None
+            ptg_errors = float(sdict["grade"]) #  - 1) * 100            
+            if ptg_errors < 0:
+                ptg_errors = 100
         if sdict["maxerrs"] > (ptg_errors if ptg_errors else 100):
             maxlevel = sdict["level"]
         else:
