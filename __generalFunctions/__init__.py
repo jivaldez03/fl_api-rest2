@@ -74,11 +74,13 @@ def validating_token(token):
             detail="Expired - Invalid Token"
         )
 
-def level_seq(level, forward=False):
+def level_seq(level, forward=False, position=False):
     llevel = (getenv("LEVEL_SEQUENCE")).split(',')    
     if llevel.__contains__(level):
         ix = llevel.index(level)
-        if forward:
+        if position:
+            return ix
+        elif forward:
             return(llevel[ix+1])
         else:            
             return(llevel[ix-1])
