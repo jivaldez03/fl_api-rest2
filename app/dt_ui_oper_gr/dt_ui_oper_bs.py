@@ -17,12 +17,12 @@ def get_pronunciationId(words, packagename, userId):
     # getting the WordSound id for each word and example
     ne04j_statement = "with " + str(list(words)) + " as wordlist " + \
                     "unwind wordlist as wordtext " + \
-                    "match (pgk:Package {packageId:'" + packagename + "'})-\n" + \
+                    "match (pkg:Package {packageId:'" + packagename + "'})-\n" + \
                     "[:PACKAGED]-(u:User {userId: '"+ userId +"'}) \n" + \
                     "match(wp:WordSound {word:wordtext}) " + \
                     "where pkg.source in labels(wp) \n" + \
                     "return wp.word, id(wp) as idNode, wp.actived, wp.example"  # wp.binfile,
-    
+
     nodes, log = neo4j_exec(session, user,
                         log_description="getting words pronunciation",
                         statement=ne04j_statement)
@@ -165,6 +165,20 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
+
+    statement = "match (u:User {userId:'" + userId + "'}) \n" + \
+                "match (pkg:Package {userId: u.userId, status:'open', idSCat:" + str(idSCat) + "}) \n" + \
+                "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
+                "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
+                "with u, pkg, c,  pkgS.level as level, min(pkgS.grade[1] / toFloat(pkgS.grade[0]))*100 as grade, coalesce(o.grademin,85.0) as mingrade \n" + \
+                "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, count(DISTINCT level) as levs, mingrade \n" + \
+                "return pkg.packageId, c.idCat as idCat, c.name as CatName, \n" + \
+                "pkg.SubCat as SCatName, \n" + \
+                "pkg.idSCat as idSCat, \n" + \
+                "split(level,'-,-')[0] as level, \n" + \
+                "toFloat(split(level,'-,-')[1]) as grade, levs, mingrade"
+
+    """
     statement = "match (u:User {userId:'" + userId + "'}) \n" + \
                 "match (pkg:Package {userId: u.userId, status:'open', idSCat:" + str(idSCat) + "}) \n" + \
                 "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category) \n"  + \
@@ -177,6 +191,7 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
                         "split(level,'-,-')[0] as level, \n" + \
                         "toFloat(split(level,'-,-')[1]) as grade, \n" + \
                         "levs"
+    """
     print(statement)
     nodes, log = neo4j_exec(session, user,
                         log_description="getting opened packages",
