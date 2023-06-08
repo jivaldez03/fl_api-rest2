@@ -34,7 +34,7 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     cardsQty = datas.cardsQty
 
     print('levelclick:', level, clicksQty, cardsQty)
-    if funcs.level_seq(level, forward=False, position=True) == 1:
+    if level == 'lvl_10_01': #funcs.level_seq(level, forward=False, position=True) == 1:
         clicksQty = cardsQty
     print('levelclick2:', level, clicksQty, cardsQty)
     """

@@ -75,9 +75,11 @@ def validating_token(token):
         )
 
 def level_seq(level, forward=False, position=False):
-    llevel = (getenv("LEVEL_SEQUENCE")).split(',')    
+    llevel = (getenv("LEVEL_SEQUENCE")).split(',')   
+    print('lllleeeevel:', llevel, position) 
     if llevel.__contains__(level):
         ix = llevel.index(level)
+        print('ixxxxxxxxxxxxxxxx:', ix)
         if position:
             return ix
         elif forward:
