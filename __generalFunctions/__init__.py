@@ -91,7 +91,9 @@ def level_seq(level, forward=False, position=False):
         elif forward:
             return(llevel[ix+1])
         else:            
-            return(llevel[ix-1])        
+            return(llevel[ix-1])      
+    elif not level:
+        return llevel[0]  
     return -1
     
 def validating_exist_level(level):

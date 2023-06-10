@@ -55,8 +55,9 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
                     "merge (pkgS:PackageStudy {studing_dt:datetime('" + updtime + "')})-[rs:STUDY]->(pkg) " + \
                     "set pkgS.level = '" + level + "', pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "]" + \
                     "return pkg.packageId as packageId, pkgS.studing_dt, pkgS.level as level, pkgS.grade as grade"
-    nodes, log = neo4j_exec(session, user,
-                        log_description="updating package study level",
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="updating activity on package = '" + pkgname + "'\nlevel = '" + level + "'" + \
+                                    "\npkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "]",
                         statement=neo4j_statement)
     listcat = []
     for node in nodes:

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Header #, Request, Body
 from typing import Optional #, Annotated
-from _neo4j.neo4j_operations import login_validate_user_pass_trx, user_change_password
+from _neo4j.neo4j_operations import login_validate_user_pass_trx, user_change_password, neo4_log
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 
@@ -24,6 +24,7 @@ def login_user(datas: ForLogin):
  
     result = login_validate_user_pass_trx(session, datas.userId, datas.password) #  user, keypass)
     if len(result) == 0:
+        neo4_log(session, datas.userId, 'login - invalid user or password - us')
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us', "username": "", 
                     "age":0, 
                     "country_birth": "", 
@@ -36,6 +37,7 @@ def login_user(datas: ForLogin):
             #headers={"WWW-Authenticate": "Basic"},
         )
     elif datas.password == result["us.keypass"]:
+        neo4_log(session, datas.userId, 'login - success access')
         resp_dict ={'status': 'OK', 
                     'text': 'successful access',
                     "userId":datas.userId,
@@ -56,6 +58,7 @@ def login_user(datas: ForLogin):
                     "native_lang" : result["us.nativeLang"]
         }
     else:
+        neo4_log(session, datas.userId, 'login - invalid user or password')
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password', "username": "",  
                     "age":0, 
                     "country_birth": "", 

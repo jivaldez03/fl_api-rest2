@@ -23,7 +23,7 @@ def get_pronunciationId(words, packagename, userId):
                     "where pkg.source in labels(wp) \n" + \
                     "return wp.word, id(wp) as idNode, wp.actived, wp.example"  # wp.binfile,
 
-    nodes, log = neo4j_exec(session, user,
+    nodes, log = neo4j_exec(session, userId,
                         log_description="getting words pronunciation",
                         statement=ne04j_statement)
     result = []    
@@ -61,7 +61,7 @@ def get_categories(Authorization: Optional[str] = Header(None)):
                                 "collect(subcategory) as subcategories, collect(idSCat) as subid" 
     
     nodes, log = neo4j_exec(session, userId,
-                        log_description="getting words for user",
+                        log_description="getting categories for the user",
                         statement=neo4j_statement)
     listcat = []
     for node in nodes:
@@ -146,7 +146,7 @@ def get_config_uid(Authorization: Optional[str] = Header(None)):
                         ", rep.email as contactEmail \n" 
     
     nodes, log = neo4j_exec(session, userId,
-                 log_description="getting user data ",
+                 log_description="getting user local configuration data ",
                  statement=neo4j_statement)    
     
     for node in nodes:
@@ -196,8 +196,8 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
                         "levs"
     """
     print(statement)
-    nodes, log = neo4j_exec(session, user,
-                        log_description="getting opened packages",
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="--getting opened packages list \n--\n"+ statement,
                         statement=statement)
 
     print("despues de ejecución de neo4")
@@ -207,12 +207,12 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
         #subcat_list = []
         print('sdict:', sdict)
         if sdict["grade"] == None:
-            ptg_errors = None
+            ptg_errors = 100
         else:
             ptg_errors = float(sdict["grade"]) #  - 1) * 100            
             if ptg_errors < 0:
                 ptg_errors = 100
-        if sdict["maxerrs"] > (ptg_errors if ptg_errors else 100):
+        if sdict["maxerrs"] > (ptg_errors if ptg_errors>=0 else 100):
             maxlevel = sdict["level"]
         else:
             maxlevel = funcs.level_seq(sdict["level"], forward=False)
@@ -272,7 +272,7 @@ def get_words(userId, pkgname):
 
     print(f"neo4j:state: {neo4j_statement}")
     nodes, log = neo4j_exec(session, userId,
-                        log_description="getting words for user",
+                        log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement)    
 
     # creating the structure to return data
@@ -462,7 +462,7 @@ def post_user_words(datas:ForNewPackage
                                     "o.lTarget as lTarget, s.name as idSCatName limit 1" 
     
     nodes, log = neo4j_exec(session, userId,
-                        log_description="getting new words package for user",
+                        log_description="getting data previous to create new words package",
                         statement=neo4j_statement_pre)
         
     #print(f"nodes : {sdict} , {len(sdict)}")
@@ -485,7 +485,7 @@ def post_user_words(datas:ForNewPackage
             "with collect(pkgwords) as pkgwords " + \
             "return pkgwords "
     nodes, log = neo4j_exec(session, userId,
-                    log_description="getting words for user",
+                    log_description="getting new words (step 1) for new package",
                     statement=neo4j_statement)
     pkgwords = []
     for node in nodes:
@@ -524,7 +524,7 @@ def post_user_words(datas:ForNewPackage
                 #"swlist[0.." + str(capacity) + "] as slTarget"
         #print(f"ne04j_state: {ne04j_statement}")
     nodes, log = neo4j_exec(session, userId,
-                        log_description="getting words for user",
+                        log_description="getting new words (step 2) for new package",
                         statement=neo4j_statement)    
 
 
@@ -554,7 +554,7 @@ def post_user_words(datas:ForNewPackage
     print(f"neo4j:state: {neo4j_statement}")
 
     nodes, log = neo4j_exec(session, userId,
-                        log_description="new word package",
+                        log_description="creating new word package -> "+ pkgname,
                         statement=neo4j_statement)
     #                                                              end of create new data package
 
@@ -610,7 +610,8 @@ def get_user_words4(userId:str, pkgname:str, level:str):
 
     print(f"neo4j:state: {neo4j_statement}")
     nodes, log = neo4j_exec(session, userId,
-                        log_description="getting words for user",
+                        log_description="get_user_words4 for level: " + level + \
+                                        "\n getting words package: " + pkgname,
                         statement=neo4j_statement)
     
         
@@ -655,9 +656,9 @@ def get_user_words4(userId:str, pkgname:str, level:str):
         element.append(section_extra)
         result.append(element)        
 
-    print('before shuffle')
+    #print('before shuffle')
     shuffle(result)
-    print('after shuffle')
+    #print('after shuffle')
     pkgdescriptor["message"] = result
     return pkgdescriptor
 
@@ -716,8 +717,8 @@ def post_user_words4(datas:ForNewPackage
             "set pkg2.words40 = pkg.words40[0..-1] \n" + \
             "return userId, packageId limit 1 "
     print('exec neo4j:', neo4j_statement)
-    nodes, log = neo4j_exec(session, user,
-                    log_description="getting words for user level 4",
+    nodes, log = neo4j_exec(session, userId,
+                    log_description="post_user_words4 -level_40_ \n packageId: " + pkgname,
                     statement=neo4j_statement)
     # print(f'params for l45: {user_id} {pkgwords}')
     # now, getting the package using the same endpoint function to return words package
@@ -778,8 +779,8 @@ def post_user_words5(datas:ForNewPackage
             "set pkg2.words50 = pkg.words50[0..-1] \n" + \
             "return userId, packageId limit 1 "
     print('exec neo4j:', neo4j_statement)
-    nodes, log = neo4j_exec(session, user,
-                    log_description="getting words for user level 5",
+    nodes, log = neo4j_exec(session, userId,
+                    log_description="post_user_words5 -level_50_ \n packageId: " + pkgname, 
                     statement=neo4j_statement)
     # print(f'params for l45: {user_id} {pkgwords}')
     # now, getting the package using the same endpoint function to return words package
@@ -807,7 +808,7 @@ def get_user_word_pron2(word, idWord
                 "return ws.binfile limit 1"  # ws.word, ws.actived, 
     #print(f"statement pronun: {statement}")
     nodes, log = neo4j_exec(session, userId,
-                        log_description="getting pronunciation word",
+                        log_description="getting pronunciation word: " + word,
                         statement=statement)
     for ele in nodes:
         elems = dict(ele)

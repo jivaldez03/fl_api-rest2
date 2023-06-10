@@ -8,11 +8,14 @@ def q01(session):
     #    print(node, type(node))
     return nodes
 
-def neo4j_exec(session, user, log_description, statement):
+def neo4_log(session, user, log_description):
     logofaccess = 'create (n:Log {user: "' + user + '", trx: "' + \
                     log_description + '"}) set n.ctInsert = datetime() return n'
-    log = None # session.run(logofaccess)
-    # print('neo4jStatement: ', statement)
+    log = session.run(logofaccess)
+    return log
+
+def neo4j_exec(session, user, log_description, statement):
+    log = neo4_log(session, user, log_description)
     nodes = session.run(statement)
     return nodes, log
 
@@ -63,6 +66,7 @@ def user_change_password(session, login, old_pass, new_pass):
         return nodes
 
     resp = change_pass(session, login, old_pass, new_pass)
+    log = neo4_log(session, login, "update password")
     #print(f"resp: {type(resp)} {resp}")
     result = {}
     for elem in resp:
