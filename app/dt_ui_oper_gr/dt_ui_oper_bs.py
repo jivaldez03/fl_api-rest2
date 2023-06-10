@@ -200,12 +200,12 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
                         log_description="--getting opened packages list \n--\n"+ statement,
                         statement=statement)
 
-    print("despues de ejecución de neo4")
+    #print("despues de ejecución de neo4")
     listPack = []
     for node in nodes:
         sdict = dict(node)    
         #subcat_list = []
-        print('sdict:', sdict)
+        #print('sdict:', sdict)
         if sdict["grade"] == None:
             ptg_errors = 100
         else:
