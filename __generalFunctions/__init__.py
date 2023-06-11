@@ -11,7 +11,11 @@ from dotenv import load_dotenv
 from os import getenv
 from fastapi import HTTPException, status
 
+import inspect
+myfunctionname = lambda: str(inspect.stack()[1][3])
+
 load_dotenv()
+
 
 def _getdatime():
     return str(dt.now())
@@ -110,5 +114,15 @@ def validating_exist_level(level):
         )
     return levelSeqPosition
 
+def monitoring_function(functiontovalidate):
+    """
+    
+    """
+    lfunctions = (getenv("MONITORING_FUNCTIONS")).split(',\n')
+    #print('functionsvalidate: ', functiontovalidate, lfunctions, type(functiontovalidate))
+    # if lfunctions.__contains__(functiontovalidate):
 
-
+    if functiontovalidate in lfunctions:
+        return True
+    else:
+        return False

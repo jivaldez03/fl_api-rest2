@@ -1,22 +1,64 @@
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase 
+from __generalFunctions import monitoring_function
 
-def q01(session):
-    q01 = 'match (n:English)-->(s:Spanish) return n.word, s.word'
+"""
+https://neo4j.com/docs/python-manual/current/transformers/
+
+import neo4j
+
+pandas_df = driver.execute_query(
+    "UNWIND range(1, 10) AS n RETURN n, n+1 as m",
+    database_="neo4j",
+    result_transformer_=neo4j.Result.to_df
+)
+"""
+def q01(session, strtoexec= None):
+    if strtoexec == None:
+        q01 = 'match (n:English)-->(s:Spanish) return n.word, s.word'
+    else:
+        q01 = strtoexec        
     nodes = session.run(q01)
-    #print(type(nodes))
-    #for node in nodes:
-    #    print(node, type(node))
     return nodes
 
-def neo4_log(session, user, log_description):
-    logofaccess = 'create (n:Log {user: "' + user + '", trx: "' + \
-                    log_description + '"}) set n.ctInsert = datetime() return n'
+def neo4_log(session, user, log_description, filename= None, function_name=None):
+    if not function_name:
+        function_name = 'null'
+    else:
+        function_name = "'" + function_name + "'"
+    logofaccess = 'create (n:Log {user: "' + user + '", ' + \
+                    'trx: "' + log_description + '", \n' + \
+                    'exec_fname: "' + filename + '", \n' + \
+                    "exec_fn:" + function_name + ", \n" + \
+                    "ctInsert: datetime()})" + \
+                    "return id(n) as idLog, n.ctInsert as dtstamp"
     log = session.run(logofaccess)
-    return log
 
-def neo4j_exec(session, user, log_description, statement):
-    log = neo4_log(session, user, log_description)
+    ix = [dict(ix) for ix in log][0]
+    #idlog = [dict(ix)['idLog'] for ix in log][0]
+    idlog = ix["idLog"]
+    dtstamp = ix["dtstamp"]
+    #print('recordlog for ', function_name ,': ', idlog, dtstamp)
+    
+    return [idlog, dtstamp]
+
+def neo4j_exec(session, user, log_description, statement, filename= None, function_name=None):
+
+    if not function_name:
+        function_name = 'null'
+    
+    # next line is for the log record for the user's execution
+    if monitoring_function(function_name):
+        log_description += "\n----\n" + statement
+    log = neo4_log(session, user, log_description, filename, function_name)
+    
+    # next line execute the cypher statement required for the user
     nodes = session.run(statement)
+
+    q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
+                "where id(l) = " + str(log[0]) + " \n" + \
+                "set l.ctClosed = datetime() \n" + \
+                "return count(l)"
+    )
     return nodes, log
 
 def get_sugcategories(session, user):
@@ -36,15 +78,13 @@ def get_sugcategories(session, user):
 # login de usuario
 def login_validate_user_pass_trx(session, login, keypass):
     def login_validate_user_pass(session, login):        
-        query = "match (us:User {userId: $login}) " +  \
+        query = "create (l:Log {user:$login, ctInsert:datetime(), "+ \
+                "trx:'trying login for the user', exec_fname:'" + __name__+ "', \n"+ \
+                "exec_fn: 'login_validate_user_pass_trx'})" + \
+                "with l.user as userId \n"+ \
+                "match (us:User {userId: $login}) " +  \
                 "return us.userId, us.name, us.keypass, us.age, \n" + \
                     "us.nativeLang, us.country_birth, us.country_res limit 1"
-        """
-        session.run("CREATE (a:Person {name: $name})", parameters("name", name));
-        result = tx.run(query, {"name": "Alice", "age": 33})
-        result = tx.run(query, {"name": "Alice"}, age=33)
-        result = tx.run(query, name="Alice", age=33)
-        """
         nodes = session.run(query, login=login)
         return nodes
 

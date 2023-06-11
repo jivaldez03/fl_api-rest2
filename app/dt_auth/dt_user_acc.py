@@ -3,13 +3,20 @@ from typing import Optional #, Annotated
 from _neo4j.neo4j_operations import login_validate_user_pass_trx, user_change_password, neo4_log
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
+from __generalFunctions import myfunctionname
 
 from datetime import datetime as dt
 
 #models:
 from app.model.md_params_auth import ForLogin, ForChangePass
 
+
 router = APIRouter()
+#import sys
+#def callersfunctionname(  ):
+#    return sys._getframe(2).f_code.co_name
+
+#him = callersfunctionname()
 
 #def login_user(user, keypass, User_Agent: Annotated[str | None, Header()] = None, userId: Annotated[str | None, Header()] = None):
 #def login_user(datas: Annotated[forlogin, Body(embed=True)]):
@@ -22,9 +29,11 @@ def login_user(datas: ForLogin):
     """
     global session
  
-    result = login_validate_user_pass_trx(session, datas.userId, datas.password) #  user, keypass)
+    result = login_validate_user_pass_trx(session, datas.userId, datas.password) 
+
     if len(result) == 0:
-        neo4_log(session, datas.userId, 'login - invalid user or password - us')
+        print("fname__name__and more:",__name__)
+        neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname)
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us', "username": "", 
                     "age":0, 
                     "country_birth": "", 
@@ -37,7 +46,9 @@ def login_user(datas: ForLogin):
             #headers={"WWW-Authenticate": "Basic"},
         )
     elif datas.password == result["us.keypass"]:
-        neo4_log(session, datas.userId, 'login - success access')
+        #print("fname__name__and more:",__name__, myfunctionname()) #, callersfunctionname(),__file__)
+        
+        neo4_log(session, datas.userId, 'login - success access', __name__, myfunctionname())
         resp_dict ={'status': 'OK', 
                     'text': 'successful access',
                     "userId":datas.userId,

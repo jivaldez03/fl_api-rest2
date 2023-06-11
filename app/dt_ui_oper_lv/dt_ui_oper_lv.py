@@ -3,6 +3,7 @@ from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs # import reg_exp as rexp #  as funcs^(lev([0-9][0-9])(_)([09][0-9]))$
+from __generalFunctions import myfunctionname
 
 from app.model.md_params_oper import ForClosePackages
 
@@ -32,25 +33,11 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     clicksQty= datas.clicksQty
     cardsQty = datas.cardsQty
 
-    #validating if level is valid
+    #validating if level is valid, if it isn't valid the raise and error 406 raise HTTPException HTTP_406_NOT_ACCEPTABLE
     levelSeqPosition = funcs.validating_exist_level(level)
-
-    print('levelclick:', level, clicksQty, cardsQty, 'position:', levelSeqPosition)
-    #print(funcs.level_seq(level, forward=False, position=True))
-    #if funcs.level_seq(level, forward=False, position=True) == 1: #level == 'lvl_10_01': #funcs.level_seq(level, forward=False, position=True) == 1:
-    if levelSeqPosition == 1:
+    if levelSeqPosition == 1:  # level in position 1 is equal to lvl_10_01, if it is.... clickqty = cardsqty
         clicksQty = cardsQty
-    print('levelclick2:', level, clicksQty, cardsQty)
-    """
-    if not rexp("^(lev([0-9][0-9])(_)([09][0-9]))$", level):
-        #listcat = []
-        #return {'message': listcat}
-        pass
-    """
-    #"with 'jivaldez03' as user_id,  "
-                      #  "'2023-05-17T18:32:37.490051' as pkgId,  "
-                      #  "'2023-05-18T14:12:30' as dtexec,  "
-                      #  "'lvl01.01' as lvl, [12,8] as grade "
+        
     neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', userId:'" + userId + "'}) " + \
                     "merge (pkgS:PackageStudy {studing_dt:datetime('" + updtime + "')})-[rs:STUDY]->(pkg) " + \
                     "set pkgS.level = '" + level + "', pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "]" + \
@@ -58,7 +45,9 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     nodes, log = neo4j_exec(session, userId,
                         log_description="updating activity on package = '" + pkgname + "'\nlevel = '" + level + "'" + \
                                     "\npkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "]",
-                        statement=neo4j_statement)
+                        statement=neo4j_statement,
+                        filename=__name__,
+                        function_name=myfunctionname())
     listcat = []
     for node in nodes:
         listcat.append(dict(node))
