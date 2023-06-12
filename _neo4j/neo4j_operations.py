@@ -76,11 +76,12 @@ def get_sugcategories(session, user):
 
 
 # login de usuario
-def login_validate_user_pass_trx(session, login, keypass):
+def login_validate_user_pass_trx(session, login):
     def login_validate_user_pass(session, login):        
         query = "create (l:Log {user:$login, ctInsert:datetime(), "+ \
-                "trx:'trying login for the user', exec_fname:'" + __name__+ "', \n"+ \
-                "exec_fn: 'login_validate_user_pass_trx'})" + \
+                        "trx:'trying login for the user', \n" + \
+                        "exec_fname:'" + __name__+ "', \n"+ \
+                        "exec_fn: 'login_validate_user_pass_trx'})" + \
                 "with l.user as userId \n"+ \
                 "match (us:User {userId: $login}) " +  \
                 "return us.userId, us.name, us.keypass, us.age, \n" + \
@@ -96,7 +97,7 @@ def login_validate_user_pass_trx(session, login, keypass):
     return result 
 
 # chage user password
-def user_change_password(session, login, old_pass, new_pass):
+def user_change_password(session, login, old_pass, new_pass, filename=None, function_name=None):
     def change_pass(session, login, old_pass, new_pass):        
         query = "match (us:User {userId: $login, keypass: $oldpass}) \n" +  \
                 "set us.keypass = $newpass \n" + \
@@ -106,13 +107,22 @@ def user_change_password(session, login, old_pass, new_pass):
         return nodes
 
     resp = change_pass(session, login, old_pass, new_pass)
-    log = neo4_log(session, login, "update password")
-    #print(f"resp: {type(resp)} {resp}")
     result = {}
     for elem in resp:
         #print(f"elem: {type(elem)} {elem}")     
         result=dict(elem)
-    #print(f"result: {type(result)} {result}")
+    print('chagnepasswrod:', result)
+
+    if len(result) == 0:
+        trx = "Incorrect user or password"
+    else:
+        trx = "Password updated"
+    log = neo4_log(session, login, "Updating password - " + trx, filename, function_name)
+    q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + login + "'}) \n" + \
+                "where id(l) = " + str(log[0]) + " \n" + \
+                "set l.ctClosed = datetime() \n" + \
+                "return count(l)"
+    )
     return result
 
 def create_new_word_sound(tx, session, word, bfield):

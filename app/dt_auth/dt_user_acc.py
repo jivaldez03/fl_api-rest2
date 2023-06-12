@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Header #, Request, Body
 from typing import Optional #, Annotated
-from _neo4j.neo4j_operations import login_validate_user_pass_trx, user_change_password, neo4_log
+from _neo4j.neo4j_operations import login_validate_user_pass_trx, user_change_password, neo4_log, q01
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 from __generalFunctions import myfunctionname
@@ -29,17 +29,21 @@ def login_user(datas: ForLogin):
     """
     global session
  
-    result = login_validate_user_pass_trx(session, datas.userId, datas.password) 
+    result = login_validate_user_pass_trx(session, datas.userId) # , datas.password) 
 
     if len(result) == 0:
-        print("fname__name__and more:",__name__)
-        neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname)
-        resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us', "username": "", 
+        print("no records - fname__name__and more:",__name__)
+        log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
+        resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us', "userId":"",  "username": "", 
                     "age":0, 
                     "country_birth": "", 
-                    "country_res": "",
-
-                }
+                    "country_res": ""
+                }        
+        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
+                    "where id(l) = " + str(log[0]) + " \n" + \
+                    "set l.ctClosed = datetime() \n" + \
+                    "return count(l)"
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password"
@@ -48,7 +52,7 @@ def login_user(datas: ForLogin):
     elif datas.password == result["us.keypass"]:
         #print("fname__name__and more:",__name__, myfunctionname()) #, callersfunctionname(),__file__)
         
-        neo4_log(session, datas.userId, 'login - success access', __name__, myfunctionname())
+        log = neo4_log(session, datas.userId, 'login - success access', __name__, myfunctionname())
         resp_dict ={'status': 'OK', 
                     'text': 'successful access',
                     "userId":datas.userId,
@@ -58,6 +62,11 @@ def login_user(datas: ForLogin):
                     "country_res": result["us.country_res"],
                     "native_lang" : result["us.nativeLang"]
                 }
+        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
+                    "where id(l) = " + str(log[0]) + " \n" + \
+                    "set l.ctClosed = datetime() \n" + \
+                    "return count(l)"
+        )
         token = funcs.return_token(data=resp_dict)
 
         #print(f"validating token: {funcs.validating_token(token.split(' ')[1], False)}")
@@ -69,15 +78,22 @@ def login_user(datas: ForLogin):
                     "native_lang" : result["us.nativeLang"]
         }
     else:
-        neo4_log(session, datas.userId, 'login - invalid user or password')
+        print("pass invalid")
+        log = neo4_log(session, datas.userId, 'login - invalid user or password', __name__, myfunctionname())
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password', "username": "",  
                     "age":0, 
                     "country_birth": "", 
                     "country_res": ""
                 }
+        
+        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
+                    "where id(l) = " + str(log[0]) + " \n" + \
+                    "set l.ctClosed = datetime() \n" + \
+                    "return count(l)"
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect user or password"
+            detail="Incorrect user or password -"
             #headers={"WWW-Authenticate": "Basic"},
         )    
     return resp_dict
@@ -95,7 +111,9 @@ def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(
     global session
     token=funcs.validating_token(Authorization)    
 
-    nodes = user_change_password(session, token['userId'], datas.oldkeypass, datas.newkeypass)
+    nodes = user_change_password(session, token['userId'], datas.oldkeypass, datas.newkeypass,
+                                 filename=__name__,
+                                 function_name=myfunctionname())
     if len(nodes) == 0:        
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
