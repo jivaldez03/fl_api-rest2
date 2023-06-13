@@ -26,10 +26,9 @@ from random import randint
 from _neo4j import neo4j_operations as trx
 from _neo4j import appNeo, session, log
 
-
-from app.auth.base import api_router
-from app.ui_oper_gr.base import api_router as api_oper_gr_router
-from app.ui_oper_lv.base import api_router as api_oper_lv_router
+#from app.auth.base import api_router
+#from app.ui_oper_gr.base import api_router as api_oper_gr_router
+#from app.ui_oper_lv.base import api_router as api_oper_lv_router
 
 from app.dt_auth.base import api_router as dt_auth_router
 from app.dt_ui_oper_gr.base import api_router as dt_api_oper_gr_router

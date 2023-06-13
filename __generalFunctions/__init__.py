@@ -16,6 +16,7 @@ myfunctionname = lambda: str(inspect.stack()[1][3])
 
 load_dotenv()
 
+myConjutationLink = lambda verb: (getenv("CONJUGATION_VERBS_LINK")) + verb
 
 def _getdatime():
     return str(dt.now())

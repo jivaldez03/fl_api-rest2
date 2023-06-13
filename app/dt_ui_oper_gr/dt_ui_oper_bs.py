@@ -3,7 +3,7 @@ from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
-from __generalFunctions import myfunctionname
+from __generalFunctions import myfunctionname, myConjutationLink, get_list_element
 
 from random import shuffle as shuffle
 
@@ -23,7 +23,7 @@ def get_pronunciationId(words, packagename, userId):
                     "[:PACKAGED]-(u:User {userId: '"+ userId +"'}) \n" + \
                     "match(wp:WordSound {word:wordtext}) " + \
                     "where pkg.source in labels(wp) \n" + \
-                    "return wp.word, id(wp) as idNode, wp.actived, wp.example"  # wp.binfile,
+                    "return wp.word, id(wp) as idNode, wp.actived, wp.example, wp.Spanish"
 
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words pronunciation",
@@ -34,14 +34,17 @@ def get_pronunciationId(words, packagename, userId):
     for word in words:
         idNode = None
         example = ''
+        example_target = ''
         for node in nodes:
             sdict = dict(node)
             if word == sdict['wp.word']:
                 idNode = sdict["idNode"]
                 example = sdict.get('wp.example', '')
+                example_target = sdict.get('wp.Spanish', '')
                 break
-        dict_pronunciation = {'example': example,
-                            'pronunciation': idNode} # binfile.decode("ISO-8859-1")} #utf-8")}
+        dict_pronunciation = {'pronunciation': idNode,
+                            'example': example,
+                            'target':example_target} # binfile.decode("ISO-8859-1")} #utf-8")}
         result.append(dict_pronunciation)
     return result
 
@@ -294,19 +297,45 @@ def get_words(userId, pkgname):
             npackage.append([value, ltarget, gia + 1, prnReference, prnLink])
             words.append(value) # (value, sdict['kow']))
     lpron = get_pronunciationId(words, pkgname, userId)
-    result = []      
-    for gia, element in enumerate(npackage):        
+    result = []
+    result2 = []
+
+    # we have a list with neo4 values, we need to add some elements like:
+    # - pronunciation with sentence example (lpron)
+    # - kind of word and link for conjungation verbs
+    # - location or more information for countries, skeleton, etc 
+
+    for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
         element.append(lpron[gia])
+        # kow section
         if len(kow) == 0:
             isitaverb = (False, [])
         else:
             isitaverb = (('vb' in str(kowc[gia]).lower()), kow[gia])
-        section_extra = {"kow": isitaverb[1] # kow[gia] # list of different kind of word for the same word
-                        , "verb": isitaverb[0] # is it a verb?
+        if isitaverb[0]:
+            conjLink = myConjutationLink(element[0])
+        else:
+            conjLink = ''
+        s_kow = {"type": "kow"
+                        , "apply_link": isitaverb[0] # is it a verb?
+                        , "link" : conjLink
+                        , "title": get_list_element(isitaverb[1],0) # kow[gia] # list of different kind of word for the same word
                         }
+        s_object={"type": "location"
+                        , "apply_link": True if element[3] else False
+                        , "link" : element[4]
+                        , "title": element[3]
+                        }
+        new_element = {'word': element[0]
+                        , "tranlate": element[1]
+                        , "position": element[2]
+                        , "pronunciation": lpron[gia]
+                        , "additional": [s_object, s_kow]
+                        }        
 
-        element.append(section_extra)
+        #element.append(section_extra)
         result.append(element)
+        result2.append(new_element)
     pkgdescriptor["message"] = result
 
     return pkgdescriptor
