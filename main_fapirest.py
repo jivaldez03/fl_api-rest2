@@ -18,12 +18,16 @@ uvicorn main_fapirest:app --reload --host localhost --port 3000
 """
 #from fastapi import HTTPException #, FastAPI
 from app import create_app, app_fastapi as app
-from fastapi import Response
+from fastapi import Response, Header
+from typing import Optional
+
+import __generalFunctions as funcs
+from __generalFunctions import myfunctionname
 
 #from app.model.md_books import Book
 #from uuid import  uuid4 as uuid
 from random import randint 
-from _neo4j import neo4j_operations as trx
+from _neo4j import neo4j_operations as trx 
 from _neo4j import appNeo, session, log
 
 #from app.auth.base import api_router
@@ -363,6 +367,34 @@ def get_user_words2(user_id:str, idSCat:int):
 
 
 @app.get("/get_/user_word_pron2/{word} {idWord}")
+def get_user_word_pron2(word, idWord
+                    , Authorization: Optional[str] = Header(None)):
+    """
+    Function to get the file .mp3 with the pronunciation example
+
+    params :  \n
+        word:str, \n
+        idWord: int
+    """
+    global appNeo, session, log
+
+    token=funcs.validating_token(Authorization) 
+    userId = token['userId']
+
+    statement = "match (ws:WordSound {word: '" +  word + "'}) " + \
+                "where id(ws) = " + str(idWord) + " " + \
+                "return ws.binfile limit 1"  # ws.word, ws.actived, 
+    #print(f"statement pronun: {statement}")
+    nodes, log = trx.neo4j_exec(session, userId,
+                        log_description="getting pronunciation word: " + word,
+                        statement=statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    for ele in nodes:
+        elems = dict(ele)
+        return Response(elems['ws.binfile'])
+
+"""
 def get_user_word_pron2(word, idWord):
     global appNeo, session, log
     user = 'admin'
@@ -393,3 +425,4 @@ def get_user_word_pron2(word, idWord):
 if __name__ == "__main__":
     #print('GETENV:', getenv("SEC_KEY")) 
     app.run(host='0.0.0.0', port=3000, debug=True)
+"""
