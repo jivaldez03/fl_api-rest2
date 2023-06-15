@@ -18,10 +18,10 @@ uvicorn main_fapirest:app --reload --host localhost --port 3000
 """
 #from fastapi import HTTPException #, FastAPI
 from app import create_app, app_fastapi as app
-from fastapi import Response, Header
-from typing import Optional
+from fastapi import Response #, Header
+#from typing import Optional
 
-import __generalFunctions as funcs
+#import __generalFunctions as funcs
 from __generalFunctions import myfunctionname
 
 #from app.model.md_books import Book

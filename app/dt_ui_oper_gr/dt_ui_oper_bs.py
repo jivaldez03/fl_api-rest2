@@ -306,7 +306,6 @@ def get_words(userId, pkgname):
     # - location or more information for countries, skeleton, etc 
 
     for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
-        element.append(lpron[gia])
         # kow section
         if len(kow) == 0:
             isitaverb = (False, [])
@@ -317,11 +316,13 @@ def get_words(userId, pkgname):
         else:
             conjLink = ''
         s_kow = {"type": "kow"
+                        , "position" : "source"
                         , "apply_link": isitaverb[0] # is it a verb?
                         , "link" : conjLink
                         , "title": get_list_element(isitaverb[1],0) # kow[gia] # list of different kind of word for the same word
                         }
         s_object={"type": "location"
+                        , "position" : "source"
                         , "apply_link": True if element[3] else False
                         , "link" : element[4]
                         , "title": element[3]
@@ -330,13 +331,14 @@ def get_words(userId, pkgname):
                         , "tranlate": element[1]
                         , "position": element[2]
                         , "pronunciation": lpron[gia]
-                        , "additional": [s_object, s_kow]
+                        , "additional": [s_kow, s_object]
                         }        
 
-        #element.append(section_extra)
+        element.append(lpron[gia])
+        element.append([s_kow, s_object])
         result.append(element)
         result2.append(new_element)
-    pkgdescriptor["message"] = result
+    pkgdescriptor["message"] = result2
 
     return pkgdescriptor
 
