@@ -62,6 +62,9 @@ def get_categories(Authorization: Optional[str] = Header(None)):
     
     neo4j_statement = "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]-(o:Organization)\n" + \
                         "<-[:SUBJECT]-(c:Category)<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
+                        "where exists \n" + \
+                        "   {match (s)<-[:SUBCAT]-(es:ElemSubCat) \n" + \
+                        "   where o.lSource in labels(es)} \n" + \
                         "with o,c, s.name as subcategory, s.idSCat as idSCat \n" + \
                         "order by o.idOrg, c.name, subcategory \n" + \
                         "return o.name, c.name as category, c.idCat as idCat, \n" + \
@@ -327,11 +330,17 @@ def get_words(userId, pkgname):
                         , "link" : element[4]
                         , "title": element[3]
                         }
+        ladds = []
+        for ele in [s_kow, s_object]:
+            if ele["title"] != None:
+                ladds.append(ele)
+
+
         new_element = {'word': element[0]
                         , "tranlate": element[1]
                         , "position": element[2]
                         , "pronunciation": lpron[gia]
-                        , "additional": [s_kow, s_object]
+                        , "additional": ladds
                         }        
 
         element.append(lpron[gia])
