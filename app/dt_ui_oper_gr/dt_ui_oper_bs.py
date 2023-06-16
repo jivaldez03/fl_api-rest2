@@ -263,12 +263,14 @@ def get_words(userId, pkgname):
                             "(ew:ElemSubCat {word:pkgwords})-[:TRANSLATOR]->(sw:ElemSubCat)  \n" + \
                         "with pkg, s, ew, sw, scat order by scat.wordranking, ew.wordranking, ew.word  \n" + \
                         "with pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
+                            "collect(COALESCE(ew.kowcomplete, [])) as kow, \n" + \
+                            "collect(COALESCE(ew.kowc, [])) as kowc, \n" + \
                             "collect(ew.word) as ewlist, collect(sw.word) as swlist  \n" + \
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) \n" + \
-                        "with pkg, s, ewlist, swlist, COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links \n" + \
+                        "with pkg, s, ewlist, swlist, kow, kowc, COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "pkg.level as maxlevel, linktitles, links, \n" + \
-                            "ewlist as slSource, [] as kow, [] as kowc, swlist as slTarget"
+                            "ewlist as slSource, kow, kowc, swlist as slTarget"
 
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
@@ -334,7 +336,6 @@ def get_words(userId, pkgname):
         for ele in [s_kow, s_object]:
             if ele["title"] != None:
                 ladds.append(ele)
-
 
         new_element = {'word': element[0]
                         , "tranlate": element[1]
