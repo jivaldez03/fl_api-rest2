@@ -3,7 +3,7 @@ from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
-from __generalFunctions import myfunctionname, myConjutationLink, get_list_element
+from __generalFunctions import myfunctionname, myConjutationLink, get_list_element,_getdatime_T
 
 from random import shuffle as shuffle
 
@@ -25,6 +25,8 @@ def get_pronunciationId(words, packagename, userId):
                     "where pkg.source in labels(wp) \n" + \
                     "return wp.word, id(wp) as idNode, wp.actived, wp.example, wp.Spanish"
 
+    print('userwords_neo4j_statement:', neo4j_statement)
+    
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words pronunciation",
                         statement=neo4j_statement,
@@ -46,6 +48,7 @@ def get_pronunciationId(words, packagename, userId):
                             'example': example,
                             'target':example_target} # binfile.decode("ISO-8859-1")} #utf-8")}
         result.append(dict_pronunciation)
+    print("id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return result
 
 
@@ -83,6 +86,7 @@ def get_categories(Authorization: Optional[str] = Header(None)):
             subcat_list.append(subs)
         ndic["subcategories"] = subcat_list[:]
         listcat.append(ndic)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': listcat}
 
 
@@ -132,6 +136,7 @@ def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     for node in nodes:
         listcat.append(dict(node))
         #print(dict(node))
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': listcat}
 
 
@@ -166,6 +171,7 @@ def get_config_uid(Authorization: Optional[str] = Header(None)):
     
     for node in nodes:
         sdict = dict(node)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return sdict
 
 
@@ -227,6 +233,7 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
         }
         
         listPack.append(ndic)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': listPack}
 
 
@@ -349,7 +356,7 @@ def get_words(userId, pkgname):
         result.append(element)
         result2.append(new_element)
     pkgdescriptor["message"] = result2
-
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return pkgdescriptor
 
 @router.get("/get_/user_words/{pkgname}")
@@ -456,6 +463,7 @@ def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None)):
     #pkgdescriptor["message"] = get_words(userId, pkgname, dtexec)
     pkgdescriptor = get_words(userId, pkgname)
 
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return pkgdescriptor
 
 
@@ -597,6 +605,7 @@ def post_user_words(datas:ForNewPackage
 
     # now, getting the package using the same endpoint function to return words package
     pkgdescriptor = get_words(userId, pkgname)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return pkgdescriptor #pkgname #pkgdescriptor
 
 
@@ -690,6 +699,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
     shuffle(result)
     #print('after shuffle')
     pkgdescriptor["message"] = result
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return pkgdescriptor
 
 
@@ -755,6 +765,7 @@ def post_user_words4(datas:ForNewPackage
     
     # now, getting the package using the same endpoint function to return words package
     result = get_user_words4(userId, pkgname, "words40")
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return result
 
 
@@ -819,6 +830,7 @@ def post_user_words5(datas:ForNewPackage
     
     # now, getting the package using the same endpoint function to return words package
     result = get_user_words4(userId, pkgname, "words50")
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return result
 
 
@@ -848,5 +860,6 @@ def get_user_word_pron2(word, idWord
                         function_name=myfunctionname())
     for ele in nodes:
         elems = dict(ele)
+        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
         return Response(elems['ws.binfile'])
 

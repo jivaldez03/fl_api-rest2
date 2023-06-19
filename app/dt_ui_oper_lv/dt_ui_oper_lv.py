@@ -3,7 +3,7 @@ from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs # import reg_exp as rexp #  as funcs^(lev([0-9][0-9])(_)([09][0-9]))$
-from __generalFunctions import myfunctionname
+from __generalFunctions import myfunctionname, _getdatime_T
 
 from app.model.md_params_oper import ForClosePackages
 
@@ -51,5 +51,6 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     listcat = []
     for node in nodes:
         listcat.append(dict(node))
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())        
     return {'message': listcat}
 

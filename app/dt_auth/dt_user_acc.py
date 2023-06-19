@@ -3,7 +3,7 @@ from typing import Optional #, Annotated
 from _neo4j.neo4j_operations import login_validate_user_pass_trx, user_change_password, neo4_log, q01
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
-from __generalFunctions import myfunctionname
+from __generalFunctions import myfunctionname, _getdatime_T
 
 from datetime import datetime as dt
 
@@ -20,7 +20,7 @@ router = APIRouter()
 
 #def login_user(user, keypass, User_Agent: Annotated[str | None, Header()] = None, userId: Annotated[str | None, Header()] = None):
 #def login_user(datas: Annotated[forlogin, Body(embed=True)]):
-@router.post("/login/")   # {user} {keypass}
+@router.post("/login")   # {user} {keypass}
 def login_user(datas: ForLogin):
     """
     Function to create a new session \n
@@ -44,6 +44,7 @@ def login_user(datas: ForLogin):
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         )
+        print("========== id: ", datas.userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password"
@@ -70,6 +71,7 @@ def login_user(datas: ForLogin):
         token = funcs.return_token(data=resp_dict)
 
         #print(f"validating token: {funcs.validating_token(token.split(' ')[1], False)}")
+        print("========== id: ", datas.userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
         return {"token": token, 
                     "user_name": result["us.name"], 
                     "age":0, 
@@ -91,11 +93,13 @@ def login_user(datas: ForLogin):
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         )
+        print("========== id: ", datas.userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password -"
             #headers={"WWW-Authenticate": "Basic"},
-        )    
+        )
+    print("id: ", datas.userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return resp_dict
 #
 
@@ -114,11 +118,13 @@ def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(
     nodes = user_change_password(session, token['userId'], datas.oldkeypass, datas.newkeypass,
                                  filename=__name__,
                                  function_name=myfunctionname())
-    if len(nodes) == 0:        
+    if len(nodes) == 0:
+        print("id: ", token['userId'], " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raiseHTTP - user / pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password",
         )
+    print("========== id: ", token['userId'], " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': "password updated"}
 
 """

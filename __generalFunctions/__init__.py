@@ -127,3 +127,10 @@ def monitoring_function(functiontovalidate):
         return True
     else:
         return False
+
+
+def _getenv_function(env_variable):
+    """
+    
+    """
+    return getenv(env_variable)
