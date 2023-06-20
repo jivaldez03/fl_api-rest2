@@ -64,7 +64,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         log_description += "\n----\n" + statement
     log = [-1,""]
     trying = 0
-    nodes = Result()
+    #nodes = Result() marca error
     while trying < 3:
         trying += 1
         try:
@@ -77,17 +77,26 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
             print("*********************** inicia ejecución en neo4_exec " , function_name)
             nodes = session.run(statement)
             print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
+            break
         except SessionExpired as error:
+            print("X X X X X X X X X X X X session expired X X X X X X X X X X ")
             reconect_neo4j()
             sleep(2)
             continue
         except SessionError as error:
+            print("X X X X X X X X X X X X session error X X X X X X X X X X ")
             reconect_neo4j()
             sleep(2)
             continue    
         except ServiceUnavailable as error:
+            print("X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
             reconect_neo4j()
-            sleep(2)
+            sleep(3)
+            continue
+        except ResultError as error:
+            print("X X X X X X X X X X X X result error  X X X X X X X X X X ")
+            #reconect_neo4j()
+            sleep(1)
             continue
         except Exception as error:
             print("An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
