@@ -278,9 +278,10 @@ def get_words(userId, pkgname):
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) \n" + \
                         "with pkg, s, ewlist, swlist, kow, kowc, COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
-                            "pkg.level as maxlevel, linktitles, links, \n" + \
+                            "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, swlist as slTarget"
 
+    print("--neo4j_statement:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
