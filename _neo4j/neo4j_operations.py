@@ -49,7 +49,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     # next line is for the log record for the user's execution
     if monitoring_function(function_name):
         log_description += "\n----\n" + statement
-    
+    log = [-1,""]                 
     try:
         #log = neo4_log(session, user, log_description, filename, function_name)
         pass
@@ -62,7 +62,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         nodes = session.run(statement)
     except Exception as error:
         print("An error occurred executing:" , statement, "\n\n", type(error).__name__, " - ", error)
-        
+
         nodes = None
 
     print("log's values: ", log)    
