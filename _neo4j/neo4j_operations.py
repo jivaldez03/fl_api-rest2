@@ -32,7 +32,7 @@ def q01(session, strtoexec= None):
     nodes = session.run(q01)
     return nodes
 
-def execution(function_name, statement):
+def execution(function_name, statement, user, log):
     global appNeo, session
 
     # next loop exist only if we have an error about our session, it try to reconnect again
@@ -45,32 +45,32 @@ def execution(function_name, statement):
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
         except SessionExpired as error:
-            print("X X X X X X X X X X X X session expired X X X X X X X X X X ")
+            print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session expired X X X X X X X X X X ")
             reconect_neo4j()
             sleep(2)
             continue
         except SessionError as error:
-            print("X X X X X X X X X X X X session error X X X X X X X X X X ")
+            print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session error X X X X X X X X X X ")
             reconect_neo4j()
             sleep(2)
             continue    
         except ServiceUnavailable as error:
-            print("X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
+            print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
             reconect_neo4j()
             sleep(3)
             continue
         except ResultError as error:
-            print("X X X X X X X X X X X X result error  X X X X X X X X X X ")
+            print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X result error  X X X X X X X X X X ")
             #reconect_neo4j()
             sleep(1)
             continue
         except Exception as error:
-            print("An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
+            print("**********", user, "-", log[0], " ->            An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
             print("exception as : ", Exception)
             continue 
     return nodes
 
-def neo4_log(session, user, log_description, filename= None, function_name=None):
+def neo4_log(session, user, log_description, filename= None, function_name=None, log=[0,""]):
     if not function_name:
         function_name = 'null'
     else:
@@ -82,7 +82,7 @@ def neo4_log(session, user, log_description, filename= None, function_name=None)
                     "ctInsert: datetime()})" + \
                     "return id(n) as idLog, n.ctInsert as dtstamp"
     #log = session.run(logofaccess)
-    log = execution(function_name, logofaccess)
+    log = execution(function_name, logofaccess, user, log)
     ix = [dict(ix) for ix in log][0]
     idlog = ix["idLog"]
     dtstamp = ix["dtstamp"]
@@ -98,23 +98,23 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     # next line is the log's record for the user's execution
     if monitoring_function(function_name):
         log_description += "\n----\n" + statement
-    print("\n\n*********************** log's record - the beginning" , function_name)
+    print("\n\n**********", user, "----> recording logs - the beginning" , function_name)
     log = [-1,""]
     log = neo4_log(session, user, log_description, filename, function_name)    
 
-    print("***********************          inicia ejecución en neo4_exec " , function_name)
+    print("**********", user, "-", log[0], "->           inicia ejecución en neo4_exec " , function_name)
 
-    nodes = execution(function_name, statement)
+    nodes = execution(function_name, statement, user, log)
     
-    print("***********************          finaliza ejecución en neo4_exec", function_name, type(nodes))
+    print("**********", user, "-", log[0], "->           finaliza ejecución en neo4_exec", function_name, type(nodes))
         
-    print("*********************** recording the end for log's values: ", log)        
+    print("**********", user, "-", log[0], "-> recording logs - the end for log's at: ", str(log[1]))
     if log[0] > 0:
         statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
                     "where id(l) = " + str(log[0]) + " \n" + \
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
-        execution(function_name, statement)
+        execution(function_name, statement, user, log)
         print("*********************** log's record - the end" , function_name, "\n\n")
     return nodes, log
 
