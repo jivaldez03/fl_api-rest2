@@ -11,7 +11,7 @@ from app.model.md_params_oper import ForPackages as ForNewPackage
 
 router = APIRouter()
 
-async def get_pronunciationId(words, packagename, userId):
+def get_pronunciationId(words, packagename, userId):
     """
     Function to identify and return the id() of pronunciation file
     into the WordSound collection
@@ -248,7 +248,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     return {'message': listPack}
 
 
-async def get_words(userId, pkgname):
+def get_words(userId, pkgname):
     global app, session, log
 
     npackage = []
