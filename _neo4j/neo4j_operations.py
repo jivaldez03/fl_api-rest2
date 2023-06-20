@@ -54,18 +54,18 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         log = neo4_log(session, user, log_description, filename, function_name)
     except Exception as error:
         print("An error occurred recording log:", type(error).__name__, " - ", error)                     
-        #sleep(60)          
-
-    
+        #sleep(60) 
     
     # next line execute the cypher statement required for the user
     nodes = session.run(statement)
 
+    """
     q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
                 "where id(l) = " + str(log[0]) + " \n" + \
                 "set l.ctClosed = datetime() \n" + \
                 "return count(l)"
     )
+    """
     return nodes, log
 
 def get_sugcategories(session, user):
