@@ -1,6 +1,6 @@
-from neo4j import GraphDatabase 
+from neo4j import GraphDatabase, Result #neo4j._sync.work.result.Result
 from __generalFunctions import monitoring_function
-from neo4j.exceptions import SessionExpired, SessionError, ServiceUnavailable
+from neo4j.exceptions import SessionExpired, SessionError, ServiceUnavailable, ResultError
 #Neo4j.Driver.SessionExpiredException error
 from _neo4j import appNeo, session, log, connectNeo4j
 from time import sleep
@@ -64,6 +64,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         log_description += "\n----\n" + statement
     log = [-1,""]
     trying = 0
+    nodes = Result()
     while trying < 3:
         trying += 1
         try:
@@ -75,7 +76,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         try:
             print("*********************** inicia ejecución en neo4_exec " , function_name)
             nodes = session.run(statement)
-            print("*********************** finaliza ejecución en neo4_exec", type(nodes))
+            print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
         except SessionExpired as error:
             reconect_neo4j()
             sleep(2)
@@ -89,7 +90,8 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
             sleep(2)
             continue
         except Exception as error:
-            print("An error occurred executing:" , statement, "\n\n", type(error).__name__, " - ", error)
+            print("An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
+            print("exception as : ", Exception)
 
         print("log's values: ", log)    
         """
