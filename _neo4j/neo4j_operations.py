@@ -65,7 +65,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     log = [-1,""]
     trying = 0
     #nodes = Result() marca error
-    while trying < 3:
+    while trying < 4:
         trying += 1
         try:
             #log = neo4_log(session, user, log_description, filename, function_name)
