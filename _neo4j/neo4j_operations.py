@@ -1,5 +1,10 @@
 from neo4j import GraphDatabase 
 from __generalFunctions import monitoring_function
+from neo4j.exceptions import SessionExpired, SessionError, ServiceUnavailable
+#Neo4j.Driver.SessionExpiredException error
+from _neo4j import appNeo, session, log, connectNeo4j
+from time import sleep
+
 
 """
 https://neo4j.com/docs/python-manual/current/transformers/
@@ -12,6 +17,13 @@ pandas_df = driver.execute_query(
     result_transformer_=neo4j.Result.to_df
 )
 """
+
+def reconect_neo4j():
+    global appNeo, session, log
+    user = 'admin'
+    appNeo, session, log = connectNeo4j(user, 'starting session')
+
+
 def q01(session, strtoexec= None):
     if strtoexec == None:
         q01 = 'match (n:English)-->(s:Spanish) return n.word, s.word'
@@ -42,6 +54,7 @@ def neo4_log(session, user, log_description, filename= None, function_name=None)
     return [idlog, dtstamp]
 
 def neo4j_exec(session, user, log_description, statement, filename= None, function_name=None):
+    global appNeo
 
     if not function_name:
         function_name = 'null'
@@ -49,31 +62,42 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     # next line is for the log record for the user's execution
     if monitoring_function(function_name):
         log_description += "\n----\n" + statement
-    log = [-1,""]                 
-    try:
-        #log = neo4_log(session, user, log_description, filename, function_name)
-        pass
-    except Exception as error:
-        print("An error occurred recording log:", log_description, "\n\n",  type(error).__name__, " - ", error)
-        log = [-1,""]                 
-        #sleep(60) 
-    #executing operation
-    try:
-        nodes = session.run(statement)
-    except Exception as error:
-        print("An error occurred executing:" , statement, "\n\n", type(error).__name__, " - ", error)
+    log = [-1,""]
+    trying = 0
+    while trying < 3:
+        trying += 1
+        try:
+            #log = neo4_log(session, user, log_description, filename, function_name)
+            pass
+        except Exception as error:
+            print("An error occurred recording log:", log_description, "\n\n",  type(error).__name__, " - ", error)
+            log = [-1,""]     
+        try:
+            nodes = session.run(statement)
+        except SessionExpired as error:
+            reconect_neo4j()
+            sleep(2)
+            continue
+        except SessionError as error:
+            reconect_neo4j()
+            sleep(2)
+            continue    
+        except ServiceUnavailable as error:
+            reconect_neo4j()
+            sleep(2)
+            continue
+        except Exception as error:
+            print("An error occurred executing:" , statement, "\n\n", type(error).__name__, " - ", error)
 
-        nodes = None
-
-    print("log's values: ", log)    
-    """
-    if log[0] > 0:
-        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
-                    "where id(l) = " + str(log[0]) + " \n" + \
-                    "set l.ctClosed = datetime() \n" + \
-                    "return count(l)"
-        )
-    """
+        print("log's values: ", log)    
+        """
+        if log[0] > 0:
+            q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
+                        "where id(l) = " + str(log[0]) + " \n" + \
+                        "set l.ctClosed = datetime() \n" + \
+                        "return count(l)"
+            )
+        """
     return nodes, log
 
 def get_sugcategories(session, user):
