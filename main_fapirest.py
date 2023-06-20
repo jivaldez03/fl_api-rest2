@@ -384,6 +384,7 @@ def get_user_word_pron2(word, idWord):
                         statement=statement,
                         filename=__name__, 
                         function_name=myfunctionname())
+    
     for ele in nodes:
         elems = dict(ele)
         #print(type(f), type(ele), ele, elems['ws.word'], elems['ws.actived'])
