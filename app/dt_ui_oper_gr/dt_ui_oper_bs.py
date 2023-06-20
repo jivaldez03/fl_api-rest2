@@ -11,7 +11,7 @@ from app.model.md_params_oper import ForPackages as ForNewPackage
 
 router = APIRouter()
 
-def get_pronunciationId(words, packagename, userId):
+async def get_pronunciationId(words, packagename, userId):
     """
     Function to identify and return the id() of pronunciation file
     into the WordSound collection
@@ -53,7 +53,7 @@ def get_pronunciationId(words, packagename, userId):
 
 
 @router.get("/get_/categories/")
-def get_categories(Authorization: Optional[str] = Header(None)):
+async def get_categories(Authorization: Optional[str] = Header(None)):
     """
     Function to get all categories and subcategories allowed for the user
 
@@ -91,7 +91,7 @@ def get_categories(Authorization: Optional[str] = Header(None)):
 
 
 @router.get("/get_/dashboard/")
-def get_dashboard_table(Authorization: Optional[str] = Header(None)):
+async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     """
     Function to get how much has the user worked for each category
 
@@ -146,7 +146,7 @@ def get_dashboard_table(Authorization: Optional[str] = Header(None)):
 
 
 @router.get("/get_/config_uid/")
-def get_config_uid(Authorization: Optional[str] = Header(None)):
+async def get_config_uid(Authorization: Optional[str] = Header(None)):
     """"
     Function to get some options or data of the user
 
@@ -186,7 +186,7 @@ def get_config_uid(Authorization: Optional[str] = Header(None)):
 
 
 @router.get("/get_/user_packagelist/{idSCat}")
-def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)):
+async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)):
     """
     Function to get opened package list in a specific SubCategory \n
 
@@ -248,7 +248,7 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
     return {'message': listPack}
 
 
-def get_words(userId, pkgname):
+async def get_words(userId, pkgname):
     global app, session, log
 
     npackage = []
@@ -372,7 +372,7 @@ def get_words(userId, pkgname):
     return pkgdescriptor
 
 @router.get("/get_/user_words/{pkgname}")
-def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None)):
+async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None)):
     """
     Function to get the words into a specific package \n
 
