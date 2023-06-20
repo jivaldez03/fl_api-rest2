@@ -20,7 +20,7 @@ router = APIRouter()
 
 #def login_user(user, keypass, User_Agent: Annotated[str | None, Header()] = None, userId: Annotated[str | None, Header()] = None):
 #def login_user(datas: Annotated[forlogin, Body(embed=True)]):
-@router.post("/login")   # {user} {keypass}
+@router.post("/login/")   # {user} {keypass}
 def login_user(datas: ForLogin):
     """
     Function to create a new session \n

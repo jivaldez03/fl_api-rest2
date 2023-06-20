@@ -32,6 +32,44 @@ def q01(session, strtoexec= None):
     nodes = session.run(q01)
     return nodes
 
+def execution(function_name, statement):
+    global appNeo, session
+
+    # next loop exist only if we have an error about our session, it try to reconnect again
+    trying = 0
+    while trying < 4:
+        trying += 1        
+        try:
+            #print("*********************** inicia ejecución en neo4_exec " , function_name)
+            nodes = session.run(statement)
+            #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
+            break
+        except SessionExpired as error:
+            print("X X X X X X X X X X X X session expired X X X X X X X X X X ")
+            reconect_neo4j()
+            sleep(2)
+            continue
+        except SessionError as error:
+            print("X X X X X X X X X X X X session error X X X X X X X X X X ")
+            reconect_neo4j()
+            sleep(2)
+            continue    
+        except ServiceUnavailable as error:
+            print("X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
+            reconect_neo4j()
+            sleep(3)
+            continue
+        except ResultError as error:
+            print("X X X X X X X X X X X X result error  X X X X X X X X X X ")
+            #reconect_neo4j()
+            sleep(1)
+            continue
+        except Exception as error:
+            print("An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
+            print("exception as : ", Exception)
+            continue 
+    return nodes
+
 def neo4_log(session, user, log_description, filename= None, function_name=None):
     if not function_name:
         function_name = 'null'
@@ -43,13 +81,11 @@ def neo4_log(session, user, log_description, filename= None, function_name=None)
                     "exec_fn:" + function_name + ", \n" + \
                     "ctInsert: datetime()})" + \
                     "return id(n) as idLog, n.ctInsert as dtstamp"
-    log = session.run(logofaccess)
-
+    #log = session.run(logofaccess)
+    log = execution(function_name, logofaccess)
     ix = [dict(ix) for ix in log][0]
-    #idlog = [dict(ix)['idLog'] for ix in log][0]
     idlog = ix["idLog"]
     dtstamp = ix["dtstamp"]
-    #print('recordlog for ', function_name ,': ', idlog, dtstamp)
     
     return [idlog, dtstamp]
 
@@ -59,20 +95,52 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     if not function_name:
         function_name = 'null'
     
+    # next line is the log's record for the user's execution
+    if monitoring_function(function_name):
+        log_description += "\n----\n" + statement
+    print("\n\n*********************** log's record - the beginning" , function_name)
+    log = [-1,""]
+    log = neo4_log(session, user, log_description, filename, function_name)    
+
+    print("***********************          inicia ejecución en neo4_exec " , function_name)
+
+    nodes = execution(function_name, statement)
+    
+    print("***********************          finaliza ejecución en neo4_exec", function_name, type(nodes))
+        
+    print("*********************** recording the end for log's values: ", log)        
+    if log[0] > 0:
+        statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
+                    "where id(l) = " + str(log[0]) + " \n" + \
+                    "set l.ctClosed = datetime() \n" + \
+                    "return count(l)"
+        execution(function_name, statement)
+        print("*********************** log's record - the end" , function_name, "\n\n")
+    return nodes, log
+
+
+def neo4j_exec_back_borrar(session, user, log_description, statement, filename= None, function_name=None):
+    global appNeo
+
+    if not function_name:
+        function_name = 'null'
+    
     # next line is for the log record for the user's execution
     if monitoring_function(function_name):
         log_description += "\n----\n" + statement
+    
     log = [-1,""]
     trying = 0
-    #nodes = Result() marca error
     while trying < 4:
         trying += 1
+        # recording log - the beginning of the transaction
         try:
             log = neo4_log(session, user, log_description, filename, function_name)
             #pass
         except Exception as error:
             print("An error occurred recording log:", log_description, "\n\n",  type(error).__name__, " - ", error)
-            log = [-1,""]     
+            log = [-1,""]
+        # process the transaction or request
         try:
             print("*********************** inicia ejecución en neo4_exec " , function_name)
             nodes = session.run(statement)
@@ -100,10 +168,9 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
             continue
         except Exception as error:
             print("An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
-            print("exception as : ", Exception)
-
-        print("log's values: ", log)    
-        
+            print("exception as : ", Exception)        
+        # recording log - the end of the transaction
+        print("log's values: ", log)        
         if log[0] > 0:
             q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
                         "where id(l) = " + str(log[0]) + " \n" + \
