@@ -134,11 +134,14 @@ def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         function_name=myfunctionname())
     
     listcat = []
-    if "Result" in type(nodes):
+
+    try:
         for node in nodes:
             listcat.append(dict(node))
-            #print(dict(node))
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    except Exception as error:
+        msg = "error on empty nodes - no iterable"
+
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg)
     return {'message': listcat}
 
 
@@ -172,10 +175,12 @@ def get_config_uid(Authorization: Optional[str] = Header(None)):
                         function_name=myfunctionname())
     
     sdict={}
-    if "Result" in type(nodes):
+    try:
         for node in nodes:
             sdict = dict(node)
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    except Exception as error:
+        msg = "error on empty nodes - no iterable"
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg)
     return sdict
 
 
