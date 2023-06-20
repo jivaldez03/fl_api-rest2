@@ -25,7 +25,7 @@ def get_pronunciationId(words, packagename, userId):
                     "where pkg.source in labels(wp) \n" + \
                     "return wp.word, id(wp) as idNode, wp.actived, wp.example, wp.Spanish"
 
-    print('userwords_neo4j_statement:', neo4j_statement)
+    print('pronunciationId_neo4j_statement:', neo4j_statement)
     
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words pronunciation",
@@ -126,7 +126,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "c.idCat as idCat, " + \
                 "sc.idSCat as idSCat"
     
-    print(f"neo4j_state: {neo4j_statement}")
+    #print(f"neo4j_state: {neo4j_statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting data for dashboard table",
                         statement=neo4j_statement, 
@@ -211,7 +211,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                 "pkg.idSCat as idSCat, \n" + \
                 "split(level,'-,-')[0] as level, \n" + \
                 "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
-    print(statement)
+    #print(statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
@@ -229,7 +229,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
             ptg_errors = float(sdict["grade"]) #  - 1) * 100            
             if ptg_errors < 0:
                 ptg_errors = 100
-        print(ptg_errors, 'maxerrs', sdict["maxerrs"])
+        #print(ptg_errors, 'maxerrs', sdict["maxerrs"])
         if sdict["maxerrs"] > (ptg_errors if ptg_errors>=0 else 100):
             maxlevel = sdict["level"]
         else:
@@ -290,7 +290,7 @@ def get_words(userId, pkgname):
                             "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, swlist as slTarget"
 
-    print("--neo4j_statement:", neo4j_statement)
+    #print("--neo4j_statement:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
