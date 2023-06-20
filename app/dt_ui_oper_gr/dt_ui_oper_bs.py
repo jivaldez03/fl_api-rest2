@@ -126,6 +126,7 @@ def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "c.idCat as idCat, " + \
                 "sc.idSCat as idSCat"
     
+    print(f"neo4j_state: {neo4j_statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting data for dashboard table",
                         statement=neo4j_statement, 
@@ -201,7 +202,7 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
                 "pkg.idSCat as idSCat, \n" + \
                 "split(level,'-,-')[0] as level, \n" + \
                 "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
-    #print(statement)
+    print(statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
@@ -222,7 +223,7 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
         if sdict["maxerrs"] > (ptg_errors if ptg_errors>=0 else 100):
             maxlevel = sdict["level"]
         else:
-            maxlevel = funcs.level_seq(sdict["level"], forward=False)
+            maxlevel = funcs.level_seq(sdict["level"], forward=True)
         ndic = {'packageId': sdict["pkg.packageId"]
                 , 'Category': sdict["CatName"], 'idCat' : sdict["idCat"]
                 , 'SubCat': sdict["SCatName"], 'idSCat' : sdict["idSCat"]
