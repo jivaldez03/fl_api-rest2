@@ -134,7 +134,7 @@ def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         function_name=myfunctionname())
     
     listcat = []
-
+    msg = ""
     try:
         for node in nodes:
             listcat.append(dict(node))
@@ -175,6 +175,7 @@ def get_config_uid(Authorization: Optional[str] = Header(None)):
                         function_name=myfunctionname())
     
     sdict={}
+    msg = ""
     try:
         for node in nodes:
             sdict = dict(node)
