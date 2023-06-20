@@ -51,7 +51,8 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         log_description += "\n----\n" + statement
     
     try:
-        log = neo4_log(session, user, log_description, filename, function_name)
+        #log = neo4_log(session, user, log_description, filename, function_name)
+        pass
     except Exception as error:
         print("An error occurred recording log:", log_description, "\n\n",  type(error).__name__, " - ", error)
         log = [-1,""]                 
@@ -61,7 +62,8 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         nodes = session.run(statement)
     except Exception as error:
         print("An error occurred executing:" , statement, "\n\n", type(error).__name__, " - ", error)
-        nodes = []
+        
+        nodes = None
 
     print("log's values: ", log)    
     """
