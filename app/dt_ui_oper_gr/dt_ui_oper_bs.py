@@ -220,7 +220,8 @@ def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)
             ptg_errors = float(sdict["grade"]) #  - 1) * 100            
             if ptg_errors < 0:
                 ptg_errors = 100
-        if sdict["maxerrs"] > (ptg_errors if ptg_errors<0 else 100):
+        print(ptg_errors, 'maxerrs', sdict["maxerrs"])
+        if sdict["maxerrs"] > (ptg_errors if ptg_errors>=0 else 100):
             maxlevel = sdict["level"]
         else:
             maxlevel = funcs.level_seq(sdict["level"], forward=False)
