@@ -115,7 +115,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         execution(function_name, statement, user, log)
-        print("*********************** log's record - the end" , function_name, "\n\n")
+        print("*********************** log's record - the end" , function_name)
     return nodes, log
 
 

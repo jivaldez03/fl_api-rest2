@@ -86,7 +86,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
             subcat_list.append(subs)
         ndic["subcategories"] = subcat_list[:]
         listcat.append(ndic)
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'message': listcat}
 
 
@@ -141,13 +141,13 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     except Exception as error:
         msg = "error on empty nodes - no iterable"
 
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg,"\n\n")
     return {'message': listcat}
 
 
 @router.get("/get_/config_uid/")
 async def get_config_uid(Authorization: Optional[str] = Header(None)):
-    """"
+    """
     Function to get some options or data of the user
 
     """
@@ -181,7 +181,7 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
             sdict = dict(node)
     except Exception as error:
         msg = "error on empty nodes - no iterable"
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg,"\n\n")
     return sdict
 
 
@@ -244,7 +244,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
         }
         
         listPack.append(ndic)
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'message': listPack}
 
 
@@ -368,7 +368,7 @@ def get_words(userId, pkgname):
         result.append(element)
         result2.append(new_element)
     pkgdescriptor["message"] = result2
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor
 
 @router.get("/get_/user_words/{pkgname}")
@@ -475,7 +475,7 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
     #pkgdescriptor["message"] = get_words(userId, pkgname, dtexec)
     pkgdescriptor = get_words(userId, pkgname)
 
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor
 
 
@@ -617,13 +617,13 @@ def post_user_words(datas:ForNewPackage
 
     # now, getting the package using the same endpoint function to return words package
     pkgdescriptor = get_words(userId, pkgname)
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor #pkgname #pkgdescriptor
 
 
 #@router.get("/get_/user_words4/{user_id} {pkgname}")
 def get_user_words4(userId:str, pkgname:str, level:str):
-    """"
+    """
     internal function, it is not an endpoint
     """
     global appNeo, session, log
@@ -711,7 +711,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
     shuffle(result)
     #print('after shuffle')
     pkgdescriptor["message"] = result
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor
 
 
@@ -777,7 +777,7 @@ def post_user_words4(datas:ForNewPackage
     
     # now, getting the package using the same endpoint function to return words package
     result = get_user_words4(userId, pkgname, "words40")
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return result
 
 
@@ -842,7 +842,7 @@ def post_user_words5(datas:ForNewPackage
     
     # now, getting the package using the same endpoint function to return words package
     result = get_user_words4(userId, pkgname, "words50")
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return result
 
 
@@ -872,6 +872,6 @@ def get_user_word_pron2(word, idWord
                         function_name=myfunctionname())
     for ele in nodes:
         elems = dict(ele)
-        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
         return Response(elems['ws.binfile'])
 
