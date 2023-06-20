@@ -73,7 +73,9 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
             print("An error occurred recording log:", log_description, "\n\n",  type(error).__name__, " - ", error)
             log = [-1,""]     
         try:
+            print("*********************** inicia ejecución en neo4_exec " , function_name)
             nodes = session.run(statement)
+            print("*********************** finaliza ejecución en neo4_exec", type(nodes))
         except SessionExpired as error:
             reconect_neo4j()
             sleep(2)
