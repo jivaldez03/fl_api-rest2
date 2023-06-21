@@ -14,3 +14,4 @@ class ForClosePackages(BaseModel):
     clicksQty: int
     cardsQty: int 
 
+ 

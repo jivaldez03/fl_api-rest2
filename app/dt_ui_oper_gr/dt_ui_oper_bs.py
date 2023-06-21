@@ -849,7 +849,7 @@ def get_user_words4_back_borrar(userId:str, pkgname:str, level:str):
 
 
 @router.post("/pst_/user_words4/")
-def post_user_words4(datas:ForNewPackage
+async def post_user_words4(datas:ForNewPackage
                     , Authorization: Optional[str] = Header(None)):
     """
     Function to create the word list for level 4 (lvl_40_01) \n    
@@ -915,7 +915,7 @@ def post_user_words4(datas:ForNewPackage
 
 
 @router.post("/pst_/user_words5/")
-def post_user_words5(datas:ForNewPackage
+async def post_user_words5(datas:ForNewPackage
                     , Authorization: Optional[str] = Header(None)):
     """
     Function to create the word list for level 5 (lvl_50_01) \n    
@@ -979,8 +979,41 @@ def post_user_words5(datas:ForNewPackage
     return result
 
 
+@router.get("/get_/user_word_pronunciation/")
+async def get_user_word_pronunciation(word:str, idWord:int):
+    #                , Authorization: Optional[str] = Header(None)):    
+    """
+    Function to get the file .mp3 with the pronunciation example
+
+    params :  \n
+        word:str, \n
+        idNode: int
+    """
+    global appNeo, session, log
+
+    #token=funcs.validating_token(Authorization) 
+    userId = '__public__' #token['userId']
+
+    #word = datas.word
+    #idWord = datas.idNode
+
+    statement = "match (ws:WordSound {word: '" +  word + "'}) " + \
+                "where id(ws) = " + str(idWord) + " " + \
+                "return ws.binfile limit 1"  # ws.word, ws.actived, 
+    print(f"statement pronun: {statement}")
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting pronunciation word: " + word,
+                        statement=statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    for ele in nodes:
+        elems = dict(ele)
+        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+        return Response(elems['ws.binfile'])
+
+
 @router.get("/get_/user_word_pron/{word} {idWord}")
-def get_user_word_pron2(word, idWord
+def get_user_word_pron2(word:str, idWord:int
                     , Authorization: Optional[str] = Header(None)):
     """
     Function to get the file .mp3 with the pronunciation example
