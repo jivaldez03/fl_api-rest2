@@ -277,7 +277,7 @@ def get_words(userId, pkgname):
                             "collect(COALESCE(n.kowc, [])) as kowc, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
-                        "match(org:Organization)<-[:SUBJECT]-(cat:Category)<-[:CAT_SUBCAT]-(scat:SubCat {idSCat:1}) \n" + \
+                        "match(org:Organization)<-[:SUBJECT]-(cat:Category)<-[:CAT_SUBCAT]-(scat:SubCategory {idSCat:1}) \n" + \
                         "optional match (pkgS:PackageStudy {packageId:pkgname}) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, [] as linktitles, [] as links, \n" + \
