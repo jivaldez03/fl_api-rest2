@@ -253,7 +253,7 @@ def get_words(userId, pkgname):
 
     npackage = []
 
-    level = 'lvl_10_01'  # elementary level
+    level = 'null'  # elementary level
     
     neo4j_statement = "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
                         "(pkg:Package {packageId:'" + pkgname + "', idSCat:1}) " + \
@@ -660,7 +660,130 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "pkg.level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, [] as kow, [] as kowc, swlist as slTarget \n"
+
+
+    #print("--neo4j_statement:", neo4j_statement)
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting words for user and pkgId="+pkgname,
+                        statement=neo4j_statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())  
     
+    # creating the structure to return data
+    pkgdescriptor = {}
+    words = []
+    kow, kowc = [], []
+    for node in nodes:
+        sdict = dict(node)        
+        npackage = []
+        pkgdescriptor = {"packageId": pkgname
+                          , "label": sdict["label"]
+                          , "maxlevel":sdict["maxlevel"]
+        }
+        kow = sdict["kow"]
+        kowc = sdict["kowc"]
+        for gia, value in enumerate(sdict['slSource']):
+            prnReference = funcs.get_list_element(sdict["linktitles"], gia)
+            prnLink     = funcs.get_list_element(sdict["links"], gia)
+            ltarget = funcs.get_list_element(sdict["slTarget"],gia)
+            if type(ltarget) == type(list()):
+                pass
+            else:
+                ltarget = [ltarget]
+            npackage.append([value, ltarget, gia + 1, prnReference, prnLink])
+            words.append(value) # (value, sdict['kow']))
+    lpron = get_pronunciationId(words, pkgname, userId)
+    result = []
+    result2 = []
+
+    # we have a list with neo4 values, we need to add some elements like:
+    # - pronunciation with sentence example (lpron)
+    # - kind of word and link for conjungation verbs
+    # - location or more information for countries, skeleton, etc 
+
+    for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
+        # kow section
+        if len(kow) == 0:
+            isitaverb = (False, [])
+        else:
+            isitaverb = (('vb' in str(kowc[gia]).lower()), kow[gia])
+        if isitaverb[0]:
+            conjLink = myConjutationLink(element[0])
+        else:
+            conjLink = ''
+        s_kow = {"type": "kow"
+                        , "position" : "source"
+                        , "apply_link": isitaverb[0] # is it a verb?
+                        , "link" : conjLink
+                        , "title": get_list_element(isitaverb[1],0) # kow[gia] # list of different kind of word for the same word
+                        }
+        s_object={"type": "location"
+                        , "position" : "source"
+                        , "apply_link": True if element[3] else False
+                        , "link" : element[4]
+                        , "title": element[3]
+                        }
+        ladds = []
+        for ele in [s_kow, s_object]:
+            if ele["title"] != None:
+                ladds.append(ele)
+
+        new_element = {'word': element[0]
+                        , "tranlate": element[1]
+                        , "position": element[2]
+                        , "pronunciation": lpron[gia]
+                        , "additional": ladds
+                        }        
+
+        element.append(lpron[gia])
+        element.append([s_kow, s_object])
+        result.append(element)
+        result2.append(new_element)
+    pkgdescriptor["message"] = result2
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return pkgdescriptor
+
+
+
+def get_user_words4_back_borrar(userId:str, pkgname:str, level:str):
+    """
+    internal function, it is not an endpoint
+    """
+    global appNeo, session, log
+
+    npackage = []
+    
+    neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', idSCat:1}) \n" + \
+                        "unwind pkg." + level + " as pkgwords  \n" + \
+                        "with pkg.packageId as pkgname, pkg.label as pkglabel, pkgwords as pkgwords, \n" + \
+                            "pkg.source as source, pkg.target as target \n" + \
+                        "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
+                        "where source in labels(n) and target in labels(s) \n" + \
+                        "with pkgname, pkglabel, n, s, tes order by n.wordranking, tes.sorded \n" + \
+                        "with pkgname, pkglabel, n, collect(distinct s.word) as swlist  \n" + \
+                        "with pkgname, pkglabel, \n" + \
+                            "collect(COALESCE(n.kowcomplete, [])) as kow, \n" + \
+                            "collect(COALESCE(n.kowc, [])) as kowc, \n" + \
+                            "collect(n.word) as ewlist, \n" + \
+                            "collect(swlist) as swlist \n" + \
+                        "optional match (pkgS:PackageStudy {packageId:pkgname}) \n" + \
+                        "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
+                            "max(pkgS.level) as maxlevel, [] as linktitles, [] as links, \n" + \
+                            "ewlist as slSource, kow, kowc, swlist as slTarget  \n" + \
+                        "union " + \
+                        "match (pkg:Package {packageId:'" + pkgname + "'}) \n" + \
+                        "unwind pkg." + level + " as pkgwords  " + \
+                        "match (s:SubCategory {idSCat:pkg.idSCat})-[scat:SUBCAT]-" + \
+                            "(ew:ElemSubCat {word:pkgwords})-[:TRANSLATOR]->(sw:ElemSubCat)  \n" + \
+                        "with pkg, s, ew, sw, scat order by scat.wordranking, ew.wordranking, ew.word  \n" + \
+                        "with pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
+                            "collect(ew.word) as ewlist, collect(sw.word) as swlist  \n" + \
+                        "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) \n" + \
+                        "with pkg, s, ewlist, swlist, max(pkgS.level) as level, linktitles, links order by rand() \n" + \
+                        "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
+                            "pkg.level as maxlevel, linktitles, links, \n" + \
+                            "ewlist as slSource, [] as kow, [] as kowc, swlist as slTarget \n"
+                            
     nodes, log = neo4j_exec(session, userId,
                         log_description="get_user_words4 for level: " + level + \
                                         "\n getting words package: " + pkgname,
