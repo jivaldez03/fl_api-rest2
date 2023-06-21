@@ -64,6 +64,13 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
     userId = token['userId']
     
     neo4j_statement = "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]-(o:Organization)\n" + \
+                        "<-[:SUBJECT]-(c:Category)<-[:CAT_SUBCAT]-(s:SubCategory {idSCat:1}) \n" + \
+                        "with o, c, s.name as subcategory, s.idSCat as idSCat \n" + \
+                        "order by o.idOrg, c.name, subcategory \n" + \
+                        "return o.name, c.name as category, c.idCat as idCat, \n" + \
+                                "collect(subcategory) as subcategories, collect(idSCat) as subid \n" + \
+                        "union \n" + \
+                        "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]-(o:Organization)\n" + \
                         "<-[:SUBJECT]-(c:Category)<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
                         "where exists \n" + \
                         "   {match (s)<-[:SUBCAT]-(es:ElemSubCat) \n" + \
@@ -71,7 +78,8 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "with o,c, s.name as subcategory, s.idSCat as idSCat \n" + \
                         "order by o.idOrg, c.name, subcategory \n" + \
                         "return o.name, c.name as category, c.idCat as idCat, \n" + \
-                                "collect(subcategory) as subcategories, collect(idSCat) as subid"     
+                                "collect(subcategory) as subcategories, collect(idSCat) as subid"
+    
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting categories for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
