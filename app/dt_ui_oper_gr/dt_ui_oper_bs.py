@@ -274,18 +274,18 @@ def get_words(userId, pkgname):
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, [] as linktitles, [] as links, \n" + \
                             "ewlist as slSource, kow, kowc, swlist as slTarget  \n" + \
-                        "union " + \
+                        "union \n" + \
                         "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
                         "(pkg:Package {packageId:'" + pkgname + "'}) \n" + \
                         "unwind pkg.words as pkgwords  " + \
                         "match (org:Organization)<-[:SUBJECT]-(cat:Category)<-[:CAT_SUBCAT]-" + \
                             "(s:SubCategory {idSCat:pkg.idSCat})" + \
                             "-[rscat:SUBCAT]-(ew:ElemSubCat {word:pkgwords})-[:TRANSLATOR]->(sw:ElemSubCat) \n" + \
-                        "with org, pkg, s, ew, sw, rscat order by rscat.wordranking, ew.wordranking, ew.word  \n" + \
+                        "with org, pkg, s, ew, collect(distinct sw.word) as sw, rscat order by rscat.wordranking, ew.wordranking, ew.word  \n" + \
                         "with org, pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
                             "collect(COALESCE(ew.kowcomplete, [])) as kow, \n" + \
                             "collect(COALESCE(ew.kowc, [])) as kowc, \n" + \
-                            "collect(ew.word) as ewlist, collect(sw.word) as swlist \n" + \
+                            "collect(ew.word) as ewlist, collect(sw) as swlist \n" + \
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
                         "with pkg, s, ewlist, swlist, kow, kowc, COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
@@ -512,8 +512,8 @@ def post_user_words(datas:ForNewPackage
 
     # getting SubCat, Category, and Organization values for Subcategory
     neo4j_statement_pre = "match (o:Organization)<-[]-(c:Category)" + \
-                            "<-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) " + \
-                            "return o.idOrg as idOrg, o.lSource as lSource, " + \
+                            "<-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
+                            "return o.idOrg as idOrg, o.lSource as lSource, \n" + \
                                     "o.lTarget as lTarget, s.name as idSCatName limit 1" 
     
     nodes, log = neo4j_exec(session, userId,
@@ -535,10 +535,10 @@ def post_user_words(datas:ForNewPackage
 
     # new words package is required
     # we need to know which words are in open package to exclude of the new page
-    neo4j_statement = "match (u:User {userId:'" + userId + "'}) " + \
-            "optional match (pkg:Package {status:'open', idSCat:" + str(idSCat) + "})-[:PACKAGED]->(u) " + \
-            "unwind pkg.words as pkgwords " + \
-            "with collect(pkgwords) as pkgwords " + \
+    neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
+            "optional match (pkg:Package {status:'open', idSCat:" + str(idSCat) + "})-[:PACKAGED]->(u) \n" + \
+            "unwind pkg.words as pkgwords \n" + \
+            "with collect(pkgwords) as pkgwords \n" + \
             "return pkgwords "
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting new words (step 1) for new package",
@@ -551,30 +551,30 @@ def post_user_words(datas:ForNewPackage
         pkgwords = sdict["pkgwords"]
         
     if idSCat == 1:                                                     # words category is required
-        neo4j_statement = "with " + str(pkgwords) + " as pkgwords " + \
-                "match (u:User {userId:'" + userId + "'}) " + \
+        neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
+                "match (u:User {userId:'" + userId + "'}) \n" + \
                 "match (n:Word:" + lgSource + ")-[tes:TRANSLATOR]->" + \
-                "(s:Word:" + lgTarget + ") " + \
-                "where  (not n.word in u.words or u.words is NULL) and not n.word in pkgwords " + \
-                "with u, n, s, tes " + \
-                "order by n.wordranking, tes.sorded " + \
-                "with u, n, collect(distinct s.word) as swlist " + \
-                "with u, collect(n.word) as ewlist, collect(swlist) as swlist " + \
-                "return u.alias as idUser, 'words' as subCat, " + \
-                        "ewlist[0.." + str(capacity) + "] as slSource, " + \
-                        "swlist[0.." + str(capacity) + "] as slTarget"
+                "(s:Word:" + lgTarget + ") \n" + \
+                "where  (not n.word in u.words or u.words is NULL) and not n.word in pkgwords \n" + \
+                "with u, n, s, tes \n" + \
+                "order by n.wordranking, tes.sorded \n" + \
+                "with u, n, collect(distinct s.word) as swlist \n" + \
+                "with u, collect(n.word) as ewlist, collect(swlist) as swlist \n" + \
+                "return u.alias as idUser, 'words' as subCat, \n" + \
+                        "ewlist[0.." + str(capacity) + "] as slSource, \n" + \
+                        "swlist[0.." + str(capacity) + "] as slTarget \n"
     else: # if idSCat != 1:                                            # other one subcategory is required            
-        neo4j_statement = "with " + str(pkgwords) + " as pkgwords " + \
-                "match (u:User {userId:'" + userId + "'}) " + \
-                "match (c:Category)-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) " + \
+        neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
+                "match (u:User {userId:'" + userId + "'}) \n" + \
+                "match (c:Category)-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
                 "match (s)-[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]-" + \
-                    "(sw:ElemSubCat:" + lgTarget + ") " + \
-                "where  (not ew.word in u." + idSCatName + " or u." + idSCatName + " is NULL) and not ew.word in pkgwords " + \
-                "with s, u, ew, sw, scat " + \
-                "order by scat.wordranking, ew.wordranking, ew.word " + \
-                "with s, u, collect(ew.word) as ewlist, collect(sw.word) as swlist " + \
-                "return u.userId as idUser, s.name as subCat, " + \
-                        "ewlist[0.." + str(capacity) + "] as slSource, " + \
+                    "(sw:ElemSubCat:" + lgTarget + ") \n" + \
+                "where  (not ew.word in u." + idSCatName + " or u." + idSCatName + " is NULL) and not ew.word in pkgwords \n" + \
+                "with s, u, ew, collect(distinct sw.word) as sw, scat \n" + \
+                "order by scat.wordranking, ew.wordranking, ew.word \n" + \
+                "with s, u, collect(distinct ew.word) as ewlist, collect(sw) as swlist \n" + \
+                "return u.userId as idUser, s.name as subCat, \n" + \
+                        "ewlist[0.." + str(capacity) + "] as slSource, \n" + \
                         "swlist[0.." + str(capacity) + "] as slTarget"
                 #+ \
                 #"ewlist[0.." + str(capacity) + "] as slSource, " + \
