@@ -17,28 +17,52 @@ def get_pronunciationId(words, packagename, userId):
     into the WordSound collection
     """
     # getting the WordSound id for each word and example
-    neo4j_statement = "with " + str(list(words)) + " as wordlist " + \
-                    "unwind wordlist as wordtext " + \
+    neo4j_statement = "with " + str(list(words)) + " as wordlist \n" + \
+                    "unwind wordlist as wordtext \n" + \
                     "match (pkg:Package {packageId:'" + packagename + "'})-\n" + \
                     "[:PACKAGED]-(u:User {userId: '"+ userId +"'}) \n" + \
-                    "match(wp:WordSound {word:wordtext}) " + \
+                    "optional match(wp:WordSound {word:wordtext}) \n" + \
                     "where pkg.source in labels(wp) \n" + \
-                    "return wp.word, id(wp) as idNode, wp.actived, wp.example, wp.Spanish"
+                    "return wordtext, id(wp) as idNode, wp.actived, wp.example, wp.Spanish"
 
-    print('pronunciationId_neo4j_statement:', neo4j_statement)
+    #print('pronunciationId_neo4j_statement:', neo4j_statement)
     
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words pronunciation",
                         statement=neo4j_statement,
                         filename=__name__,
                         function_name=myfunctionname())
-    result = []    
-    for word in words:
+    result = []
+    #print(f"ourssss words: {words}")
+    for node in nodes:
+        #print(f"ciclo de nodes")
+        sdict = dict(node)
+        idNode = None
+        example = ''
+        example_target = ''
+        for word in words:            
+            #print(f"paraaa word: -{word}- thenermos s_dictttt: -{sdict['wordtext']}-")
+            if word == sdict['wordtext']:
+                idNode = sdict["idNode"]
+                example = sdict.get('wp.example', '')
+                example_target = sdict.get('wp.Spanish', '')
+                break
+        dict_pronunciation = {'pronunciation': idNode,
+                        'example': example,
+                        'target':example_target} # binfile.decode("ISO-8859-1")} #utf-8")}
+        result.append(dict_pronunciation)
+        #print(f" word: {word} - sdict {dict_pronunciation}")
+    #print("id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    """
+    for gia, word in enumerate(words):
+        print(f"giaaaa: {gia} {word}")
         idNode = None
         example = ''
         example_target = ''
         for node in nodes:
+            print(f"ciclo de nodes")
             sdict = dict(node)
+            print(f"paraaa word: -{word}- thenermos s_dictttt: -{sdict['wp.word']}-")
             if word == sdict['wp.word']:
                 idNode = sdict["idNode"]
                 example = sdict.get('wp.example', '')
@@ -48,7 +72,9 @@ def get_pronunciationId(words, packagename, userId):
                             'example': example,
                             'target':example_target} # binfile.decode("ISO-8859-1")} #utf-8")}
         result.append(dict_pronunciation)
+        print(f" word: {word} - sdict {dict_pronunciation}")
     print("id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    """
     return result
 
 
@@ -662,9 +688,10 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "unwind pkg." + level + " as pkgwords  " + \
                         "match (s:SubCategory {idSCat:pkg.idSCat})-[scat:SUBCAT]-" + \
                             "(ew:ElemSubCat {word:pkgwords})-[:TRANSLATOR]->(sw:ElemSubCat)  \n" + \
-                        "with pkg, s, ew, sw, scat order by scat.wordranking, ew.wordranking, ew.word  \n" + \
+                        "with pkg, s, ew, collect(distinct sw.word) as sw, scat \n" + \
+                            "order by scat.wordranking, ew.wordranking, ew.word  \n" + \
                         "with pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
-                            "collect(ew.word) as ewlist, collect(sw.word) as swlist  \n" + \
+                            "collect(ew.word) as ewlist, collect(sw) as swlist  \n" + \
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) \n" + \
                         "with pkg, s, ewlist, swlist, max(pkgS.level) as level, linktitles, links order by rand() \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \

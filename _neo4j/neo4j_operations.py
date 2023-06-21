@@ -94,7 +94,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
 
     if not function_name:
         function_name = 'null'
-    
+    print(f"FUNTION__NAME: {function_name}")
     # next line is the log's record for the user's execution
     if monitoring_function(function_name):
         log_description += "\n----\n" + statement
