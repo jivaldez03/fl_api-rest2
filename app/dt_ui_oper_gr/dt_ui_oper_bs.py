@@ -269,7 +269,8 @@ def get_words(userId, pkgname):
                             "collect(COALESCE(n.kowc, [])) as kowc, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
-                        "optional match (pkgS:PackageStudy {packageId:pkgname}) \n" + \
+                        "match(org:Organization)<-[:SUBJECT]-(cat:Category)<-[:CAT_SUBCAT]-(scat:SubCat {idSCat:1}) \n" + \
+                        "optional match (pkgS:PackageStudy {packageId:pkgname}) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, [] as linktitles, [] as links, \n" + \
                             "ewlist as slSource, kow, kowc, swlist as slTarget  \n" + \
@@ -277,14 +278,15 @@ def get_words(userId, pkgname):
                         "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
                         "(pkg:Package {packageId:'" + pkgname + "'}) \n" + \
                         "unwind pkg.words as pkgwords  " + \
-                        "match (s:SubCategory {idSCat:pkg.idSCat})-[scat:SUBCAT]-" + \
-                            "(ew:ElemSubCat {word:pkgwords})-[:TRANSLATOR]->(sw:ElemSubCat)  \n" + \
-                        "with pkg, s, ew, sw, scat order by scat.wordranking, ew.wordranking, ew.word  \n" + \
-                        "with pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
+                        "match (org:Organization)<-[:SUBJECT]-(cat:Category)<-[:CAT_SUBCAT]-" + \
+                            "(s:SubCategory {idSCat:pkg.idSCat})" + \
+                            "-[rscat:SUBCAT]-(ew:ElemSubCat {word:pkgwords})-[:TRANSLATOR]->(sw:ElemSubCat) \n" + \
+                        "with org, pkg, s, ew, sw, rscat order by rscat.wordranking, ew.wordranking, ew.word  \n" + \
+                        "with org, pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
                             "collect(COALESCE(ew.kowcomplete, [])) as kow, \n" + \
                             "collect(COALESCE(ew.kowc, [])) as kowc, \n" + \
-                            "collect(ew.word) as ewlist, collect(sw.word) as swlist  \n" + \
-                        "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) \n" + \
+                            "collect(ew.word) as ewlist, collect(sw.word) as swlist \n" + \
+                        "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
                         "with pkg, s, ewlist, swlist, kow, kowc, COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "level as maxlevel, linktitles, links, \n" + \
@@ -297,7 +299,7 @@ def get_words(userId, pkgname):
                         filename=__name__, 
                         function_name=myfunctionname())  
     
-    # creating the structure to return data
+    # creating the structure to return data   # ESTA SECCIÓN HASTA EL FINAL ES IGUAL GER_USER_WORDS4
     pkgdescriptor = {}
     words = []
     kow, kowc = [], []
@@ -669,7 +671,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         filename=__name__, 
                         function_name=myfunctionname())  
     
-    # creating the structure to return data
+    # creating the structure to return data # ESTA SECCIÓN HASTA EL FINAL ES IGUAL A GET_WORDS
     pkgdescriptor = {}
     words = []
     kow, kowc = [], []

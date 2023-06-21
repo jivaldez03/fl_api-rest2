@@ -37,10 +37,15 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     levelSeqPosition = funcs.validating_exist_level(level)
     if levelSeqPosition == 1:  # level in position 1 is equal to lvl_10_01, if it is.... clickqty = cardsqty
         clicksQty = cardsQty
+    if clicksQty < cardsQty:
+        clicksQty = cardsQty * 2
+    gradeval = (float(clicksQty) / cardsQty - 1) * 100  # 10 / 8 = 1.25 - 1 = .25 * 100 = 25
         
     neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', userId:'" + userId + "'}) " + \
-                    "merge (pkgS:PackageStudy {studing_dt:datetime('" + updtime + "')})-[rs:STUDY]->(pkg) " + \
-                    "set pkgS.level = '" + level + "', pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "]" + \
+                    "create (pkgS:PackageStudy {studing_dt:datetime('" + updtime + "')})-[rs:STUDY]->(pkg) " + \
+                    "set pkgS.level = '" + level + "', \n" + \
+                        "pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "], \n" + \
+                        "pkgS.ptgerror = " + str(gradeval) + " \n" + \
                     "return pkg.packageId as packageId, pkgS.studing_dt, pkgS.level as level, pkgS.grade as grade"
     nodes, log = neo4j_exec(session, userId,
                         log_description="updating activity on package = '" + pkgname + "'\nlevel = '" + level + "'" + \
