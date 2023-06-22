@@ -1024,7 +1024,7 @@ async def get_user_word_pronunciation(word:str, idWord:int):
     #word = datas.word
     #idWord = datas.idNode
 
-    statement = "match (ws:WordSound {word: '" +  word + "'}) " + \
+    statement = 'match (ws:WordSound {word: "' +  word + '"}) ' + \
                 "where id(ws) = " + str(idWord) + " " + \
                 "return ws.binfile limit 1"  # ws.word, ws.actived, 
     print(f"statement pronun: {statement}")
@@ -1054,7 +1054,7 @@ def get_user_word_pron2(word:str, idWord:int
     token=funcs.validating_token(Authorization) 
     userId = token['userId']
 
-    statement = "match (ws:WordSound {word: '" +  word + "'}) " + \
+    statement = 'match (ws:WordSound {word: "' +  word + '"}) ' + \
                 "where id(ws) = " + str(idWord) + " " + \
                 "return ws.binfile limit 1"  # ws.word, ws.actived, 
     #print(f"statement pronun: {statement}")

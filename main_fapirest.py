@@ -375,7 +375,7 @@ def get_user_word_pron2(word, idWord):
     if session == None:
         appNeo, session, log = trx.connectNeo4j(user, 'cat&subcat updating')
 
-    statement = "match (ws:WordSound {word: '" +  word + "'}) " + \
+    statement = 'match (ws:WordSound {word: "' +  word + '"}) ' + \
                 "where id(ws) = " + str(idWord) + " " + \
                 "return ws.binfile limit 1"  # ws.word, ws.actived, 
     print(f"statement pronun: {statement}")
