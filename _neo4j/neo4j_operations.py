@@ -75,6 +75,8 @@ def neo4_log(session, user, log_description, filename= None, function_name=None,
         function_name = 'null'
     else:
         function_name = "'" + function_name + "'"
+    print(f"lllog_description: {log_description}")
+    log_description = log_description.replace('"', '')
     logofaccess = 'create (n:Log {user: "' + user + '", ' + \
                     'trx: "' + log_description + '", \n' + \
                     'exec_fname: "' + filename + '", \n' + \
