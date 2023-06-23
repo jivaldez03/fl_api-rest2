@@ -29,8 +29,14 @@ def get_random_string(length):
 
 
 def email_send(target_userId, target_email, message):
-    email_ad = getenv("email_address")
-    email_ps = getenv("email_pass")
+    edom = "delthatech"
+    #email_pass = "Delthatech_2023"
+
+    email_ad = "dtl@" +  edom + "." + "com"
+    email_ps = edom.title()  + "_2023"
+    #print ("_____________", email_ad, email_ps)
+    ##email_ad = getenv("email_address")
+    #email_ps = getenv("email_pass")
 
     #get_random_string(8)
 
@@ -38,13 +44,13 @@ def email_send(target_userId, target_email, message):
     #dtl@delthatech.com - Delthatech_2023  
     # (esta cuenta de email es del hosting de godaddy)
 
-    print("email hosted by: ", email_ad, email_ps)
+    #print("email hosted by: ", email_ad, email_ps)
 
     msg = EmailMessage()
     msg["Subject"] = "Password reset"
     msg["From"] = email_ad
     msg["To"] = target_email
-    print("tempasssss: ", message)
+    #print("tempasssss: ", message)
     msg.set_content(message)
 
     outgoingsemails="smtpout.secureserver.net" # imap.secureserver.net
@@ -85,7 +91,7 @@ def user_change_pass_notification(datas:ForResetPass):
     emailuser = sdict.get("u.email", "")
     userIdtoChange = sdict.get("u.userId", "")
 
-    if datas.userId == emailuser:
+    if datas.user_email == emailuser:
         msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTL, " + \
             "al dar click al siguiente link su password seŕa renovado, y " + \
             "recibirá un nuevo correo electrónico con instrucciones de acceso " + \
