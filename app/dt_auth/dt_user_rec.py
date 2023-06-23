@@ -94,8 +94,9 @@ def user_change_pass_notification(datas:ForResetPass):
     if datas.user_email == emailuser:
         msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTL, " + \
             "al dar click al siguiente link su password seŕa renovado, y " + \
-            "recibirá un nuevo correo electrónico con instrucciones de acceso " + \
-            "- http://localhost:3000/dt/auth/reset_pass/" + temppass
+            "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n" + \
+            "- http://localhost:3000/dt/auth/reset_pass/" + temppass + " \n o \n" + \
+            "- https://fl-api-rest.herokuapp.com/dt/auth/reset_pass/" + temppass + " \n"
 
         sentmail = email_send(userId, datas.user_email, msg)
     else:
