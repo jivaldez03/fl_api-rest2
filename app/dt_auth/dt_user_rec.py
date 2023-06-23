@@ -74,8 +74,18 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
         path =  request.scope['method'] + "/" + str(request.scope['server']) + \
                 request.scope['root_path'] + request.scope['route'].path
 
+        print("str(request.scope", request.scope)
+        print("\n\n\nstr(request.scope['headers']", request.scope['headers'])
+        print("\n\n\nstr(request.scope['headers - 1']", str(request.scope['headers'][0][1]))
+        print("\n\n\n")
+
+        encoding = 'utf-8'    
+        serverlnk = str(request.scope['headers'][0][1], encoding)
+        print('sin biniario: ', serverlnk)
+
         print("str(request.scope[':::::']", str(request.scope['server']))
-        return path, request.scope['server']
+        
+        return path, serverlnk
     
     userId = datas.userId
     useremail = datas.user_email
@@ -83,12 +93,14 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
     temppass = get_random_string(random.randint(30,50))
 
     pathcomplete, serverlnk = get_path()
+    """
     if serverlnk.__contains__("localhost") or \
         serverlnk.__contains__("127.0.0.1"):
-        lnk_toanswer = "- http://" + serverlnk[0] + ":" + str(serverlnk[1]) + "/dt/auth/reset_pass/"
+        lnk_toanswer = "- http://" + serverlnk + "/dt/auth/reset_pass/"
     else:
         lnk_toanswer = "- https://fl-api-rest.herokuapp.com/dt/auth/reset_pass/"
-
+    """
+    lnk_toanswer = "- http://" + serverlnk + "/dt/auth/reset_pass/"
     #print("patchcompleteee:", pathcomplete)
 
     neo4j_statement = "match (u:User {email:'" + useremail + "'}) \n" + \
