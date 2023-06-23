@@ -9,3 +9,6 @@ class ForChangePass(BaseModel):
     oldkeypass:str
     newkeypass:str
     
+class ForResetPass(BaseModel):
+    userId:str
+    user_email:str
