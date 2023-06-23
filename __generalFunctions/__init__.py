@@ -9,7 +9,7 @@ from jwt import DecodeError, ExpiredSignatureError
 from flask import jsonify
 from dotenv import load_dotenv
 from os import getenv
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status #, Request
 
 import inspect
 myfunctionname = lambda: str(inspect.stack()[1][3])
@@ -18,11 +18,14 @@ load_dotenv()
 
 myConjutationLink = lambda verb: (getenv("CONJUGATION_VERBS_LINK")) + verb
 
+
 def _getdatime():
     return str(dt.now())
 
+
 def _getdatime_T():
     return str(dt.now()).replace(' ','T')
+
 
 def _sleep(secs, init_range=0, end_range=10):
     if secs:
@@ -31,6 +34,7 @@ def _sleep(secs, init_range=0, end_range=10):
         secs = randint(init_range, end_range)
     sleep(secs)
     return secs
+
 
 def get_list_element(l_elements:list, index:int):
     if len(l_elements) <= index:

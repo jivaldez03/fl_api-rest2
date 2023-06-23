@@ -9,7 +9,7 @@ from fastapi import APIRouter
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 
-from __generalFunctions import myfunctionname
+from __generalFunctions import myfunctionname #, get_path
 
 import random
 from string import ascii_letters
@@ -62,7 +62,7 @@ def email_send(target_userId, target_email, message):
 
 
 @router.post("/reset_pass_notification/")
-def user_change_pass_notification(datas:ForResetPass):
+def user_change_pass_notification(datas:ForResetPass, request:Request):
     """
     Function for reset the user password \n
     {
@@ -70,10 +70,26 @@ def user_change_pass_notification(datas:ForResetPass):
     "user_email":str"
     }
     """
+    def get_path():
+        path =  request.scope['method'] + "/" + str(request.scope['server']) + \
+                request.scope['root_path'] + request.scope['route'].path
+
+        print("str(request.scope[':::::']", str(request.scope['server']))
+        return path, request.scope['server']
+    
     userId = datas.userId
     useremail = datas.user_email
 
     temppass = get_random_string(random.randint(30,50))
+
+    pathcomplete, serverlnk = get_path()
+    if serverlnk.__contains__("localhost") or \
+        serverlnk.__contains__("127.0.0.1"):
+        lnk_toanswer = "- http://" + serverlnk[0] + ":" + str(serverlnk[1]) + "/dt/auth/reset_pass/"
+    else:
+        lnk_toanswer = "- https://fl-api-rest.herokuapp.com/dt/auth/reset_pass/"
+
+    #print("patchcompleteee:", pathcomplete)
 
     neo4j_statement = "match (u:User {email:'" + useremail + "'}) \n" + \
                     "set u.temp_access = '" + temppass + "', \n" + \
@@ -91,12 +107,12 @@ def user_change_pass_notification(datas:ForResetPass):
     emailuser = sdict.get("u.email", "")
     userIdtoChange = sdict.get("u.userId", "")
 
+
     if datas.user_email == emailuser:
         msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTL, " + \
             "al dar click al siguiente link su password seŕa renovado, y " + \
             "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n" + \
-            "- http://localhost:3000/dt/auth/reset_pass/" + temppass + " \n o \n" + \
-            "- https://fl-api-rest.herokuapp.com/dt/auth/reset_pass/" + temppass + " \n"
+            lnk_toanswer + temppass +  " \n"
 
         sentmail = email_send(userId, datas.user_email, msg)
     else:
