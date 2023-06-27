@@ -282,6 +282,68 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     return {'message': listPack}
 
 
+@router.get("/get_/user_package_st/{packageId}")
+async def get_user_package_st(packageId:str, Authorization: Optional[str] = Header(None)):
+    """
+    Function to get package level \n
+
+    """
+    global appNeo, session, log 
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+
+
+    statement = "match (u:User {userId:'" + userId + "'})-[]-\n" + \
+                "(pkg:Package {packageId: '" + packageId + "'}) \n" + \
+                "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
+                "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
+                "with u, pkg, c,  pkgS.level as level, \n" + \
+                "max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
+                "coalesce(o.ptgmaxerrs,100.0-85.0) as maxerrs \n" + \
+                "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, \n" + \
+                "count(DISTINCT level) as levs, maxerrs \n" + \
+                "return pkg.packageId, c.idCat as idCat, c.name as CatName, \n" + \
+                "pkg.SubCat as SCatName, \n" + \
+                "pkg.idSCat as idSCat, \n" + \
+                "split(level,'-,-')[0] as level, \n" + \
+                "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
+    #print(statement)
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting opened packages list",
+                        statement=statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    
+    listPack = []
+    for node in nodes:
+        sdict = dict(node)    
+        #subcat_list = []
+        #print('sdict:', sdict)
+        if sdict["grade"] == None:
+            ptg_errors = 100
+        else:
+            ptg_errors = float(sdict["grade"]) #  - 1) * 100            
+            if ptg_errors < 0:
+                ptg_errors = 100
+        #print(ptg_errors, 'maxerrs', sdict["maxerrs"])
+        if sdict["maxerrs"] > (ptg_errors if ptg_errors>=0 else 100):
+            maxlevel = sdict["level"]
+        else:
+            maxlevel = funcs.level_seq(sdict["level"], forward=False)
+        ndic = {'packageId': sdict["pkg.packageId"]
+                , 'Category': sdict["CatName"], 'idCat' : sdict["idCat"]
+                , 'SubCat': sdict["SCatName"], 'idSCat' : sdict["idSCat"]
+                #, 'distinct_levs': sdict["levs"]
+                , 'maxlevel': maxlevel # sdict["level"]
+                #, 'ptg_errors' : ptg_errors
+                #, 'maxptg_errs':sdict["maxerrs"]
+        }
+        
+        listPack.append(ndic)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return {'message': listPack}
+
 def get_words(userId, pkgname):
     global app, session, log
 

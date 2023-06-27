@@ -71,38 +71,21 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
     }
     """
     def get_path():
-        path =  request.scope['method'] + "/" + str(request.scope['server']) + \
-                request.scope['root_path'] + request.scope['route'].path
-
-        print("str(request.scope", request.scope)
-        print("\n\n\nstr(request.scope['headers']", request.scope['headers'])
-        print("\n\n\nstr(request.scope['headers - 1']", str(request.scope['headers'][0][1]))
-        print("\n\n\n")
-
-        encoding = 'utf-8'    
-        serverlnk = str(request.scope['headers'][0][1], encoding)
-        print('sin biniario: ', serverlnk)
-
-        print("str(request.scope[':::::']", str(request.scope['server']))
-        
-        return path, serverlnk
+        met  =  request.scope['method'] 
+        path =  request.scope['root_path'] + request.scope['route'].path
+        #encoding = 'utf-8'
+        serverlnk = str(request.scope['headers'][0][1], 'utf-8')        
+        return met, path, serverlnk
     
     userId = datas.userId
     useremail = datas.user_email
 
     temppass = get_random_string(random.randint(30,50))
 
-    pathcomplete, serverlnk = get_path()
-    """
-    if serverlnk.__contains__("localhost") or \
-        serverlnk.__contains__("127.0.0.1"):
-        lnk_toanswer = "- http://" + serverlnk + "/dt/auth/reset_pass/"
-    else:
-        lnk_toanswer = "- https://fl-api-rest.herokuapp.com/dt/auth/reset_pass/"
-    """
-    lnk_toanswer = "- http://" + serverlnk + "/dt/auth/reset_pass/"
-    #print("patchcompleteee:", pathcomplete)
+    method, pathcomplete, serverlnk = get_path()    
 
+    lnk_toanswer = "- http://" + serverlnk + "/dt/auth/reset_pass/"
+    
     neo4j_statement = "match (u:User {email:'" + useremail + "'}) \n" + \
                     "set u.temp_access = '" + temppass + "', \n" + \
                     "u.temp_access_dt = datetime() \n" + \
@@ -119,18 +102,15 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
     emailuser = sdict.get("u.email", "")
     userIdtoChange = sdict.get("u.userId", "")
 
-
     if datas.user_email == emailuser:
         msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTL, " + \
             "al dar click al siguiente link su password seŕa renovado, y " + \
             "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n" + \
             lnk_toanswer + temppass +  " \n"
-
         sentmail = email_send(userId, datas.user_email, msg)
     else:
         sentmail = "email has been sent to " + userId
 
-    #print("ssssssentmail", sentmail)
     return sentmail
 
 

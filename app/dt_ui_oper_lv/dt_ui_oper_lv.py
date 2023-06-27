@@ -46,7 +46,8 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
                     "set pkgS.level = '" + level + "', \n" + \
                         "pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "], \n" + \
                         "pkgS.ptgerror = " + str(gradeval) + " \n" + \
-                    "return pkg.packageId as packageId, pkgS.studing_dt, pkgS.level as level, pkgS.grade as grade"
+                    "return pkg.packageId as packageId, pkgS.studing_dt, \n" + \
+                         "pkgS.level as level, pkgS.grade as grade, pkgS.ptgerror as ptgerror"
     nodes, log = neo4j_exec(session, userId,
                         log_description="updating activity on package = '" + pkgname + "'\nlevel = '" + level + "'" + \
                                     "\npkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "]",
@@ -55,7 +56,15 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
                         function_name=myfunctionname())
     listcat = []
     for node in nodes:
-        listcat.append(dict(node))
+        sdict = dict(node)
+        if sdict.get("ptgerror",100) <= 15: 
+            sdict["status"] = True
+            sdict["message"] = ""
+        else:
+            sdict["status"] = False
+            sdict["message"] = ""
+        listcat.append(sdict)
+        
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())        
     return {'message': listcat}
 
