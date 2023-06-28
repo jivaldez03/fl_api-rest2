@@ -97,7 +97,7 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
     print("pathcomplete:", pathcomplete)
     print("serverlnk:", serverlnk)
 
-    lnk_toanswer = "- http://" + serverlnk + "/dt/auth/reset_pass/"
+    lnk_toanswer = "http://" + serverlnk + "/dt/auth/reset_pass/"
     
     neo4j_statement = "match (u:User {email:'" + useremail + "'}) \n" + \
                     "set u.temp_access = '" + temppass + "', \n" + \
@@ -112,6 +112,7 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
                         filename=__name__,
                         function_name=myfunctionname())
     sdict = {}
+    #lnk_toanswer 
     for node in nodes:
         sdict = dict(node)
     emailuser = sdict.get("u.email", "")
@@ -123,7 +124,9 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
         msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTL, " + \
             "al dar click al siguiente link su password seŕa renovado, y " + \
             "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n" + \
-            lnk_toanswer + temppass +  " \n"
+            lnk_toanswer + temppass +  " \n\n" + \
+            "Esta notificación no requiere respuesta."
+        
         sentmail = email_send(userId, datas.user_email, msg)
     else:
         sentmail = "email has been sent to " + userId
