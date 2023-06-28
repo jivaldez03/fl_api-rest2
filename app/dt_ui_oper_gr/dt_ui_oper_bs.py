@@ -299,7 +299,7 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
                 "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
                 "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
                 "with u, pkg, c,  pkgS.level as level, \n" + \
-                "max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
+                "min(pkgS.ptgerror) as grade, \n" + \
                 "coalesce(o.ptgmaxerrs,100.0-85.0) as maxerrs \n" + \
                 "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, \n" + \
                 "count(DISTINCT level) as levs, maxerrs \n" + \
@@ -309,6 +309,8 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
                 "split(level,'-,-')[0] as level, \n" + \
                 "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
     #print(statement)
+    #"min(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
+    
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,

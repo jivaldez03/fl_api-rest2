@@ -33,7 +33,7 @@ def email_send(target_userId, target_email, message):
     #email_pass = "Delthatech_2023"
 
     email_ad = "dtl@" +  edom + "." + "com"
-    email_ps = edom.title()  + "_2023"
+    email_ps = edom.title()  + "_23"
     #print ("_____________", email_ad, email_ps)
     ##email_ad = getenv("email_address")
     #email_ps = getenv("email_pass")
@@ -74,7 +74,16 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
         met  =  request.scope['method'] 
         path =  request.scope['root_path'] + request.scope['route'].path
         #encoding = 'utf-8'
-        serverlnk = str(request.scope['headers'][0][1], 'utf-8')        
+        serverlnk = ""
+        for elehead in request.scope['headers']:
+            print('eeeelehead:', elehead, type(elehead))
+            val=str(elehead[0],'utf-8')
+            if val == 'host':
+                serverlnk = str(elehead[1], 'utf-8')
+        #print(str(request.scope['headers'])) # , 'utf-8')
+
+        print('eeeelehead severlink:', serverlnk)
+        #serverlnk = str(request.scope['headers'][0][1], 'utf-8')        
         return met, path, serverlnk
     
     userId = datas.userId
@@ -84,6 +93,10 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
 
     method, pathcomplete, serverlnk = get_path()    
 
+    print("mmmethod:", method)
+    print("pathcomplete:", pathcomplete)
+    print("serverlnk:", serverlnk)
+
     lnk_toanswer = "- http://" + serverlnk + "/dt/auth/reset_pass/"
     
     neo4j_statement = "match (u:User {email:'" + useremail + "'}) \n" + \
@@ -91,6 +104,8 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
                     "u.temp_access_dt = datetime() \n" + \
                     "return u.userId, u.email limit 1"
     
+    #print("nneo4j: ", neo4j_statement)
+
     nodes, log = neo4j_exec(session, userId,
                         log_description="sending reset password notification",
                         statement=neo4j_statement,
@@ -101,6 +116,8 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
         sdict = dict(node)
     emailuser = sdict.get("u.email", "")
     userIdtoChange = sdict.get("u.userId", "")
+    #print("\n\nnneo4j despude de ejecución: - solo FALTA ENVIAR MAIL")
+
 
     if datas.user_email == emailuser:
         msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTL, " + \
