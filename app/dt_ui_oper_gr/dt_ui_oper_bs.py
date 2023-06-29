@@ -365,13 +365,14 @@ def get_words(userId, pkgname):
                         "with pkgname, pkglabel, \n" + \
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(n.ckow_complete, [])) as kowc, \n" + \
+                            "collect(COALESCE(n.cword_ref, [])) as wordref, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
                         "match(org:Organization)<-[:SUBJECT]-(cat:Category)<-[:CAT_SUBCAT]-(scat:SubCategory {idSCat:1}) \n" + \
                         "optional match (pkgS:PackageStudy {packageId:pkgname}) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, kow, kowc, swlist as slTarget  \n" + \
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget  \n" + \
                         "union \n" + \
                         "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
                         "(pkg:Package {packageId:'" + pkgname + "'}) \n" + \
@@ -383,12 +384,13 @@ def get_words(userId, pkgname):
                         "with org, pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
                             "collect(COALESCE(ew.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(ew.ckow_complete, [])) as kowc, \n" + \
+                            "collect(COALESCE(ew.cword_ref, [])) as wordref, \n" + \
                             "collect(ew.word) as ewlist, collect(sw) as swlist \n" + \
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
-                        "with pkg, s, ewlist, swlist, kow, kowc, COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links \n" + \
+                        "with pkg, s, ewlist, swlist, kow, kowc, wordref, COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "level as maxlevel, linktitles, links, \n" + \
-                            "ewlist as slSource, kow, kowc, swlist as slTarget"
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget"
 
     #print("--neo4j_statement:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
@@ -414,11 +416,12 @@ def get_words(userId, pkgname):
             prnReference = funcs.get_list_element(sdict["linktitles"], gia)
             prnLink     = funcs.get_list_element(sdict["links"], gia)
             ltarget = funcs.get_list_element(sdict["slTarget"],gia)
+            wordref = funcs.get_list_element(sdict["wordref"],gia)
             if type(ltarget) == type(list()):
                 pass
             else:
                 ltarget = [ltarget]
-            npackage.append([value, ltarget, gia + 1, prnReference, prnLink])
+            npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
             words.append(value) # (value, sdict['kow']))
     lpron = get_pronunciationId(words, pkgname, userId)
     result = []
@@ -437,7 +440,7 @@ def get_words(userId, pkgname):
             verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
             isitaverb = (('verb' in verbis), kow[gia])
         if isitaverb[0]:
-            conjLink = myConjutationLink(element[0])
+            conjLink = myConjutationLink(element[5][0])   # wordref
         else:
             conjLink = ''
         s_kow = {"type": "kow"
@@ -661,12 +664,13 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "with pkgname, pkglabel, \n" + \
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(n.ckow_complete, [])) as kowc, \n" + \
+                            "collect(COALESCE(n.cword_ref, [])) as wordref, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
                         "optional match (pkgS:PackageStudy {packageId:pkgname}) \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "max(pkgS.level) as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, kow, kowc, swlist as slTarget  \n" + \
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget  \n" + \
                         "union " + \
                         "match (pkg:Package {packageId:'" + pkgname + "'}) \n" + \
                         "unwind pkg." + level + " as pkgwords  " + \
@@ -680,7 +684,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "with pkg, s, ewlist, swlist, max(pkgS.level) as level, linktitles, links order by rand() \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "pkg.level as maxlevel, linktitles, links, \n" + \
-                            "ewlist as slSource, [] as kow, [] as kowc, swlist as slTarget \n"
+                            "ewlist as slSource, [] as kow, [] as kowc, [] as wordref, swlist as slTarget \n"
 
 
     #print("--neo4j_statement:", neo4j_statement)
@@ -707,11 +711,12 @@ def get_user_words4(userId:str, pkgname:str, level:str):
             prnReference = funcs.get_list_element(sdict["linktitles"], gia)
             prnLink     = funcs.get_list_element(sdict["links"], gia)
             ltarget = funcs.get_list_element(sdict["slTarget"],gia)
+            wordref = funcs.get_list_element(sdict["wordref"],gia)
             if type(ltarget) == type(list()):
                 pass
             else:
                 ltarget = [ltarget]
-            npackage.append([value, ltarget, gia + 1, prnReference, prnLink])
+            npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
             words.append(value) # (value, sdict['kow']))
     lpron = get_pronunciationId(words, pkgname, userId)
     result = []
@@ -730,7 +735,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
             verbis = str(kowc[gia]).lower().replace('adverb','xxxxx')
             isitaverb = (('verb' in verbis), kow[gia])
         if isitaverb[0]:
-            conjLink = myConjutationLink(element[0])
+            conjLink = myConjutationLink(element[5][0])   # wordref
         else:
             conjLink = ''
         s_kow = {"type": "kow"
