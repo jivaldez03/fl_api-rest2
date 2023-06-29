@@ -442,7 +442,7 @@ def get_words(userId, pkgname):
         if isitaverb[0]:
             #print("lene elemente:", len(element[5]), element[5])
             if element[5] == [''] or len(element[5]) == 0:
-                conjLink = myConjutationLink(element[0])   # wordref
+                conjLink = myConjutationLink(element[0])      # wordref
             else:
                 conjLink = myConjutationLink(element[5][0])   # wordref
         else:
@@ -740,9 +740,9 @@ def get_user_words4(userId:str, pkgname:str, level:str):
             isitaverb = (('verb' in verbis), kow[gia])
         if isitaverb[0]:
             if element[5] == [''] or len(element[5]) == 0:
-                conjLink = myConjutationLink(element[0])   # wordref
+                conjLink = myConjutationLink(element[0])    # wordref
             else:
-                conjLink = myConjutationLink(element[5][0])   # wordref
+                conjLink = myConjutationLink(element[5][0]) # wordref
         else:
             conjLink = ''
         s_kow = {"type": "kow"
