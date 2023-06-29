@@ -440,7 +440,11 @@ def get_words(userId, pkgname):
             verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
             isitaverb = (('verb' in verbis), kow[gia])
         if isitaverb[0]:
-            conjLink = myConjutationLink(element[5][0])   # wordref
+            #print("lene elemente:", len(element[5]), element[5])
+            if element[5] == [''] or len(element[5]) == 0:
+                conjLink = myConjutationLink(element[0])   # wordref
+            else:
+                conjLink = myConjutationLink(element[5][0])   # wordref
         else:
             conjLink = ''
         s_kow = {"type": "kow"
@@ -735,7 +739,10 @@ def get_user_words4(userId:str, pkgname:str, level:str):
             verbis = str(kowc[gia]).lower().replace('adverb','xxxxx')
             isitaverb = (('verb' in verbis), kow[gia])
         if isitaverb[0]:
-            conjLink = myConjutationLink(element[5][0])   # wordref
+            if element[5] == [''] or len(element[5]) == 0:
+                conjLink = myConjutationLink(element[0])   # wordref
+            else:
+                conjLink = myConjutationLink(element[5][0])   # wordref
         else:
             conjLink = ''
         s_kow = {"type": "kow"
