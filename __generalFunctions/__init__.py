@@ -41,6 +41,12 @@ def get_list_element(l_elements:list, index:int):
         return None
     else:
         return l_elements[index]
+
+def get_list_elements(l_elements:list, index:int):
+    if len(l_elements) <= index:        
+        return l_elements
+    else:
+        return l_elements[:index]
     
 def reg_exp(exp_to_evaluate, text_to_check):
     rege = compile(exp_to_evaluate)
