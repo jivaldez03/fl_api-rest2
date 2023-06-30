@@ -236,7 +236,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                 "match (sc:SubCategory {idSCat:pkg.idSCat})-[]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
                 "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
                 "with u, pkg, c,  pkgS.level as level, \n" + \
-                "max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
+                "min(pkgS.ptgerror) as grade, \n" + \
                 "coalesce(o.ptgmaxerrs,100.0-85.0) as maxerrs \n" + \
                 "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, \n" + \
                 "count(DISTINCT level) as levs, maxerrs \n" + \
@@ -245,6 +245,9 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                 "pkg.idSCat as idSCat, \n" + \
                 "split(level,'-,-')[0] as level, \n" + \
                 "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
+    
+    #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
+
     #print(statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
@@ -257,6 +260,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
         sdict = dict(node)    
         #subcat_list = []
         #print('sdict:', sdict)
+        
         if sdict["grade"] == None:
             ptg_errors = 100
         else:
@@ -361,7 +365,7 @@ def get_words(userId, pkgname):
                         "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
                         "where source in labels(n) and target in labels(s) \n" + \
                         "with pkgname, pkglabel, n, s, tes order by n.wordranking, tes.sorded \n" + \
-                        "with pkgname, pkglabel, n, collect(distinct s.word) as swlist  \n" + \
+                        "with pkgname, pkglabel, n, reverse(collect(s.word)) as swlist \n" + \
                         "with pkgname, pkglabel, \n" + \
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(n.ckow_complete, [])) as kowc, \n" + \
@@ -392,7 +396,7 @@ def get_words(userId, pkgname):
                             "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget"
 
-    #print("--neo4j_statement:", neo4j_statement)
+    print("--neo4j_statement:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
@@ -451,7 +455,7 @@ def get_words(userId, pkgname):
                         , "position" : "source"
                         , "apply_link": isitaverb[0] # is it a verb?
                         , "link" : conjLink
-                        , "title": get_list_elements(isitaverb[1],2) # kow[gia] # list of different kind of word for the same word
+                        , "title": get_list_elements(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                         }
         s_object={"type": "location"
                         , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior

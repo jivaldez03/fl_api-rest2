@@ -4,7 +4,7 @@ class Config:
 
 NEO4J_URI=neo4j+s://f03ab659.databases.neo4j.io
 NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=FokEdFgFjrMOp2Or6Qq6FwYeWBLpoEmY3rp8v_v0z2A
+NEO4J_PASSWORD=jiFokEdFgFjrMOp2Or6Qq6FwYeWBLpoEmY3rp8v_v0z2Aji
 AURA_INSTANCEID=f03ab659
 AURA_INSTANCENAME=Instance01    
 """
@@ -13,4 +13,3 @@ class Config:
     URI = "neo4j+s://f03ab659.databases.neo4j.io"
     USERNAME="neo4j"
     
-
