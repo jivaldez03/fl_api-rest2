@@ -396,7 +396,7 @@ def get_words(userId, pkgname):
                             "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget"
 
-    print("--neo4j_statement:", neo4j_statement)
+    #print("--neo4j_statement:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
@@ -438,11 +438,11 @@ def get_words(userId, pkgname):
 
     for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
         # kow section
-        if len(kow) == 0:
+        if len(kow[gia]) == 0:
             isitaverb = (False, [])
         else:
             verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
-            isitaverb = (('verb' in verbis), kow[gia])
+            isitaverb = (('verb' in verbis), kowc[gia])
         if isitaverb[0]:
             #print("lene elemente:", len(element[5]), element[5])
             if element[5] == [''] or len(element[5]) == 0:
@@ -668,7 +668,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
                         "where source in labels(n) and target in labels(s) \n" + \
                         "with pkgname, pkglabel, n, s, tes order by n.wordranking, tes.sorded \n" + \
-                        "with pkgname, pkglabel, n, collect(distinct s.word) as swlist  \n" + \
+                        "with pkgname, pkglabel, n, reverse(collect(distinct s.word)) as swlist  \n" + \
                         "with pkgname, pkglabel, \n" + \
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(n.ckow_complete, [])) as kowc, \n" + \
@@ -1027,7 +1027,7 @@ async def get_user_word_pronunciation(word:str, idWord:int):
     statement = 'match (ws:WordSound {word: "' +  word + '"}) ' + \
                 "where id(ws) = " + str(idWord) + " " + \
                 "return ws.binfile limit 1"  # ws.word, ws.actived, 
-    print(f"statement pronun: {statement}")
+    #print(f"statement pronun: {statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting pronunciation word: " + word,
                         statement=statement, 
