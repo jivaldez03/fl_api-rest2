@@ -467,6 +467,7 @@ def get_words(userId, pkgname):
                         }
 
         else:
+            kowo = kowc[gia]
             conjLink = ''
         if len(kowo) > 0:
             s_kow = {"type": "kow_diff_verb"
