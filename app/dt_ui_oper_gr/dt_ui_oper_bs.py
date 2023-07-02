@@ -453,7 +453,7 @@ def get_words(userId, pkgname):
             else:
                 conjLink = myConjutationLink(element[5][0])   # wordref
             for k in kowc[gia]:
-                print("valor de kkk:", k , 'verb' in k)
+                #print("valor de kkk:", k , 'verb' in k)
                 if 'verb' in k:
                     kowv.append(k)
                 else: 
