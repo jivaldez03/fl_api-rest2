@@ -368,7 +368,7 @@ def get_words(userId, pkgname):
                         "with pkgname, pkglabel, n, reverse(collect(s.word)) as swlist \n" + \
                         "with pkgname, pkglabel, \n" + \
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
-                            "collect(COALESCE(n.ckow_complete, [])) as kowc, \n" + \
+                            "collect(COALESCE(n.ckowb_complete, [])) as kowc, \n" + \
                             "collect(COALESCE(n.cword_ref, [])) as wordref, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
@@ -387,7 +387,7 @@ def get_words(userId, pkgname):
                         "with org, pkg, s, ew, collect(distinct sw.word) as sw, rscat order by rscat.wordranking, ew.wordranking, ew.word  \n" + \
                         "with org, pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
                             "collect(COALESCE(ew.ckow, [])) as kow, \n" + \
-                            "collect(COALESCE(ew.ckow_complete, [])) as kowc, \n" + \
+                            "collect(COALESCE(ew.ckowb_complete, [])) as kowc, \n" + \
                             "collect(COALESCE(ew.cword_ref, [])) as wordref, \n" + \
                             "collect(ew.word) as ewlist, collect(sw) as swlist \n" + \
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
@@ -443,20 +443,41 @@ def get_words(userId, pkgname):
         else:
             verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
             isitaverb = (('verb' in verbis), kowc[gia])
-        if isitaverb[0]:
+        
+        s_kow_verb = {'title': None}
+        kowv, kowo = [], []
+        if isitaverb[0]: # si es verbo
             #print("lene elemente:", len(element[5]), element[5])
-            if element[5] == [''] or len(element[5]) == 0:
+            if element[5] == [''] or len(element[5]) == 0:  ## es el infintivo del verbo o no hay referencia ligada
                 conjLink = myConjutationLink(element[0])      # wordref
             else:
                 conjLink = myConjutationLink(element[5][0])   # wordref
-        else:
-            conjLink = ''
-        s_kow = {"type": "kow"
+            for k in kowc[gia]:
+                print("valor de kkk:", k , 'verb' in k)
+                if 'verb' in k:
+                    kowv.append(k)
+                else: 
+                    kowo.append(k)
+            s_kow_verb = {"type": "kow_verb"
                         , "position" : "source"
                         , "apply_link": isitaverb[0] # is it a verb?
                         , "link" : conjLink
-                        , "title": get_list_elements(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
+                        , "title": get_list_elements(kowv, 3) 
+                        #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                         }
+
+        else:
+            conjLink = ''
+        if len(kowo) > 0:
+            s_kow = {"type": "kow_diff_verb"
+                            , "position" : "source"
+                            , "apply_link": isitaverb[0] # is it a verb?
+                            , "link" : ""
+                            , "title": get_list_elements(kowo,3)
+                            #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
+                            }
+        else:
+            s_kow = {'title': None}
         s_object={"type": "location"
                         , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior
                         , "apply_link": True if element[3] else False
@@ -464,7 +485,7 @@ def get_words(userId, pkgname):
                         , "title": element[3]
                         }
         ladds = []
-        for ele in [s_kow, s_object]:
+        for ele in [s_kow_verb, s_kow, s_object]:
             if ele["title"] != None:
                 ladds.append(ele)
 
@@ -671,7 +692,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "with pkgname, pkglabel, n, reverse(collect(distinct s.word)) as swlist  \n" + \
                         "with pkgname, pkglabel, \n" + \
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
-                            "collect(COALESCE(n.ckow_complete, [])) as kowc, \n" + \
+                            "collect(COALESCE(n.ckowb_complete, [])) as kowc, \n" + \
                             "collect(COALESCE(n.cword_ref, [])) as wordref, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
@@ -703,6 +724,87 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         function_name=myfunctionname())  
     
     # creating the structure to return data # ESTA SECCIÓN HASTA EL FINAL ES IGUAL A GET_WORDS
+
+    pkgdescriptor = {}
+    words = []
+    kow, kowc = [], []
+    for node in nodes:
+        sdict = dict(node)        
+        npackage = []
+        pkgdescriptor = {"packageId": pkgname
+                          , "label": sdict["label"]
+                          , "maxlevel":sdict["maxlevel"]
+        }
+        kow = sdict["kow"]
+        kowc = sdict["kowc"]
+        for gia, value in enumerate(sdict['slSource']):
+            prnReference = funcs.get_list_element(sdict["linktitles"], gia)
+            prnLink     = funcs.get_list_element(sdict["links"], gia)
+            ltarget = funcs.get_list_element(sdict["slTarget"],gia)
+            wordref = funcs.get_list_element(sdict["wordref"],gia)
+            if type(ltarget) == type(list()):
+                pass
+            else:
+                ltarget = [ltarget]
+            npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
+            words.append(value) # (value, sdict['kow']))
+    lpron = get_pronunciationId(words, pkgname, userId)
+    result = []
+    result2 = []
+
+    # we have a list with neo4 values, we need to add some elements like:
+    # - pronunciation with sentence example (lpron)
+    # - kind of word and link for conjungation verbs
+    # - location or more information for countries, skeleton, etc 
+
+    for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
+        # kow section
+        if len(kow[gia]) == 0:
+            isitaverb = (False, [])
+        else:
+            verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
+            isitaverb = (('verb' in verbis), kowc[gia])
+        if isitaverb[0]:
+            #print("lene elemente:", len(element[5]), element[5])
+            if element[5] == [''] or len(element[5]) == 0:
+                conjLink = myConjutationLink(element[0])      # wordref
+            else:
+                conjLink = myConjutationLink(element[5][0])   # wordref
+        else:
+            conjLink = ''
+        s_kow = {"type": "kow"
+                        , "position" : "source"
+                        , "apply_link": isitaverb[0] # is it a verb?
+                        , "link" : conjLink
+                        , "title": get_list_elements(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
+                        }
+        s_object={"type": "location"
+                        , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior
+                        , "apply_link": True if element[3] else False
+                        , "link" : element[4]
+                        , "title": element[3]
+                        }
+        ladds = []
+        for ele in [s_kow, s_object]:
+            if ele["title"] != None:
+                ladds.append(ele)
+
+        new_element = {'word': element[0]
+                        , "tranlate": element[1]
+                        , "position": element[2]
+                        , "pronunciation": lpron[gia]
+                        , "additional": ladds
+                        }        
+
+        element.append(lpron[gia])
+        element.append([s_kow, s_object])
+        result.append(element)
+        result2.append(new_element)
+        """
+    pkgdescriptor["message"] = result2
+
+
+
     pkgdescriptor = {}
     words = []
     kow, kowc = [], []
@@ -777,6 +879,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
         element.append([s_kow, s_object])
         result.append(element)
         result2.append(new_element)
+        """
     pkgdescriptor["message"] = result2
     print("========== id: GET_USER_WORDS4", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor

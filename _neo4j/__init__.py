@@ -1,6 +1,5 @@
 from neo4j import GraphDatabase
-#from _neo4j.neo4j_operations import connectNeo4j
-from .config import Config as cfg
+from .config import Config as cfg, get_pass
 
 class App:
     def __init__(self, uri, user, password):
@@ -57,10 +56,17 @@ class App:
         return [row["name"] for row in result]
 
     """
-def create_neo4j_app():
+
+""" def create_neo4j_app():
     app = App(cfg.URI, cfg.USERNAME, cfg.SECRET_KEY)
     return app, app.driver.session(database="neo4j")
+ """
 
+def create_neo4j_app():
+    SECRET_KEY = get_pass(cfg.USERNAME)
+    app = App(cfg.URI, cfg.USERNAME, SECRET_KEY)
+    print(f'creating objet Neo4j App:  {app}')
+    return app, app.driver.session(database="neo4j")
 
 def connectNeo4j(user, description):
     #uri = 'neo4j://localhost:7687'
