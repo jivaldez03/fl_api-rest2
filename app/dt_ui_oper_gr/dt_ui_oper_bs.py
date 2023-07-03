@@ -370,13 +370,15 @@ def get_words(userId, pkgname):
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(n.ckowb_complete, [])) as kowc, \n" + \
                             "collect(COALESCE(n.cword_ref, [])) as wordref, \n" + \
+                            "collect(COALESCE(n.wrword_ref, '')) as wr_wordref, \n" + \
+                            "collect(COALESCE(n.wr_kow, [])) as wr_kow, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
                         "match(org:Organization)<-[:SUBJECT]-(cat:Category)<-[:CAT_SUBCAT]-(scat:SubCategory {idSCat:1}) \n" + \
                         "optional match (pkgS:PackageStudy {packageId:pkgname}) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget  \n" + \
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, wr_wordref, wr_kow  \n" + \
                         "union \n" + \
                         "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
                         "(pkg:Package {packageId:'" + pkgname + "'}) \n" + \
@@ -389,12 +391,15 @@ def get_words(userId, pkgname):
                             "collect(COALESCE(ew.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(ew.ckowb_complete, [])) as kowc, \n" + \
                             "collect(COALESCE(ew.cword_ref, [])) as wordref, \n" + \
+                            "collect(COALESCE(ew.wrword_ref, '')) as wr_wordref, \n" + \
+                            "collect(COALESCE(ew.wr_kow, [])) as wr_kow, \n" + \
                             "collect(ew.word) as ewlist, collect(sw) as swlist \n" + \
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
-                        "with pkg, s, ewlist, swlist, kow, kowc, wordref, COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links \n" + \
+                        "with pkg, s, ewlist, swlist, kow, kowc, wordref, \n" + \
+                        "COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links, wr_wordref, wr_kow \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "level as maxlevel, linktitles, links, \n" + \
-                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget"
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, wr_wordref, wr_kow"
 
     #print("--neo4j_statement:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
@@ -416,6 +421,8 @@ def get_words(userId, pkgname):
         }
         kow = sdict["kow"]
         kowc = sdict["kowc"]
+        wrkowc = sdict["wr_kow"]
+        wr_wordref = sdict["wr_wordref"]
         for gia, value in enumerate(sdict['slSource']):
             prnReference = funcs.get_list_element(sdict["linktitles"], gia)
             prnLink     = funcs.get_list_element(sdict["links"], gia)
@@ -439,25 +446,33 @@ def get_words(userId, pkgname):
     for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
         # kow section
         if len(kow[gia]) == 0:
-            isitaverb = (False, [])
+            isitaverb = [False, []]
         else:
             verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
-            isitaverb = (('verb' in verbis), kowc[gia])
+            isitaverb = [('verb' in verbis), kowc[gia]]
         
         s_kow_verb = {'title': None}
         kowv, kowo = [], []
-        if isitaverb[0]: # si es verbo
+        if isitaverb[0] or 'v ' in str(wrkowc[gia]): # si es verbo
+            if not isitaverb[0]:
+                isitaverb[0] = 1
             #print("lene elemente:", len(element[5]), element[5])
-            if element[5] == [''] or len(element[5]) == 0:  ## es el infintivo del verbo o no hay referencia ligada
-                conjLink = myConjutationLink(element[0])      # wordref
+            if wr_wordref[gia] != "":
+                conjLink = myConjutationLink(wr_wordref[gia])   # wordref
+            elif element[5] == [''] or len(element[5]) == 0:  ## es el infintivo del verbo o no hay referencia ligada
+                conjLink = myConjutationLink(element[0])      # c' wordref 
             else:
-                conjLink = myConjutationLink(element[5][0])   # wordref
+                conjLink = myConjutationLink(element[5][0])   # c' wordref            
+                
             for k in kowc[gia]:
                 #print("valor de kkk:", k , 'verb' in k)
                 if 'verb' in k:
                     kowv.append(k)
                 else: 
                     kowo.append(k)
+            if len(kowv) == 0:
+                if 'v ' in str(wrkowc[gia]):
+                    kowv.append('verb')
             s_kow_verb = {"type": "kow_verb"
                         , "position" : "source"
                         , "apply_link": isitaverb[0] # is it a verb?
