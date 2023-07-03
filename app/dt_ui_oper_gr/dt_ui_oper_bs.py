@@ -472,7 +472,14 @@ def get_words(userId, pkgname):
                     kowo.append(k)
             if len(kowv) == 0:
                 if 'v ' in str(wrkowc[gia]):
-                    kowv.append('verb')
+                    if "v past" in str(wrkowc[gia]) and "v past p" in str(wrkowc[gia]):
+                        kowv.append('past - verb, past part - verb')
+                    elif "v past" in str(wrkowc[gia]):
+                        kowv.append('past - verb')
+                    elif  "v past p" in str(wrkowc[gia]):
+                        kowv.append('past part - verb')
+                    else:
+                        kowv.append('verb')
             s_kow_verb = {"type": "kow_verb"
                         , "position" : "source"
                         , "apply_link": isitaverb[0] # is it a verb?
