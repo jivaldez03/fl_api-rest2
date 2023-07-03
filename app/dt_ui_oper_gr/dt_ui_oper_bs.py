@@ -434,6 +434,7 @@ def get_words(userId, pkgname):
                 ltarget = [ltarget]
             npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
             words.append(value) # (value, sdict['kow']))
+            #print("----------------------------------------------wwword:", value)
     lpron = get_pronunciationId(words, pkgname, userId)
     result = []
     result2 = []
@@ -717,12 +718,15 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(n.ckowb_complete, [])) as kowc, \n" + \
                             "collect(COALESCE(n.cword_ref, [])) as wordref, \n" + \
+                            "collect(COALESCE(n.wrword_ref, '')) as wr_wordref, \n" + \
+                            "collect(COALESCE(n.wr_kow, [])) as wr_kow, \n" + \
                             "collect(n.word) as ewlist, \n" + \
                             "collect(swlist) as swlist \n" + \
-                        "optional match (pkgS:PackageStudy {packageId:pkgname}) \n" + \
+                        "match (pkg:Package {packageId:'2023-06-22T08:27:26.489', idSCat:1}) \n" + \
+                        "optional match (pkg)-[:STUDY]-(pkgS:PackageStudy) \n" + \
                         "return 'words' as subCat, 1 as idSCat, pkglabel as label, " + \
                             "max(pkgS.level) as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget  \n" + \
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, wr_wordref, wr_kow \n" + \
                         "union " + \
                         "match (pkg:Package {packageId:'" + pkgname + "'}) \n" + \
                         "unwind pkg." + level + " as pkgwords  " + \
@@ -736,7 +740,8 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "with pkg, s, ewlist, swlist, max(pkgS.level) as level, linktitles, links order by rand() \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "pkg.level as maxlevel, linktitles, links, \n" + \
-                            "ewlist as slSource, [] as kow, [] as kowc, [] as wordref, swlist as slTarget \n"
+                            "ewlist as slSource, [] as kow, [] as kowc, [] as wordref, \n" + \
+                            "swlist as slTarget, [] as wr_wordref, [] as wr_kow \n"
 
 
     #print("--neo4j_statement:", neo4j_statement)
@@ -760,6 +765,8 @@ def get_user_words4(userId:str, pkgname:str, level:str):
         }
         kow = sdict["kow"]
         kowc = sdict["kowc"]
+        wrkowc = sdict["wr_kow"]
+        wr_wordref = sdict["wr_wordref"]
         for gia, value in enumerate(sdict['slSource']):
             prnReference = funcs.get_list_element(sdict["linktitles"], gia)
             prnLink     = funcs.get_list_element(sdict["links"], gia)
@@ -782,25 +789,66 @@ def get_user_words4(userId:str, pkgname:str, level:str):
 
     for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
         # kow section
-        if len(kow[gia]) == 0:
-            isitaverb = (False, [])
-        else:
-            verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
-            isitaverb = (('verb' in verbis), kowc[gia])
-        if isitaverb[0]:
-            #print("lene elemente:", len(element[5]), element[5])
-            if element[5] == [''] or len(element[5]) == 0:
-                conjLink = myConjutationLink(element[0])      # wordref
+        if len(kow) == len(npackage):
+            if len(kow[gia]) == 0:
+                isitaverb = [False, []]
             else:
-                conjLink = myConjutationLink(element[5][0])   # wordref
+                verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
+                isitaverb = [('verb' in verbis), kowc[gia]]
+            
+            s_kow_verb = {'title': None}
+            kowv, kowo = [], []
+            if isitaverb[0] or 'v ' in str(wrkowc[gia]): # si es verbo
+                if not isitaverb[0]:
+                    isitaverb[0] = 1
+                #print("lene elemente:", len(element[5]), element[5])
+                if wr_wordref[gia] != "":
+                    conjLink = myConjutationLink(wr_wordref[gia])   # wordref
+                elif element[5] == [''] or len(element[5]) == 0:  ## es el infintivo del verbo o no hay referencia ligada
+                    conjLink = myConjutationLink(element[0])      # c' wordref 
+                else:
+                    conjLink = myConjutationLink(element[5][0])   # c' wordref            
+                    
+                for k in kowc[gia]:
+                    #print("valor de kkk:", k , 'verb' in k)
+                    if 'verb' in k:
+                        kowv.append(k)
+                    else: 
+                        kowo.append(k)
+                if len(kowv) == 0:
+                    if 'v ' in str(wrkowc[gia]):
+                        if "v past" in str(wrkowc[gia]) and "v past p" in str(wrkowc[gia]):
+                            kowv.append('past - verb, past part - verb')
+                        elif "v past" in str(wrkowc[gia]):
+                            kowv.append('past - verb')
+                        elif  "v past p" in str(wrkowc[gia]):
+                            kowv.append('past part - verb')
+                        else:
+                            kowv.append('verb')
+                s_kow_verb = {"type": "kow_verb"
+                            , "position" : "source"
+                            , "apply_link": isitaverb[0] # is it a verb?
+                            , "link" : conjLink
+                            , "title": get_list_elements(kowv, 3) 
+                            #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
+                            }
+
+            else:
+                kowo = kowc[gia]
+                conjLink = ''
+            if len(kowo) > 0:
+                s_kow = {"type": "kow_diff_verb"
+                                , "position" : "source"
+                                , "apply_link": isitaverb[0] # is it a verb?
+                                , "link" : ""
+                                , "title": get_list_elements(kowo,3)
+                                #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
+                                }
+            else:
+                s_kow = {'title': None}
         else:
-            conjLink = ''
-        s_kow = {"type": "kow"
-                        , "position" : "source"
-                        , "apply_link": isitaverb[0] # is it a verb?
-                        , "link" : conjLink
-                        , "title": get_list_elements(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
-                        }
+            s_kow_verb, s_kow= {'title': None}, {'title': None}
+            
         s_object={"type": "location"
                         , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior
                         , "apply_link": True if element[3] else False
@@ -808,7 +856,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         , "title": element[3]
                         }
         ladds = []
-        for ele in [s_kow, s_object]:
+        for ele in [s_kow_verb, s_kow, s_object]:
             if ele["title"] != None:
                 ladds.append(ele)
 
@@ -943,6 +991,7 @@ async def post_user_words4(datas:ForNewPackage
             "'" + userId + "' as user_id, \n" + \
             str(capacity) + " as capacity \n" + \
             "match (u:User {userId:user_id}) \n" + \
+            "set u.words = CASE WHEN u.words = [] THEN null ELSE u.words END \n" + \
             "with u.userId as userId, COALESCE(u[wSCat],['.']) as uwords, packageId, wSCat, capacity \n" + \
             "unwind uwords as words \n" + \
             "with userId, words, packageId, wSCat, capacity order by rand() \n" + \
