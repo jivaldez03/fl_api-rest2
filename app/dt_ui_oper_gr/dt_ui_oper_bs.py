@@ -180,34 +180,36 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "sc.idSCat as idSCat "
 
 
-    neo4j_statement =  "match (es:Word:English) " + \
-        "match (c:Category {idCat:1})<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) " + \
-        "with c, sc, count(es.word) as wordsSC " + \
-        "optional match (pkg:Package {userId:'" + userId + "',status:'close',idSCat:sc.idSCat}) " + \
-        "optional match (pkg)<-[rst:STUDY]-(pkgS:PackageStudy) " + \
-        "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, " + \
-                "sum(size(pkg.words)) as learned, " + \
-                "c.idCat * 1000000 + sc.idSCat as idSCat, " + \
-                "c.idCat as idCat, " + \
-                "sc.idSCat as idCS " + \
-        "union " + \
-        "match (pkg:Package {userId:'" + userId + "'}) " + \
-        "with distinct pkg.idSCat as idSCats " + \
-        "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) " + \
-        "match (og)<-[rsub:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:idSCats})-[esr]-(es:ElemSubCat:English) " + \
-        "-[tr]-(ws:ElemSubCat:Spanish) " + \
-        "with c, sc, count(es.word) as wordsSC " + \
-        "order by sc.idSCat, c.name, sc.name " + \
-        "optional match (pkg:Package {userId:'" + userId + "',status:'close',idSCat:sc.idSCat}) " + \
-        "return c.name as CatName, " + \
-                "sc.name as SCatName, " + \
-                "wordsSC as totalwords, " + \
-                "sum(size(pkg.words)) as learned, " + \
-                "c.idCat * 1000000 + sc.idSCat as idSCat, " + \
-                "c.idCat as idCat, " + \
+    neo4j_statement =  "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
+        "[:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
+        "match (es:Word) where o.lSource in labels(es) \n" + \
+        "with u, c, sc, count(es.word) as wordsSC \n" + \
+        "optional match (sc)<-[]-(pkg:Package {userId:'" + userId + "',status:'close',idSCat:sc.idSCat}) \n" + \
+        "optional match (pkg)<-[rst:STUDY]-(pkgS:PackageStudy) \n" + \
+        "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
+                "sum(size(pkg.words)) as learned, \n" + \
+                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
+                "c.idCat as idCat, \n" + \
+                "sc.idSCat as idCS \n" + \
+        "union \n" + \
+        "match (pkg:Package {userId:'" + userId + "'}) \n" + \
+        "with distinct pkg.idSCat as idSCats \n" + \
+        "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
+        "match (og)<-[rsub:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-\n" + \
+        "(sc:SubCategory {idSCat:idSCats})-[esr]-(es:ElemSubCat:English) " + \
+        "-[tr]-(ws:ElemSubCat:Spanish) \n" + \
+        "with c, sc, count(es.word) as wordsSC \n" + \
+        "order by sc.idSCat, c.name, sc.name \n" + \
+        "optional match (pkg:Package {userId:'" + userId + "',status:'close',idSCat:sc.idSCat}) \n" + \
+        "return c.name as CatName, \n" + \
+                "sc.name as SCatName, \n" + \
+                "wordsSC as totalwords, \n" + \
+                "sum(size(pkg.words)) as learned, \n" + \
+                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
+                "c.idCat as idCat, \n" + \
                 "sc.idSCat as idCS"
     
-    print(f"neo4j_state: {neo4j_statement}")
+    #print(f"neo4j_state: {neo4j_statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting data for dashboard table",
                         statement=neo4j_statement, 
