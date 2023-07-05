@@ -123,7 +123,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "return o.name, c.name as category, c.idCat as idCat, \n" + \
                                 "collect(subcategory) as subcategories, collect(idCS) as subid"
     
-    print('cats-subcats:', neo4j_statement)
+    #print('cats-subcats:', neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting categories for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -279,7 +279,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     idCat = idSCat // 1000000
     idSCat = idSCat % 1000000
 
-    print('idcattt:', idCat, 'idSCat:', idSCat)
+    #print('idcattt:', idCat, 'idSCat:', idSCat)
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
@@ -443,7 +443,7 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
 def get_words(userId, pkgname):
     global app, session, log
 
-    print('='*50," inicia get_userwords", _getdatime_T())
+    #print('='*50," inicia get_userwords", _getdatime_T())
 
     npackage = []
 
@@ -499,7 +499,7 @@ def get_words(userId, pkgname):
     neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "'})" + \
                         "-[:PACKAGED]-(u:User {userId:'" + userId + "'})\n" + \
                         "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
-                        "-(c:Category)<-[:CAT_SUBCAT]-(sc:SubCategory)<-[:PACK_SUBCAT]-(pkg)\n" + \
+                        "-(c:Category)<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:1})<-[:PACK_SUBCAT]-(pkg)\n" + \
                         "unwind pkg.words as pkgwords  \n" + \
                         "with pkg, pkg.packageId as pkgname, o.ptgmaxerrs as maxerrs, \n" + \
                             " pkg.label as pkglabel, pkgwords as pkgwords, \n" + \
@@ -580,7 +580,13 @@ def get_words(userId, pkgname):
             npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
             words.append(value) # (value, sdict['kow']))
             #print("----------------------------------------------wwword:", value)
+
+    #print('gggget_pronunciationId(:', words, pkgname, userId)
+          
     lpron = get_pronunciationId(words, pkgname, userId)
+
+    #print(' lpront:', lpron)
+          
     result = []
     result2 = []
 
@@ -671,7 +677,7 @@ def get_words(userId, pkgname):
         result2.append(new_element)
     pkgdescriptor["message"] = result2
 
-    print('='*50," finaliza -get_words", _getdatime_T())
+    #print('='*50," finaliza -get_words", _getdatime_T())
 
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor
@@ -717,7 +723,7 @@ def post_user_words(datas:ForNewPackage
     """
     global appNeo, session, log
 
-    print("\n\n\n",'='*50," inicia -pst_userwords", _getdatime_T())
+    #print("\n\n\n",'='*50," inicia -pst_userwords", _getdatime_T())
 
     token=funcs.validating_token(Authorization) 
     userId = token['userId']
@@ -750,7 +756,7 @@ def post_user_words(datas:ForNewPackage
                         filename=__name__, 
                         function_name=myfunctionname())
     
-    print("\n\n\n",'='*50," termina -pst_userwords paso 1", _getdatime_T())
+    #print("\n\n\n",'='*50," termina -pst_userwords paso 1", _getdatime_T())
     
     #npackage = []
     #continueflag = False
@@ -797,7 +803,7 @@ def post_user_words(datas:ForNewPackage
             pkgwords = sdict["pkgwords"]
 
 
-    print("\n\n\n",'='*50," termina -pst_userwords paso 2", _getdatime_T())
+    #print("\n\n\n",'='*50," termina -pst_userwords paso 2", _getdatime_T())
     
     if idSCat == 1:                                                # words category is required
         neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
@@ -889,7 +895,7 @@ def post_user_words(datas:ForNewPackage
                         function_name=myfunctionname())    
 
 
-    print("\n\n\n",'='*50," termina -pst_userwords paso 3", _getdatime_T())
+    #print("\n\n\n",'='*50," termina -pst_userwords paso 3", _getdatime_T())
     # creating the data structure to return it
     words = []
     for node in nodes:
@@ -926,7 +932,7 @@ def post_user_words(datas:ForNewPackage
 
     # now, getting the package using the same endpoint function to return words package
 
-    print("\n\n\n",'='*50," finaliza -pst_userwords", _getdatime_T(), " y sigue get_words")
+    #print("\n\n\n",'='*50," finaliza -pst_userwords", _getdatime_T(), " y sigue get_words")
 
     pkgdescriptor = get_words(userId, pkgname)
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
