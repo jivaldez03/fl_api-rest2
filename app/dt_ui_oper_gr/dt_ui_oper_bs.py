@@ -834,7 +834,7 @@ def post_user_words(datas:ForNewPackage
                 "-(c:Category {idCat:" + str(idCat) + "}) \n" + \
                 "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
                 "optional match (u)<-[:PACKAGED]-(pkg:Package {status:'open'})-[:PACK_SUBCAT]->(sc) \n" + \
-                "with u, pkg, pkg.words as pkgw \n" + \
+                "with u, pkg, coalesce(pkg.words,['.']) as pkgw \n" + \
                 "unwind pkgw as pkgword \n" + \
                 "with u, collect(pkgword) as pkgwords \n" + \
                 "match (n:Word:English) \n" + \
