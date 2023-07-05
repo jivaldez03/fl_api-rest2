@@ -444,6 +444,8 @@ def get_words(userId, pkgname):
     npackage = []
 
     level = 'null'  # elementary level
+
+    #print("\n\n\n*******************************\nuuuuserid:", userId, pkgname)
     
     neo4j_statement = "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
                         "(pkg:Package {packageId:'" + pkgname + "', idSCat:1}) " + \
@@ -932,7 +934,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
 
     neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', idSCat:1}) \n" + \
                         "unwind pkg." + level + " as pkgwords  \n" + \
-                        "with pkg, pkgname, pkgwords as pkgwords \n" + \
+                        "with pkg, pkg.packageId as pkgname, pkgwords as pkgwords \n" + \
                         "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
                         "where pkg.source in labels(n) and pkg.target in labels(s) \n" + \
                         "with pkg, pkgname, n, s, tes order by n.wordranking, tes.sorded \n" + \
@@ -952,7 +954,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "union " + \
                         "match (pkg:Package {packageId:'" + pkgname + "'}) \n" + \
                         "unwind pkg." + level + " as pkgwords  " + \
-                        "match (pkg)-[:PACK_SUBCAT]->(s:SubCategory)-[scat:SUBCAT]<-" + \
+                        "match (pkg)-[:PACK_SUBCAT]->(s:SubCategory)<-[scat:SUBCAT]-" + \
                             "(ew:ElemSubCat {word:pkgwords})-[:TRANSLATOR]->(sw:ElemSubCat)  \n" + \
                         "where pkg.source in labels(ew) and pkg.target in labels(sw) \n" + \
                         "with pkg, s, ew, collect(distinct sw.word) as sw, scat \n" + \
@@ -1002,6 +1004,8 @@ def get_user_words4(userId:str, pkgname:str, level:str):
             npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
             words.append(value) # (value, sdict['kow']))
     lpron = get_pronunciationId(words, pkgname, userId)
+
+    #print('***************************************\nlennnn lpron:', len(lpron), lpron)
     result = []
     result2 = []
 
@@ -1194,6 +1198,9 @@ async def post_user_words4(datas:ForNewPackage
     global appNeo, session
     
     idSCat = datas.idScat
+
+    idCat = idSCat // 1000000
+    idSCat = idSCat % 1000000
     pkgname = datas.package
     capacity = datas.capacity    
     
@@ -1234,6 +1241,31 @@ async def post_user_words4(datas:ForNewPackage
             "set pkg2.words40 = pkg.words40[0..-1] \n" + \
             "return userId, packageId limit 1 "
     
+
+    neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
+            "'" + wSCat + "' as wSCat, \n" + \
+            "'" + userId + "' as user_id, \n" + \
+            str(capacity) + " as capacity \n" + \
+            "match (u:User {userId:user_id}) \n" + \
+            "set u.words = CASE WHEN u.words = [] THEN null ELSE u.words END \n" + \
+            "with u.userId as userId, COALESCE(u[wSCat],['.']) as uwords, packageId, wSCat, capacity \n" + \
+            "unwind uwords as words \n" + \
+            "with userId, words, packageId, wSCat, capacity order by rand() \n" + \
+            "with userId, collect(words) as words, packageId, wSCat, capacity \n" + \
+            "with userId, words[0..capacity] as lwords, packageId, wSCat, capacity \n" + \
+            "match (u)-[rp:PACKAGED]-(pkg:Package {packageId:packageId}) \n" + \
+            "set pkg.words40=(pkg.words + lwords)[0..capacity], \n" + \
+                "pkg.status='open', \n" + \
+                "pkg.ctUpdate = datetime('" + dtexec + "') \n" + \
+            "create (pkgS:PackageStudy {level:'" + level + "'})-[rs:STUDY]->(pkg) \n" + \
+            "set pkgS.studying_dt = datetime('" + dtexec + "'), \n" + \
+                "pkgS.grade = [0,capacity] \n" + \
+            "with userId, packageId, pkg, wSCat \n" + \
+            "match (u2:User {userId:userId}) \n" + \
+            "where u2." + wSCat + " is null \n" + \
+            "match (pkg2:Package {packageId:packageId})-[]-(u2) \n" + \
+            "set pkg2.words40 = pkg.words40[0..-1] \n" + \
+            "return userId, packageId limit 1 "
     nodes, log = neo4j_exec(session, userId,
                     log_description="post_user_words4 -level_40_ \n packageId: " + pkgname,
                     statement=neo4j_statement,
