@@ -177,10 +177,10 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "wordsSC as totalwords, " + \
                 "sum(size(pkg.words)) as learned, " + \
                 "c.idCat as idCat, " + \
-                "sc.idSCat as idSCat"
+                "sc.idSCat as idSCat "
 
 
-    neo4j_statement = "match (es:Word:English) " + \
+    neo4j_statement =  "match (es:Word:English) " + \
         "match (c:Category {idCat:1})<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) " + \
         "with c, sc, count(es.word) as wordsSC " + \
         "optional match (pkg:Package {userId:'" + userId + "',status:'close',idSCat:sc.idSCat}) " + \
