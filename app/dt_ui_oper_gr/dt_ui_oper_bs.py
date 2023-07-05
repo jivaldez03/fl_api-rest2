@@ -187,9 +187,9 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         "optional match (pkg)<-[rst:STUDY]-(pkgS:PackageStudy) " + \
         "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, " + \
                 "sum(size(pkg.words)) as learned, " + \
-                "c.idCat * 1000000 + sc.idSCat as idCS, " + \
+                "c.idCat * 1000000 + sc.idSCat as idSCat, " + \
                 "c.idCat as idCat, " + \
-                "sc.idSCat as idSCat " + \
+                "sc.idSCat as idCS " + \
         "union " + \
         "match (pkg:Package {userId:'" + userId + "'}) " + \
         "with distinct pkg.idSCat as idSCats " + \
@@ -203,9 +203,9 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "sc.name as SCatName, " + \
                 "wordsSC as totalwords, " + \
                 "sum(size(pkg.words)) as learned, " + \
-                "c.idCat * 1000000 + sc.idSCat as idCS, " + \
+                "c.idCat * 1000000 + sc.idSCat as idSCat, " + \
                 "c.idCat as idCat, " + \
-                "sc.idSCat as idSCat"
+                "sc.idSCat as idCS"
     
     print(f"neo4j_state: {neo4j_statement}")
     nodes, log = neo4j_exec(session, userId,
