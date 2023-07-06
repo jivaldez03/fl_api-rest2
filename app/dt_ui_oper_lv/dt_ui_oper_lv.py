@@ -68,3 +68,67 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())        
     return {'message': listcat}
 
+
+def set_archived_package(packagename, userId):
+    """
+    Function to closed and add package words to the user's learned words
+    """
+    # getting the WordSound id for each word and example
+
+    neo4j_statement = "with '" + packagename + "' as pkgname, \n" + \
+                        "'" + userId + "' as userId \n" + \
+                        "match (p:Package {packageId:pkgname, userId:userId, status:'open'}) \n" + \
+                        "-[:PACKAGED]->(u:User {userId:userId}) \n" + \
+                        "set p.status = 'closed', p.ctUpdate = datetime(), \n" + \
+                        "  p.ctArchived = datetime() \n" + \
+                        "set u.German = " + \
+                        "  CASE WHEN p.source = 'German' \n" + \
+                        "         THEN CASE WHEN u[p.source] is null THEN p.words ELSE u[p.source] + p.words END \n" + \
+                        "         ELSE u.German END, \n" + \
+                        "  u.English = " + \
+                        "  CASE WHEN p.source = 'English' \n" + \
+                        "               THEN CASE WHEN u[p.source] is null THEN p.words ELSE u[p.source] + p.words END \n" + \
+                        "                        ELSE u.English END, \n" + \
+                        "  u.ctUpdate = datetime() \n" + \
+                        "return p.packageId as packageId , p.label as slabel, p.status as status " 
+    
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="archive package" + packagename,
+                        statement=neo4j_statement,
+                        filename=__name__,
+                        function_name=myfunctionname())
+    res = {"message" : "ERROR - INVALID OPERATION", 
+           "packageId": None, 
+           "label":None, 
+           "status":None
+           }
+    for node in nodes:
+        #print(f"ciclo de nodes")
+        sdict = dict(node)
+        res = {'packageId': sdict["packageId"], "label":sdict["slabel"], "status":sdict["status"]}
+        res["message"] = "-- SUCCESSFUL OPERATION --"
+    return res
+
+
+@router.post("/pst_/packagearchive/")
+async def pst_packagearchive(package:str
+                    , Authorization: Optional[str] = Header(None)):
+    """
+    Function change the package's label \n    
+    
+    {\n
+        package:str=None
+    }
+    """
+    global appNeo, session
+
+    token=funcs.validating_token(Authorization) 
+    userId = token['userId']
+
+    print("\n\n\n","="*30, "se ejecuta cierre de package")
+
+    res = set_archived_package(package, userId)
+
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return res
+

@@ -315,7 +315,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                 "pkg.SubCat as SCatName, \n" + \
                 "c.idCat * 1000000 + pkg.idSCat as idSCat, \n" + \
                 "split(level,'-,-')[0] as level, \n" + \
-                "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
+                "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs, pkg.label as labelname"
     
     #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
@@ -350,6 +350,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                 , 'maxlevel': maxlevel # sdict["level"]
                 , 'ptg_errors' : ptg_errors
                 , 'maxptg_errs':sdict["maxerrs"]
+                , 'label':sdict["labelname"]
         }
         
         listPack.append(ndic)
@@ -834,7 +835,7 @@ def post_user_words(datas:ForNewPackage
                         "swlist[0.." + str(capacity) + "] as slTarget \n"
         
         neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
-                "set u.words = CASE WHEN u.words = null THEN [] ELSE u.words END \n" + \
+                "set u.words = CASE WHEN u.words is null THEN [] ELSE u.words END \n" + \
                 "with u \n" + \
                 "match (u)-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT] \n" + \
                 "-(c:Category {idCat:" + str(idCat) + "}) \n" + \
@@ -843,7 +844,7 @@ def post_user_words(datas:ForNewPackage
                 "with u, pkg, coalesce(pkg.words,['.']) as pkgw \n" + \
                 "unwind pkgw as pkgword \n" + \
                 "with u, collect(pkgword) as pkgwords \n" + \
-                "match (n:Word:English) \n" + \
+                "match (n:Word:" + lgSource + ") \n" + \
                 "where not n.word in pkgwords  \n" + \
                 "with u, n, n.word in u.words as alreadystored \n" + \
                 "where alreadystored = False \n" + \
@@ -906,6 +907,8 @@ def post_user_words(datas:ForNewPackage
             #npackage.append([value, sdict["slTarget"][gia], gia + 1, prnFileName, prnLink])
             words.append(value)
 
+    print('\n\n\n',30*'=','lista de words pst_words:', words)
+
     #creating data structure  version del 20230703 tiene la versión de esta sección
     neo4j_statement = "with " + str(list(words)) + " as wordlist \n" + \
                     "match (u:User {userId:'" + userId + "'}) \n" + \
@@ -917,7 +920,7 @@ def post_user_words(datas:ForNewPackage
                     "-[pkgd:PACKAGED]->(u) \n" + \
                     "set pkg.words=wordlist, pkg.idSCat=" + str(idSCat) + ", \n" + \
                         "pkg.status='open', pkg.SubCat='" + idSCatName + "', \n" + \
-                        "pkg.label=' ', \n" + \
+                        "pkg.label  = pkg.packageId , \n" + \
                         "pkg.source = '"+ lgSource + "', \n"  + \
                         "pkg.target = '"+ lgTarget + "', \n"  + \
                         "pkg.ctInsert = datetime() "  + \

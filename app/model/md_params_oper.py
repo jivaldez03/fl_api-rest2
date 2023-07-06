@@ -15,3 +15,6 @@ class ForClosePackages(BaseModel):
     cardsQty: int 
 
  
+class ForNamePackages(BaseModel):
+    package: str=None
+    label: str = None
