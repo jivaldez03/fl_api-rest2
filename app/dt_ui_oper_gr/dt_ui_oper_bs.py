@@ -11,6 +11,46 @@ from app.model.md_params_oper import ForPackages as ForNewPackage
 
 router = APIRouter()
 
+def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):    
+    if idCat == None:
+        neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "'})\n" + \
+                "-[:PACKAGED]->(u:User {userId:'" + userId + "'}) \n" + \
+                "match (pkg)-[:PACK_SUBCAT]->(sc:SubCategory {idSCat:pkg.idSCat})-\n" + \
+                "[:CAT_SUBCAT]->(c:Category)-[:SUBJECT]->(o:Organization)<-[:RIGHTS_TO]-(u) \n" + \
+                "return pkg.source as pkgsource, sc.idSCat as idSCat, c.idCat as idCat"    
+
+    else:
+        neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
+                "-[:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
+                "-(c:Category {idCat:" + str(idCat) + "})\n" + \
+                "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+                "match (pkg:Package {packageId:'" + pkgname + "'})\n" + \
+                "-[:PACKAGED]->(u) \n" + \
+                "return pkg.source as pkgsource"    
+
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting new words (step 1) for new package",
+                        statement=neo4j_statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())
+
+    pkgsource = ""
+    for node in nodes:
+        sdict = dict(node)
+        pkgsource = sdict["pkgsource"]        
+
+    if idCat == None:
+        idCat = sdict["idCat"]
+        idSCat = sdict["idSCat"]
+
+    if idSCat == 1:
+        wSCat = pkgsource
+    else:
+        wSCat = "w_SC_" + str(idCat * 1000000 + idSCat) # 'w_idSCat_' + str(idSCat)
+
+    print("\n\n\n","="*50,"wsCat =", wSCat, idCat, idSCat)
+    return wSCat
+
 def get_pronunciationId(words, packagename, userId):
     """
     Function to identify and return the id() of pronunciation file
@@ -628,7 +668,7 @@ def post_user_words(datas:ForNewPackage
 
 
     # getting SubCat, Category, and Organization values for Subcategory
-    neo4j_statement_pre = "match (u:User {userId:'" + userId + "'}) \n" + \
+    neo4j_statement_pre = "match (u:User {userId:'" + userId + "'})\n" + \
                             "-[rt:RIGHTS_TO]->(o:Organization)<-\n" + \
                             "[:SUBJECT]-(c:Category {idCat:" + str(idCat) + "})" + \
                             "<-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
@@ -711,7 +751,7 @@ def post_user_words(datas:ForNewPackage
         
 
     else: # if idSCat != 1:                                   # other one subcategory is required
-        idSCatName = "idSCat_" + str(idCat * 1000000 + idSCat) 
+        idSCatName = "w_SC_" + str(idCat * 1000000 + idSCat) 
 
         neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
                 "match (u:User {userId:'" + userId + "'}) \n" + \
@@ -732,6 +772,7 @@ def post_user_words(datas:ForNewPackage
                 "set u." + idSCatName + " = CASE WHEN u." + idSCatName + " is null \n" + \
                     "THEN [] \n" + \
                     "ELSE u." + idSCatName + " END \n" + \
+                "with  u, pkgwords \n" + \
                 "match (c:Category)-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "})-\n" + \
                 "[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]-" + \
                     "(sw:ElemSubCat:" + lgTarget + ") \n" + \
@@ -1008,6 +1049,7 @@ async def post_user_words4(datas:ForNewPackage
 
     dtexec = funcs._getdatime_T()
 
+    """
     # we need to know which words are in open package to exclude of the new page  #w_idSCat
     neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
                 "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
@@ -1031,8 +1073,9 @@ async def post_user_words4(datas:ForNewPackage
     if idSCat == 1:
         wSCat = pkgsource
     else:
-        wSCat = "w_idSCat_" + str(idCat * 1000000 + idSCat) # 'w_idSCat_' + str(idSCat)
-    
+        wSCat = "w_SC_" + str(idCat * 1000000 + idSCat) # 'w_idSCat_' + str(idSCat)
+    """
+    wSCat = get_w_SCat (userId, pkgname, idCat, idSCat)
 
     neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
             "'" + wSCat + "' as wSCat, \n" + \
@@ -1099,7 +1142,7 @@ async def post_user_words5(datas:ForNewPackage
     if idSCat == 1:
         wSCat = 'words'
     else:
-        wSCat = 'w_idSCat_' + str(idSCat)
+        wSCat = 'w_SC_' + str(idSCat)
 
     neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
             "'" + wSCat + "' as wSCat, \n" + \

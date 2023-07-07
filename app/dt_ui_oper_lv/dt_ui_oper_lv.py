@@ -4,6 +4,8 @@ from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs # import reg_exp as rexp #  as funcs^(lev([0-9][0-9])(_)([09][0-9]))$
 from __generalFunctions import myfunctionname, _getdatime_T
+#from dt_ui_oper_gr.dt_ui_oper_bs import get_w_SCat
+from ..dt_ui_oper_gr.dt_ui_oper_bs import get_w_SCat
 
 from app.model.md_params_oper import ForClosePackages
 
@@ -46,6 +48,7 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
                     "set pkgS.level = '" + level + "', \n" + \
                         "pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "], \n" + \
                         "pkgS.ptgerror = " + str(gradeval) + " \n" + \
+                        "pkgS.ctInsert = datetime() \n" + \
                     "return pkg.packageId as packageId, pkgS.studing_dt, \n" + \
                          "pkgS.level as level, pkgS.grade as grade, pkgS.ptgerror as ptgerror"
     nodes, log = neo4j_exec(session, userId,
@@ -74,6 +77,7 @@ def set_archived_package(packagename, userId):
     Function to closed and add package words to the user's learned words
     """
     # getting the WordSound id for each word and example
+    wSCat = get_w_SCat (userId, packagename)
 
     neo4j_statement = "with '" + packagename + "' as pkgname, \n" + \
                         "'" + userId + "' as userId \n" + \
@@ -81,14 +85,10 @@ def set_archived_package(packagename, userId):
                         "-[:PACKAGED]->(u:User {userId:userId}) \n" + \
                         "set p.status = 'closed', p.ctUpdate = datetime(), \n" + \
                         "  p.ctArchived = datetime() \n" + \
-                        "set u.German = " + \
-                        "  CASE WHEN p.source = 'German' \n" + \
-                        "         THEN CASE WHEN u[p.source] is null THEN p.words ELSE u[p.source] + p.words END \n" + \
-                        "         ELSE u.German END, \n" + \
-                        "  u.English = " + \
-                        "  CASE WHEN p.source = 'English' \n" + \
-                        "               THEN CASE WHEN u[p.source] is null THEN p.words ELSE u[p.source] + p.words END \n" + \
-                        "                        ELSE u.English END, \n" + \
+                        "set u." + wSCat + " = " + \
+                        "CASE WHEN u." + wSCat + " is null \n" + \
+                            "THEN p.words \n" + \
+                            "ELSE u." + wSCat + " + p.words END, \n" + \
                         "  u.ctUpdate = datetime() \n" + \
                         "return p.packageId as packageId , p.label as slabel, p.status as status " 
     
