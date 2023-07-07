@@ -345,6 +345,106 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     return {'message': listPack}
 
 
+@router.get("/get_/user_packagehistorylist/")
+async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, ssearch:str=None, sword:str=None
+                               ,Authorization: Optional[str] = Header(None)):
+    """
+    endpoint/subCategoryId?page=1&show=10&search='2023'
+    --------------------------------
+    {
+        data: any[],
+        pageLast: number,
+    }
+
+    Function to get opened package list in a specific SubCategory \n
+
+    """
+    global appNeo, session, log 
+
+    idCat = idSCat // 1000000
+    idSCat = idSCat % 1000000
+
+    #print('idcattt:', idCat, 'idSCat:', idSCat)
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+    if ssearch == None:
+        ssearch = ''
+    if sword == None:
+        sword = ''
+    ssearch = ssearch.strip().replace("'","").replace('"',"")
+    sword = sword.strip().replace("'","").replace('"',"")
+
+    statement = "with '" + ssearch + "' as slabel, '" + sword + "' as sword \n" + \
+                "match (u:User {userId:'" + userId + "'})\n" + \
+                "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
+                "-(c:Category {idCat:" + str(idCat) + "})\n" + \
+                "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+                "-[:PACK_SUBCAT]-(pkg:Package {userId: u.userId, status:'closed'})-[]->(u) \n" + \
+                "where (pkg.label contains slabel or slabel = '') \n" + \
+                    "and (sword in pkg.words or sword = '') \n" + \
+                "with u, o, c, collect(pkg) as pkgs, count(pkg) as qtypkg \n" + \
+                "unwind pkgs as pkg\n" + \
+                "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
+                "with u, pkg, c, o, pkgS.level as level, \n" + \
+                "min(pkgS.ptgerror) as grade, \n" + \
+                "coalesce(o.ptgmaxerrs,100.0-85.0) as maxerrs, qtypkg \n" + \
+                "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, \n" + \
+                "count(DISTINCT level) as levs, maxerrs, qtypkg \n" + \
+                "return pkg.packageId, c.idCat as idCat, c.name as CatName, \n" + \
+                    "pkg.SubCat as SCatName, \n" + \
+                    "c.idCat * 1000000 + pkg.idSCat as idSCat, \n" + \
+                    "split(level,'-,-')[0] as level, \n" + \
+                    "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs, pkg.label as labelname, qtypkg \n" + \
+                "order by coalesce(pkg.ctUpdate, pkg.ctInsert) desc \n" + \
+                "skip " + str((ipage - 1) * ishow) + " \n" + \
+                "limit " + str(ishow) 
+    
+    #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
+
+    #print("\n\n\n",'='*50,"statement:\n", statement)
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting opened packages list",
+                        statement=statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    
+    listPack = []
+    for node in nodes:
+        sdict = dict(node)    
+        #subcat_list = []
+        #print('sdict:', sdict)
+        
+        if sdict["grade"] == None:
+            ptg_errors = 100
+        else:
+            ptg_errors = float(sdict["grade"]) #  - 1) * 100            
+            if ptg_errors < 0:
+                ptg_errors = 100
+        #print(ptg_errors, 'maxerrs', sdict["maxerrs"])
+        if sdict["maxerrs"] > (ptg_errors if ptg_errors>=0 else 100):
+            maxlevel = sdict["level"]
+        else:
+            maxlevel = funcs.level_seq(sdict["level"], forward=False)
+        ndic = {'packageId': sdict["pkg.packageId"]
+                , 'Category': sdict["CatName"], 'idCat' : sdict["idCat"]
+                , 'SubCat': sdict["SCatName"], 'idSCat' : sdict["idSCat"]
+                , 'distinct_levs': sdict["levs"]
+                , 'maxlevel': maxlevel # sdict["level"]
+                , 'ptg_errors' : ptg_errors
+                , 'maxptg_errs':sdict["maxerrs"]
+                , 'label':sdict["labelname"]
+        }
+        totrecs = sdict["qtypkg"]
+        
+        listPack.append(ndic)
+    totalpages = totrecs // ishow 
+    if totalpages * ishow != totrecs:
+        totalpages += 1
+    
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return {'page': ipage, 'show': ishow, 'totrecs': totrecs, 'lastpage':totalpages, 'data':listPack}
+
+
 @router.get("/get_/user_package_st/{packageId}")
 async def get_user_package_st(packageId:str, Authorization: Optional[str] = Header(None)):
     """
