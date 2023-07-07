@@ -445,7 +445,8 @@ def get_words(userId, pkgname):
                             "where pkgS.ptgerror <= maxerrs \n" + \
                         "return 'words' as subCat, pkg.idSCat as idSCat, pkglabel as label, " + \
                             "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, wr_wordref, wr_kow  \n" + \
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
+                            "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget  \n" + \
                         "union \n" + \
                         "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
                         "(pkg:Package {packageId:'" + pkgname + "'})\n" + \
@@ -469,7 +470,8 @@ def get_words(userId, pkgname):
                         "COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links, wr_wordref, wr_kow \n" + \
                         "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
                             "level as maxlevel, linktitles, links, \n" + \
-                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, wr_wordref, wr_kow"
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
+                            "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
     
     #print("--neo4j_statement:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
@@ -493,6 +495,8 @@ def get_words(userId, pkgname):
         kowc = sdict["kowc"]
         wrkowc = sdict["wr_kow"]
         wr_wordref = sdict["wr_wordref"]
+        langs = sdict["langsource"]
+        langt = sdict["langtarget"]
         for gia, value in enumerate(sdict['slSource']):
             prnReference = funcs.get_list_element(sdict["linktitles"], gia)
             prnLink     = funcs.get_list_element(sdict["links"], gia)
@@ -528,18 +532,18 @@ def get_words(userId, pkgname):
             verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
             isitaverb = [('verb' in verbis), kowc[gia]]
         
-        s_kow_verb = {'title': None}
-        kowv, kowo = [], []
+        s_kow_verb, s_kow_past_verb = {'title': None}, {'title': None}
+        kowv, kowo, past_verb = [], [], False
         if isitaverb[0] or 'v ' in str(wrkowc[gia]): # si es verbo
             if not isitaverb[0]:
                 isitaverb[0] = 1
             #print("lene elemente:", len(element[5]), element[5])
             if wr_wordref[gia] != "":
-                conjLink = myConjutationLink(wr_wordref[gia])   # wordref
+                conjLink = myConjutationLink(wr_wordref[gia], langs)   # wordref
             elif element[5] == [''] or len(element[5]) == 0:  ## es el infintivo del verbo o no hay referencia ligada
-                conjLink = myConjutationLink(element[0])      # c' wordref 
+                conjLink = myConjutationLink(element[0], langs)      # c' wordref 
             else:
-                conjLink = myConjutationLink(element[5][0])   # c' wordref            
+                conjLink = myConjutationLink(element[5][0], langs)   # c' wordref            
                 
             for k in kowc[gia]:
                 #print("valor de kkk:", k , 'verb' in k)
@@ -551,12 +555,19 @@ def get_words(userId, pkgname):
                 if 'v ' in str(wrkowc[gia]):
                     if "v past" in str(wrkowc[gia]) and "v past p" in str(wrkowc[gia]):
                         kowv.append('past - verb, past part - verb')
+                        past_verb = True
                     elif "v past" in str(wrkowc[gia]):
                         kowv.append('past - verb')
+                        past_verb = True
                     elif  "v past p" in str(wrkowc[gia]):
                         kowv.append('past part - verb')
+                        past_verb = True
                     else:
                         kowv.append('verb')
+            else:
+                if "v past" in str(wrkowc[gia]) or "v past p" in str(wrkowc[gia]):
+                    past_verb = True
+
             s_kow_verb = {"type": "kow_verb"
                         , "position" : "source"
                         , "apply_link": isitaverb[0] # is it a verb?
@@ -564,7 +575,20 @@ def get_words(userId, pkgname):
                         , "title": get_list_elements(kowv, 3) 
                         #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                         }
-
+            if past_verb: 
+                if wr_wordref[gia] != "":
+                    conjLink = myConjutationLink(wr_wordref[gia], langt)   # wordref
+                elif element[5] == [''] or len(element[5]) == 0:  ## es el infintivo del verbo o no hay referencia ligada
+                    conjLink = myConjutationLink(element[0], langt)      # c' wordref 
+                else:
+                    conjLink = myConjutationLink(element[5][0], langt)   # c' wordref   
+                s_kow_past_verb = {"type": "kow_verb"
+                            , "position" : "target"
+                            , "apply_link": isitaverb[0] # is it a verb?
+                            , "link" : conjLink
+                            , "title": get_list_elements(kowv, 3) 
+                            #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
+                            }
         else:
             kowo = kowc[gia]
             conjLink = ''
@@ -585,7 +609,7 @@ def get_words(userId, pkgname):
                         , "title": element[3]
                         }
         ladds = []
-        for ele in [s_kow_verb, s_kow, s_object]:
+        for ele in [s_kow_verb, s_kow, s_object, s_kow_past_verb]:
             if ele["title"] != None:
                 ladds.append(ele)
 
