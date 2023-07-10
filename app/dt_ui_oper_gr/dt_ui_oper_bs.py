@@ -63,6 +63,7 @@ def get_pronunciationId(words, packagename, userId):
                     "[:PACKAGED]-(u:User {userId: '"+ userId +"'}) \n" + \
                     "optional match(wp:WordSound {word:wordtext}) \n" + \
                     "where pkg.source in labels(wp) \n" + \
+                        " and pkg.idSCat = wp.idSCat \n" + \
                     "return wordtext, id(wp) as idNode, wp.actived, wp.example, wp.Spanish"
 
     #print('pronunciationId_neo4j_statement:', neo4j_statement)
@@ -299,10 +300,12 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                 "with u, pkg, c,  max(level + '-,-' + coalesce(toString(grade),'0')) as level, \n" + \
                 "count(DISTINCT level) as levs, maxerrs \n" + \
                 "return pkg.packageId, c.idCat as idCat, c.name as CatName, \n" + \
-                "pkg.SubCat as SCatName, \n" + \
-                "c.idCat * 1000000 + pkg.idSCat as idSCat, \n" + \
-                "split(level,'-,-')[0] as level, \n" + \
-                "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs, pkg.label as labelname"
+                    "pkg.SubCat as SCatName, \n" + \
+                    "c.idCat * 1000000 + pkg.idSCat as idSCat, \n" + \
+                    "split(level,'-,-')[0] as level, \n" + \
+                    "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs, pkg.label as labelname, \n" + \
+                    "coalesce(pkg.ctUpdate, pkg.ctInsert) as updatedate \n" + \
+                "order by updatedate, labelname"
     
     #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
