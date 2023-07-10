@@ -49,8 +49,10 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
                         "pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "], \n" + \
                         "pkgS.ptgerror = " + str(gradeval) + ", \n" + \
                         "pkgS.ctInsert = datetime() \n" + \
+                    "set pkg.ctUpdate = datetime() \n" + \
                     "return pkg.packageId as packageId, pkgS.studing_dt, \n" + \
                          "pkgS.level as level, pkgS.grade as grade, pkgS.ptgerror as ptgerror"
+    print("neo4jj:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="updating activity on package = '" + pkgname + "'\nlevel = '" + level + "'" + \
                                     "\npkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "]",
