@@ -305,7 +305,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                     "split(level,'-,-')[0] as level, \n" + \
                     "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs, pkg.label as labelname, \n" + \
                     "coalesce(pkg.ctUpdate, pkg.ctInsert) as updatedate \n" + \
-                "order by updatedate, labelname"
+                "order by updatedate desc, labelname"
     
     #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
