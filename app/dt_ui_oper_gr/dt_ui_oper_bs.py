@@ -720,9 +720,9 @@ def get_words(userId, pkgname):
                         , "additional": ladds
                         }        
 
-        element.append(lpron[gia])
-        element.append([s_kow, s_object])
-        result.append(element)
+        #element.append(lpron[gia])
+        #element.append([s_kow, s_object])
+        #result.append(element)
         result2.append(new_element)
     pkgdescriptor["message"] = result2
 
@@ -933,35 +933,39 @@ def post_user_words(datas:ForNewPackage
 
     print('\n\n\n',30*'=','lista de words pst_words:', words)
 
-    #creating data structure  version del 20230703 tiene la versión de esta sección
-    neo4j_statement = "with " + str(list(words)) + " as wordlist \n" + \
-                    "match (u:User {userId:'" + userId + "'}) \n" + \
-                    "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
-                    "-(c:Category {idCat:" + str(idCat) + "})\n" + \
-                    "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
-                    "merge (sc)<-[:PACK_SUBCAT]-\n" + \
-                    "(pkg:Package {userId:'" + userId + "', packageId:'" + pkgname + "'})" + \
-                    "-[pkgd:PACKAGED]->(u) \n" + \
-                    "set pkg.words=wordlist, pkg.idSCat=" + str(idSCat) + ", \n" + \
-                        "pkg.status='open', pkg.SubCat='" + idSCatName + "', \n" + \
-                        "pkg.label  = pkg.packageId , \n" + \
-                        "pkg.source = '"+ lgSource + "', \n"  + \
-                        "pkg.target = '"+ lgTarget + "', \n"  + \
-                        "pkg.ctInsert = datetime() "  + \
-                    "return count(pkg) as pkg_qty"
+    if len(words) > 0:
+        #creating data structure  version del 20230703 tiene la versión de esta sección
+        neo4j_statement = "with " + str(list(words)) + " as wordlist \n" + \
+                        "match (u:User {userId:'" + userId + "'}) \n" + \
+                        "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
+                        "-(c:Category {idCat:" + str(idCat) + "})\n" + \
+                        "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+                        "merge (sc)<-[:PACK_SUBCAT]-\n" + \
+                        "(pkg:Package {userId:'" + userId + "', packageId:'" + pkgname + "'})" + \
+                        "-[pkgd:PACKAGED]->(u) \n" + \
+                        "set pkg.words=wordlist, pkg.idSCat=" + str(idSCat) + ", \n" + \
+                            "pkg.status='open', pkg.SubCat='" + idSCatName + "', \n" + \
+                            "pkg.label  = pkg.packageId , \n" + \
+                            "pkg.source = '"+ lgSource + "', \n"  + \
+                            "pkg.target = '"+ lgTarget + "', \n"  + \
+                            "pkg.ctInsert = datetime() "  + \
+                        "return count(pkg) as pkg_qty"
 
-    nodes, log = neo4j_exec(session, userId,
-                        log_description="creating new word package -> "+ pkgname,
-                        statement=neo4j_statement, 
-                        filename=__name__, 
-                        function_name=myfunctionname())
-    #                                                              end of create new data package
+        nodes, log = neo4j_exec(session, userId,
+                            log_description="creating new word package -> "+ pkgname,
+                            statement=neo4j_statement, 
+                            filename=__name__, 
+                            function_name=myfunctionname())
+        #                                                              end of create new data package
 
-    # now, getting the package using the same endpoint function to return words package
+        # now, getting the package using the same endpoint function to return words package
 
-    #print("\n\n\n",'='*50," finaliza -pst_userwords", _getdatime_T(), " y sigue get_words")
+        #print("\n\n\n",'='*50," finaliza -pst_userwords", _getdatime_T(), " y sigue get_words")
 
-    pkgdescriptor = get_words(userId, pkgname)
+        pkgdescriptor = get_words(userId, pkgname)
+    else:
+        pkgdescriptor = get_words(userId, pkgname)
+
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor #pkgname #pkgdescriptor
 
