@@ -63,6 +63,7 @@ def get_pronunciationId(words, packagename, userId):
                     "[:PACKAGED]-(u:User {userId: '"+ userId +"'}) \n" + \
                     "optional match(wp:WordSound {word:wordtext}) \n" + \
                     "where pkg.source in labels(wp) \n" + \
+                        " and pkg.idCat = wp.idCat \n" + \
                         " and pkg.idSCat = wp.idSCat \n" + \
                     "return wordtext, id(wp) as idNode, wp.actived, wp.example, wp.Spanish"
 
@@ -271,6 +272,45 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
         msg = "error on empty nodes - no iterable"
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg,"\n\n")
     return sdict
+
+
+@router.get("/get_/cat_subc/{idSCat}")
+async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header(None)):
+    """
+    Function to get to get category name and subcategory name \n
+
+    """
+    global appNeo, session, log 
+
+    idCat = idSCat // 1000000
+    idSCat = idSCat % 1000000
+
+    #print('idcattt:', idCat, 'idSCat:', idSCat)
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']    
+
+    statement = "match (u:User {userId:'" + userId + "'})\n" + \
+                "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
+                "-(c:Category {idCat:" + str(idCat) + "})\n" + \
+                "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+                "return c.idCat as idCat, c.name as catname, sc.name as scname limit 1" 
+    
+    #print(statement)
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting opened packages list",
+                        statement=statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    
+    catscname = {}
+    for node in nodes:
+        sdict = dict(node)    
+        catscname = {'idCat': sdict["idCat"]
+                     , 'CatName': sdict["catname"]
+                    , 'scatname': sdict["scname"]
+        }
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return catscname
 
 
 @router.get("/get_/user_packagelist/{idSCat}")
@@ -524,10 +564,11 @@ def get_words(userId, pkgname):
     level = 'null'  # elementary level
 
     #print("\n\n\n*******************************\nuuuuserid:", userId, pkgname)    
-    neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "'})" + \
+    neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', idSCat:1})" + \
                         "-[:PACKAGED]-(u:User {userId:'" + userId + "'})\n" + \
                         "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
-                        "-(c:Category)<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:1})<-[:PACK_SUBCAT]-(pkg)\n" + \
+                        "-(c:Category {idCat:pkg.idCat})<-[:CAT_SUBCAT]-" + \
+                            "(sc:SubCategory {idSCat:pkg.idSCat})<-[:PACK_SUBCAT]-(pkg)\n" + \
                         "unwind pkg.words as pkgwords  \n" + \
                         "with pkg, pkg.packageId as pkgname, o.ptgmaxerrs as maxerrs, \n" + \
                             " pkg.label as pkglabel, pkgwords as pkgwords, \n" + \
@@ -553,7 +594,8 @@ def get_words(userId, pkgname):
                         "union \n" + \
                         "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
                         "(pkg:Package {packageId:'" + pkgname + "'})\n" + \
-                        "-[:PACK_SUBCAT]->(s:SubCategory)-[:CAT_SUBCAT]->(cat:Category)\n" + \
+                        "-[:PACK_SUBCAT]->(s:SubCategory {idSCat:pkg.idSCat})-[:CAT_SUBCAT]\n" + \
+                            "->(cat:Category {idCat:pkg.idCat})\n" + \
                         "-[:SUBJECT]->(org:Organization) \n" + \
                         "unwind pkg.words as pkgwords  " + \
                         "match(s)-[rscat:SUBCAT]-(ew:ElemSubCat {word:pkgwords})\n" + \
@@ -879,20 +921,6 @@ def post_user_words(datas:ForNewPackage
 
     else: # if idSCat != 1:                                   # other one subcategory is required
         idSCatName = "w_SC_" + str(idCat * 1000000 + idSCat) 
-
-        neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
-                "match (u:User {userId:'" + userId + "'}) \n" + \
-                "match (c:Category)-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "})-\n" + \
-                "[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]-" + \
-                    "(sw:ElemSubCat:" + lgTarget + ") \n" + \
-                "where  (not ew.word in u." + idSCatName + " or u." + idSCatName + " is NULL) \n" + \
-                    "and not ew.word in pkgwords \n" + \
-                "with s, u, ew, collect(distinct sw.word) as sw, scat \n" + \
-                "order by scat.wordranking, ew.wordranking, ew.word \n" + \
-                "with s, u, collect(distinct ew.word) as ewlist, collect(sw) as swlist \n" + \
-                "return u.userId as idUser, s.name as subCat, \n" + \
-                        "ewlist[0.." + str(capacity) + "] as slSource, \n" + \
-                        "swlist[0.." + str(capacity) + "] as slTarget"
         
         neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
                 "match (u:User {userId:'" + userId + "'}) \n" + \
@@ -900,13 +928,14 @@ def post_user_words(datas:ForNewPackage
                     "THEN [] \n" + \
                     "ELSE u." + idSCatName + " END \n" + \
                 "with  u, pkgwords \n" + \
-                "match (c:Category)-[:CAT_SUBCAT]-(s:SubCategory {idSCat:" + str(idSCat) + "})-\n" + \
+                "match (c:Category {idCat:" + str(idCat) + "})-[:CAT_SUBCAT]\n" + \
+                    "-(s:SubCategory {idSCat:" + str(idSCat) + "})-\n" + \
                 "[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]-" + \
                     "(sw:ElemSubCat:" + lgTarget + ") \n" + \
                 "where  (not ew.word in u." + idSCatName + " or u." + idSCatName + " is NULL) \n" + \
                     "and not ew.word in pkgwords \n" + \
                 "with s, u, ew, collect(distinct sw.word) as sw, scat \n" + \
-                "order by scat.wordranking, ew.wordranking, ew.word \n" + \
+                "order by scat.wordranking, ew.word \n" + \
                 "with s, u, collect(distinct ew.word) as ewlist, collect(sw) as swlist \n" + \
                 "return u.userId as idUser, s.name as subCat, \n" + \
                         "ewlist[0.." + str(capacity) + "] as slSource, \n" + \
@@ -946,7 +975,9 @@ def post_user_words(datas:ForNewPackage
                         "merge (sc)<-[:PACK_SUBCAT]-\n" + \
                         "(pkg:Package {userId:'" + userId + "', packageId:'" + pkgname + "'})" + \
                         "-[pkgd:PACKAGED]->(u) \n" + \
-                        "set pkg.words=wordlist, pkg.idSCat=" + str(idSCat) + ", \n" + \
+                        "set pkg.words=wordlist, \n" + \
+                            "pkg.idCat=" + str(idCat) + ", \n" + \
+                            "pkg.idSCat=" + str(idSCat) + ", \n" + \
                             "pkg.status='open', pkg.SubCat='" + idSCatName + "', \n" + \
                             "pkg.label  = pkg.packageId , \n" + \
                             "pkg.source = '"+ lgSource + "', \n"  + \
