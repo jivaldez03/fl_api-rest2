@@ -9,6 +9,8 @@ from ..dt_ui_oper_gr.dt_ui_oper_bs import get_w_SCat
 
 from app.model.md_params_oper import ForClosePackages
 
+from datetime import datetime as dt
+
 router = APIRouter()
 
 @router.post("/level/")
@@ -78,20 +80,45 @@ def set_archived_package(packagename, userId):
     """
     Function to closed and add package words to the user's learned words
     """
-    # getting the WordSound id for each word and example
+    # getting the internal code for subcat 
     wSCat = get_w_SCat (userId, packagename)
+    wSCat, source, target = wSCat  # subcategoria w_SC_10000053, source, target del paquete
+    #source = wSCat[1]
+
+    dtimenow = dt.now()
+    yearr = dtimenow.year
+    monthh = dtimenow.month
+    weekk = dtimenow.strftime("%W") 
 
     neo4j_statement = "with '" + packagename + "' as pkgname, \n" + \
-                        "'" + userId + "' as userId \n" + \
+                        "'" + userId + "' as userId, \n" + \
+                        str(yearr) + " as yearr, \n" + \
+                        str(monthh) + " as monthh, \n" + \
+                        str(weekk) + " as weekk, \n" + \
+                        "'" + source + "' as psource \n" + \
                         "match (p:Package {packageId:pkgname, userId:userId, status:'open'}) \n" + \
                         "-[:PACKAGED]->(u:User {userId:userId}) \n" + \
                         "set p.status = 'closed', p.ctUpdate = datetime(), \n" + \
-                        "  p.ctArchived = datetime() \n" + \
+                        "  p.ctArchived = datetime(), \n" + \
+                        "  p.ctArchivedYear = yearr, \n" + \
+                        "  p.ctArchivedMonth = monthh, \n" + \
+                        "  p.ctArchivedWeekYear = weekk \n" + \
+                        "merge (rofArc:Archived:" + source + ":"+ target + " " + \
+                            "{userId:u.userId, year:yearr, month:monthh, week:weekk}) \n" + \
+                        "on create set rofArc.ctInsert = datetime() \n" + \
+                        "on match set rofArc.ctUpdate = datetime() \n" + \
+                        "set rofArc." + wSCat + " = " + \
+                        "CASE WHEN rofArc." + wSCat + " is null \n" + \
+                            "THEN size(p.words) \n" + \
+                            "ELSE rofArc." + wSCat + " + size(p.words) END \n" + \
                         "set u." + wSCat + " = " + \
                         "CASE WHEN u." + wSCat + " is null \n" + \
                             "THEN p.words \n" + \
                             "ELSE u." + wSCat + " + p.words END, \n" + \
                         "  u.ctUpdate = datetime() \n" + \
+                        "merge (u)<-[rArc:ARCHIVED]-(rofArc) \n" + \
+                        "on create set rArc.ctInsert = datetime() \n" + \
+                        "on match set rArc.ctUpdate = datetime() \n" + \
                         "return p.packageId as packageId , p.label as slabel, p.status as status " 
     
     nodes, log = neo4j_exec(session, userId,

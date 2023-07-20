@@ -3,6 +3,8 @@ from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
+from datetime import datetime as dt
+
 from __generalFunctions import myfunctionname, myConjutationLink, get_list_element,_getdatime_T, get_list_elements
 
 from random import shuffle as shuffle
@@ -17,16 +19,17 @@ def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):
                 "-[:PACKAGED]->(u:User {userId:'" + userId + "'}) \n" + \
                 "match (pkg)-[:PACK_SUBCAT]->(sc:SubCategory {idSCat:pkg.idSCat})-\n" + \
                 "[:CAT_SUBCAT]->(c:Category)-[:SUBJECT]->(o:Organization)<-[:RIGHTS_TO]-(u) \n" + \
-                "return pkg.source as pkgsource, sc.idSCat as idSCat, c.idCat as idCat"    
+                "return pkg.source as pkgsource, pkg.target as pkgtarget, \n" + \
+                    "sc.idSCat as idSCat, c.idCat as idCat"    
 
     else:
         neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
                 "-[:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
                 "-(c:Category {idCat:" + str(idCat) + "})\n" + \
                 "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
-                "match (pkg:Package {packageId:'" + pkgname + "'})\n" + \
+                "<-[:PACK_SUBCAT]-(pkg:Package {packageId:'" + pkgname + "'})\n" + \
                 "-[:PACKAGED]->(u) \n" + \
-                "return pkg.source as pkgsource"    
+                "return pkg.source as pkgsource, pkg.target as pkgtarget"    
 
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting new words (step 1) for new package",
@@ -37,7 +40,8 @@ def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):
     pkgsource = ""
     for node in nodes:
         sdict = dict(node)
-        pkgsource = sdict["pkgsource"]        
+        pkgsource = sdict["pkgsource"]
+        pkgtarget = sdict["pkgtarget"]
 
     if idCat == None:
         idCat = sdict["idCat"]
@@ -49,7 +53,7 @@ def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):
         wSCat = "w_SC_" + str(idCat * 1000000 + idSCat) # 'w_idSCat_' + str(idSCat)
 
     print("\n\n\n","="*50,"wsCat =", wSCat, idCat, idSCat)
-    return wSCat
+    return [wSCat, pkgsource, pkgtarget]
 
 def get_pronunciationId(words, packagename, userId):
     """
@@ -150,29 +154,40 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     Function to get how many words has the user worked for each subcategory
 
     """
-    global appNeo, session, log 
+    global appNeo, session, log  # w_SC_10000053
+
+    dtimenow = dt.now()
+    yearr = dtimenow.year
+    monthh = dtimenow.month
+    weekk = dtimenow.strftime("%W") 
 
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
-    neo4j_statement =  "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
+    neo4j_statement =  "with " + str(yearr) + " as yearr, \n" + \
+                        str(monthh) + " as monthh, \n" + \
+                        str(weekk) + " as weekk \n" + \
+        "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
         "[:SUBJECT]-(c:Category {idCat:52})<-[sr:CAT_SUBCAT]-(sc:SubCategory)<-\n" + \
         "[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
-        "with u, o, c, sc, count(es) as wordsSC \n" + \
+        "with u, o, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
+        "optional match (u)<-[:ARCHIVED]-(rof:Archived " + \
+            "{userId:u.userId, year:yearr, month:monthh, week:weekk})" + \
         "optional match (sc)<-[:PACK_SUBCAT]-" + \
             "(pkg:Package {userId:'" + userId + "',status:'closed',idSCat:sc.idSCat, source:o.lSource}) \n" + \
         "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
                 "sum(size(pkg.words)) as learned, \n" + \
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "c.idCat as idCat, \n" + \
-                "sc.idSCat as idCS \n" + \
+                "sc.idSCat as idCS, \n" + \
+                "rof['w_SC_' +  toString(c.idCat * 1000000 + sc.idSCat)] as qtyweek " + \
         "order by CatName, idCS \n" + \
         "union \n" + \
         "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
         "[:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
         "match (es:Word) where o.lSource in labels(es) \n" + \
-        "with u, o, c, sc, count(es) as wordsSC \n" + \
+        "with u, o, c, sc, 8373 as wordsSC \n" + \
         "optional match (sc)<-[:PACK_SUBCAT]-" + \
             "(pkg:Package {userId:'" + userId + "',status:'closed',idSCat:sc.idSCat, source:o.lSource}) \n" + \
         "optional match (pkg)<-[rst:STUDY]-(pkgS:PackageStudy) \n" + \
@@ -180,7 +195,8 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "sum(size(pkg.words)) as learned, \n" + \
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "c.idCat as idCat, \n" + \
-                "sc.idSCat as idCS \n" + \
+                "sc.idSCat as idCS, \n" + \
+                "0 as qtyweek " + \
         "union \n" + \
         "match (pkg:Package {userId:'" + userId + "'}) \n" + \
         "where pkg.idCat <> 52 \n" + \
@@ -200,8 +216,10 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "sum(size(pkg.words)) as learned, \n" + \
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "c.idCat as idCat, \n" + \
-                "sc.idSCat as idCS"
-    
+                "sc.idSCat as idCS, \n" + \
+                "0 as qtyweek "
+    #"sum(size(pkg.words)) as learned, \n" + \ 
+    # count(es) as wordsSC
     #print(f"neo4j_state: {neo4j_statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting data for dashboard table",
@@ -215,16 +233,17 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         for node in nodes:
             sdict = dict(node)
             tw = ""
+            qtyweek = str(sdict["qtyweek"]) if sdict["qtyweek"] else "0"
             twq = sdict["totalwords"] - sdict["learned"]
-            if twq > 320:
-                tw = "0 / 320 m_ " + str(sdict["learned"]) + " / " + str(sdict["totalwords"]) + " t"
+            if twq >= 320:
+                tw = "m: " + qtyweek + "/320" + " | t: " + str(sdict["learned"]) + "/" + str(sdict["totalwords"])
             else:
-                tw = "0 / 320" + " m_ " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"]) + " t"
+                tw = "m: " + qtyweek + "/" + str(twq) + " | t: " + str(sdict["learned"]) + "/" +  str(sdict["totalwords"])
+            if twq >= 40:
+                tw = "w: " + qtyweek + "/40" + " | " + tw
+            else:
+                tw = "w: " + qtyweek + "/" + str(twq) + " | " + tw
 
-            if twq > 40:
-                tw = "0 / 40 w_ " + tw 
-            else:
-                tw = "0 / 40" + " w_ " + tw
             sdict["totalwords"] = tw
             listcat.append(sdict)
     except Exception as error:
@@ -1214,7 +1233,7 @@ async def post_user_words4(datas:ForNewPackage
     dtexec = funcs._getdatime_T()
 
     wSCat = get_w_SCat (userId, pkgname, idCat, idSCat)
-
+    wSCat = wSCat[0]
     neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
             "'" + wSCat + "' as wSCat, \n" + \
             "'" + userId + "' as user_id, \n" + \
