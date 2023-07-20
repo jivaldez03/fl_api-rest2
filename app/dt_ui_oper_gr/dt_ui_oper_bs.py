@@ -218,14 +218,14 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             tw = ""
             twq = sdict["totalwords"] - sdict["learned"]
             if twq > 320:
-                tw = "0/320    " + str(sdict["learned"]) + "/" + str(sdict["totalwords"])
+                tw = "0 / 320    " + str(sdict["learned"]) + " / " + str(sdict["totalwords"])
             else:
-                tw = "0/" + str(twq) + "    " + str(sdict["learned"]) + "/" +  str(sdict["totalwords"])
+                tw = "0 / " + str(twq) + "    " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"])
 
             if twq > 40:
-                tw = "0/40    " + tw 
+                tw = "0 / 40    " + tw 
             else:
-                tw = "0/" + str(twq) + "    " + tw
+                tw = "0 / " + str(twq) + "    " + tw
             sdict["totalwords"] = tw
             listcat.append(sdict)
     except Exception as error:
