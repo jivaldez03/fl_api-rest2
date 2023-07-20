@@ -147,7 +147,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
 @router.get("/get_/dashboard/")
 async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     """
-    Function to get how much has the user worked for each category
+    Function to get how many words has the user worked for each subcategory
 
     """
     global appNeo, session, log 
@@ -162,7 +162,6 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         "with u, o, c, sc, count(es) as wordsSC \n" + \
         "optional match (sc)<-[:PACK_SUBCAT]-" + \
             "(pkg:Package {userId:'" + userId + "',status:'closed',idSCat:sc.idSCat, source:o.lSource}) \n" + \
-        "optional match (pkg)<-[rst:STUDY]-(pkgS:PackageStudy) \n" + \
         "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
                 "sum(size(pkg.words)) as learned, \n" + \
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
@@ -218,14 +217,14 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             tw = ""
             twq = sdict["totalwords"] - sdict["learned"]
             if twq > 320:
-                tw = "0 / 320 __ " + str(sdict["learned"]) + " / " + str(sdict["totalwords"])
+                tw = "0 / 320 m_ " + str(sdict["learned"]) + " / " + str(sdict["totalwords"]) + " t"
             else:
-                tw = "0 / " + str(twq) + " __ " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"])
+                tw = "0 / 320" + " m_ " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"]) + " t"
 
             if twq > 40:
-                tw = "0 / 40 __ " + tw 
+                tw = "0 / 40 w_ " + tw 
             else:
-                tw = "0 / " + str(twq) + " __ " + tw
+                tw = "0 / 40" + " w_ " + tw
             sdict["totalwords"] = tw
             listcat.append(sdict)
     except Exception as error:
