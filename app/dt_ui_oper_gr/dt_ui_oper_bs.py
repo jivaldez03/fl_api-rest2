@@ -214,7 +214,20 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     msg = ""
     try:
         for node in nodes:
-            listcat.append(dict(node))
+            sdict = dict(node)
+            tw = ""
+            twq = sdict["totalwords"] - sdict["learned"]
+            if twq > 320:
+                tw = "0/320    " + str(sdict["learned"]) + "/" + str(sdict["totalwords"])
+            else:
+                tw = "0/" + str(twq) + "    " + str(sdict["learned"]) + "/" +  str(sdict["totalwords"])
+
+            if twq > 40:
+                tw = "0/40    " + tw 
+            else:
+                tw = "0/" + str(twq) + "    " + tw
+            sdict["totalwords"] = tw
+            listcat.append(sdict)
     except Exception as error:
         msg = "error on empty nodes - no iterable"
 
