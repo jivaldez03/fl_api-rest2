@@ -218,14 +218,14 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             tw = ""
             twq = sdict["totalwords"] - sdict["learned"]
             if twq > 320:
-                tw = "0 / 320    " + str(sdict["learned"]) + " / " + str(sdict["totalwords"])
+                tw = "0 / 320 __ " + str(sdict["learned"]) + " / " + str(sdict["totalwords"])
             else:
-                tw = "0 / " + str(twq) + "    " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"])
+                tw = "0 / " + str(twq) + " __ " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"])
 
             if twq > 40:
-                tw = "0 / 40    " + tw 
+                tw = "0 / 40 __ " + tw 
             else:
-                tw = "0 / " + str(twq) + "    " + tw
+                tw = "0 / " + str(twq) + " __ " + tw
             sdict["totalwords"] = tw
             listcat.append(sdict)
     except Exception as error:
@@ -973,6 +973,8 @@ def post_user_words(datas:ForNewPackage
                         "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
                         "-(c:Category {idCat:" + str(idCat) + "})\n" + \
                         "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+                        "optional match (sc)<-[rpsubcat:PACK_SUBCAT]-(pkg:Package)-[:PACKAGED]->(u) \n" + \
+                        "with u, sc, wordlist, toString(count(pkg) + 1) as foliopkg \n" + \
                         "merge (sc)<-[:PACK_SUBCAT]-\n" + \
                         "(pkg:Package {userId:'" + userId + "', packageId:'" + pkgname + "'})" + \
                         "-[pkgd:PACKAGED]->(u) \n" + \
@@ -980,7 +982,7 @@ def post_user_words(datas:ForNewPackage
                             "pkg.idCat=" + str(idCat) + ", \n" + \
                             "pkg.idSCat=" + str(idSCat) + ", \n" + \
                             "pkg.status='open', pkg.SubCat='" + idSCatName + "', \n" + \
-                            "pkg.label  = pkg.packageId , \n" + \
+                            "pkg.label  = foliopkg, \n" + \
                             "pkg.source = '"+ lgSource + "', \n"  + \
                             "pkg.target = '"+ lgTarget + "', \n"  + \
                             "pkg.ctInsert = datetime() "  + \
@@ -1212,32 +1214,6 @@ async def post_user_words4(datas:ForNewPackage
 
     dtexec = funcs._getdatime_T()
 
-    """
-    # we need to know which words are in open package to exclude of the new page  #w_idSCat
-    neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
-                "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
-                "-(c:Category {idCat:" + str(idCat) + "})\n" + \
-                "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
-            "match (pkg:Package {packageId:'" + pkgname + "'})\n" + \
-            "-[:PACKAGED]->(u) \n" + \
-            "return pkg.source as pkgsource"    
-
-    nodes, log = neo4j_exec(session, userId,
-                        log_description="getting new words (step 1) for new package",
-                        statement=neo4j_statement,
-                        filename=__name__, 
-                        function_name=myfunctionname())
-
-    pkgsource = ""
-    for node in nodes:
-        sdict = dict(node)
-        pkgsource = sdict["pkgsource"]        
-
-    if idSCat == 1:
-        wSCat = pkgsource
-    else:
-        wSCat = "w_SC_" + str(idCat * 1000000 + idSCat) # 'w_idSCat_' + str(idSCat)
-    """
     wSCat = get_w_SCat (userId, pkgname, idCat, idSCat)
 
     neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
