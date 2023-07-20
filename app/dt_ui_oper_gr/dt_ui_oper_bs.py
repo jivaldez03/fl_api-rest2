@@ -156,8 +156,9 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     userId = token['userId']
 
     neo4j_statement =  "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
-        "[:SUBJECT]-(c:Category {idCat:52})<-[sr:CAT_SUBCAT]-(sc:SubCategory) \n" + \
-        "match (es:Word) where o.lSource in labels(es) \n" + \
+        "[:SUBJECT]-(c:Category {idCat:52})<-[sr:CAT_SUBCAT]-(sc:SubCategory)<-\n" + \
+        "[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
+        "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
         "with u, o, c, sc, count(es) as wordsSC \n" + \
         "optional match (sc)<-[:PACK_SUBCAT]-" + \
             "(pkg:Package {userId:'" + userId + "',status:'closed',idSCat:sc.idSCat, source:o.lSource}) \n" + \
