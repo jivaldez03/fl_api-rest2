@@ -168,6 +168,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "c.idCat as idCat, \n" + \
                 "sc.idSCat as idCS \n" + \
+        "order by CatName, idCS \n" + \
         "union \n" + \
         "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
         "[:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
