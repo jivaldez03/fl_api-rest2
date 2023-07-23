@@ -278,8 +278,9 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
         "match (og)<-[rsub:SUBJECT]-(c:Category) \n" + \
         "where c.idCat <> 52 \n" + \
-        "match (c)<-[sr:CAT_SUBCAT]-\n" + \
-        "(sc:SubCategory {idCat:c.idCat})-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
+        "match (c)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idCat:c.idCat}) \n" + \
+        "where exists {(sc)<-[:SUBCAT_ARCHIVED_W]-(rof:Archived_W)-[:ARCHIVED_W]->(u)} \n" + \
+        "match (sc)-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
         "where og.lSource in labels(es) and og.lTarget in labels(ws) \n" + \
         "with og, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
         "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
