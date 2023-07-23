@@ -279,7 +279,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         "match (og)<-[rsub:SUBJECT]-(c:Category) \n" + \
         "where c.idCat <> 52 \n" + \
         "match (c)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idCat:c.idCat}) \n" + \
-        "where exists {(sc)<-[:SUBCAT_ARCHIVED_W]-(rof:Archived_W)-[:ARCHIVED_W]->(u)} \n" + \
+        "where exists {(sc)<-[:PACK_SUBCAT]-(:Package)-[:PACKAGED]->(u)} \n" + \
         "match (sc)-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
         "where og.lSource in labels(es) and og.lTarget in labels(ws) \n" + \
         "with og, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
@@ -968,9 +968,9 @@ def post_user_words(datas:ForNewPackage
         idSCatName = idSCatName.replace("/","").replace(" ","")    
 
     pkgwords = []
-    if idSCat != 1:  
+    if idSCat != 1:
         # new words package is required
-        # we need to know which words are in open package to exclude of the new page  #w_idSCat
+        # we need to know which words are in open package to exclude of the new package  #w_idSCat
         neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
                     "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
                     "-(c:Category {idCat:" + str(idCat) + "})\n" + \
@@ -1025,7 +1025,7 @@ def post_user_words(datas:ForNewPackage
 
     else: # if idSCat != 1:                                   # other one subcategory is required
         idSCatName = "w_SC_" + str(idCat * 1000000 + idSCat) 
-        
+        """
         neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
                 "match (u:User {userId:'" + userId + "'}) \n" + \
                 "set u." + idSCatName + " = CASE WHEN u." + idSCatName + " is null \n" + \
@@ -1044,7 +1044,30 @@ def post_user_words(datas:ForNewPackage
                 "return u.userId as idUser, s.name as subCat, \n" + \
                         "ewlist[0.." + str(capacity) + "] as slSource, \n" + \
                         "swlist[0.." + str(capacity) + "] as slTarget"
-        
+        """
+        neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
+                "match (u:User {userId:'" + userId + "'}) \n" + \
+                "/*set u." + idSCatName + " = CASE WHEN u." + idSCatName + " is null \n" + \
+                    "THEN [] \n" + \
+                    "ELSE u." + idSCatName + " END \n" + \
+                "with  u, pkgwords \n */ \n" + \
+                "match (c:Category {idCat:" + str(idCat) + "})-[:CAT_SUBCAT]\n" + \
+                    "-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+                "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-\n" + \
+                "[rUArcM:ARCHIVED_M]->(u) \n" + \
+                "with u, pkgwords, c, sc, coalesce(arcM.words,['.']) as words \n" + \
+                "unwind words as word \n" + \
+                "with u, pkgwords, c, sc, collect(word) as words \n" + \
+                "match (sc)<-[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]->" + \
+                    "(sw:ElemSubCat:" + lgTarget + ") \n" + \
+                "where  (not ew.word in words) \n" + \
+                    "and (not ew.word in pkgwords) \n" + \
+                "with sc, u, ew, collect(distinct sw.word) as sw, scat \n" + \
+                "order by scat.wordranking, ew.word \n" + \
+                "with sc, u, collect(distinct ew.word) as ewlist, collect(sw) as swlist \n" + \
+                "return u.userId as idUser, sc.name as subCat, \n" + \
+                        "ewlist[0.." + str(capacity) + "] as slSource, \n" + \
+                        "swlist[0.." + str(capacity) + "] as slTarget"
                 #+ \
                 #"ewlist[0.." + str(capacity) + "] as slSource, " + \
                 #"swlist[0.." + str(capacity) + "] as slTarget"
@@ -1317,8 +1340,9 @@ async def post_user_words4(datas:ForNewPackage
 
     dtexec = funcs._getdatime_T()
 
-    wSCat = get_w_SCat (userId, pkgname, idCat, idSCat)
-    wSCat = wSCat[0]
+    #wSCat = get_w_SCat (userId, pkgname, idCat, idSCat)
+    #wSCat = wSCat[0]
+    """
     neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
             "'" + wSCat + "' as wSCat, \n" + \
             "'" + userId + "' as user_id, \n" + \
@@ -1345,6 +1369,33 @@ async def post_user_words4(datas:ForNewPackage
             "match (pkg2:Package {packageId:packageId})-[]-(u2) \n" + \
             "set pkg2.words40 = pkg.words40[0..-1] \n" + \
             "return userId, packageId limit 1 "
+    """
+
+    neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
+            "'" + userId + "' as user_id, \n" + \
+            str(capacity) + " as capacity \n" + \
+            "match (u:User {userId:user_id}) \n" + \
+            "match (c:Category {idCat:" + str(idCat) + "})-[:CAT_SUBCAT]\n" + \
+            "-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+            "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-\n" + \
+            "[rUArcM:ARCHIVED_M]->(u) \n" + \
+            "with u.userId as userId, c.idCat as idCat, sc.idSCat as idSCat, \n" + \
+                "coalesce(arcM.words,['.']) as uwords, packageId, capacity, sc \n" + \
+            "unwind uwords as words \n" + \
+            "with sc, userId, words, packageId, idCat, idSCat, capacity order by rand() \n" + \
+            "with sc, userId, collect(words) as words, packageId, idCat, idSCat, capacity \n" + \
+            "with sc, userId, words[0..capacity] as lwords, packageId, idCat, idSCat, capacity \n" + \
+            "match (u)-[rp:PACKAGED]-(pkg:Package {packageId:packageId})-[:PACK_SUBCAT]->(sc) \n" + \
+            "set pkg.words40=(pkg.words + lwords)[0..capacity], \n" + \
+                "pkg.status='open', \n" + \
+                "pkg.ctUpdate = datetime('" + dtexec + "') \n" + \
+            "with sc, userId, packageId, pkg, idCat, idSCat \n" + \
+            "match (u2:User {userId:userId}) \n" + \
+            "match (sc)<-[PACK_SUBCAT]-(pkg2:Package {packageId:packageId})-[:PACKAGED]->(u2) \n" + \
+            "set pkg2.words40 = CASE WHEN not exists \n" + \
+                        "{(sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-[rUArcM:ARCHIVED_M]->(u2)} \n" + \
+                        "THEN pkg2.words40[0..-1] ELSE pkg2.words40 END \n" + \
+            "return userId, packageId, pkg2.words40 limit 1 "
     nodes, log = neo4j_exec(session, userId,
                     log_description="post_user_words4 -level_40_ \n packageId: " + pkgname,
                     statement=neo4j_statement,

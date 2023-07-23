@@ -107,7 +107,7 @@ def set_archived_package(packagename, userId):
                         "merge (rofArc:Archived_W:" + source + ":"+ target + " " + \
                             "{userId:u.userId, year:yearr, month:monthh, week:weekk, " + \
                                 "source:'" + source + "', target:'" + target + "', \n" + \
-                                    "idCat:p.idCat, idSSCat:p.idSCat}) \n" + \
+                                    "idCat:p.idCat, idSCat:p.idSCat}) \n" + \
                         "on create set rofArc.week_qty = 0, rofArc.words=[], rofArc.ctInsert = datetime() \n" + \
                         "on match set rofArc.ctUpdate = datetime() \n" + \
                         "set rofArc.week_qty = rofArc.week_qty  + size(p.words), \n" + \
@@ -133,7 +133,7 @@ def set_archived_package(packagename, userId):
                         "merge (ArcM:Archived_M:" + source + ":"+ target + " " + \
                             "{userId:u.userId, year:yearr, month:monthh, " + \
                                 "source:'" + source + "', target:'" + target + "', \n" + \
-                                    "idCat:p.idCat, idSSCat:p.idSCat}) \n" + \
+                                    "idCat:p.idCat, idSCat:p.idSCat}) \n" + \
                         "on create set ArcM.month_qty = 0, ArcM.words=[], ArcM.ctInsert = datetime() \n" + \
                         "on match set ArcM.ctUpdate = datetime() \n" + \
                         "set ArcM.month_qty = ArcM.month_qty  + size(p.words), \n" + \
