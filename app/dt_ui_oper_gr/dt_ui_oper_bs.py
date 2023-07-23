@@ -236,13 +236,13 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             qtyweek = str(sdict["qtyweek"]) if sdict["qtyweek"] else "0"
             twq = sdict["totalwords"] - sdict["learned"]
             if twq >= 320:
-                tw = "m: " + qtyweek + "/320" + " | t: " + str(sdict["learned"]) + "/" + str(sdict["totalwords"])
+                tw = "m: " + qtyweek + " / 320" + "  |  t: " + str(sdict["learned"]) + " / " + str(sdict["totalwords"])
             else:
-                tw = "m: " + qtyweek + "/" + str(twq) + " | t: " + str(sdict["learned"]) + "/" +  str(sdict["totalwords"])
+                tw = "m: " + qtyweek + " / " + str(twq) + " |  t: " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"])
             if twq >= 40:
-                tw = "w: " + qtyweek + "/40" + " | " + tw
+                tw = "w: " + qtyweek + " / 40" + "  |  " + tw
             else:
-                tw = "w: " + qtyweek + "/" + str(twq) + " | " + tw
+                tw = "w: " + qtyweek + " / " + str(twq) + "  |  " + tw
 
             sdict["totalwords"] = tw
             listcat.append(sdict)

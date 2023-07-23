@@ -104,7 +104,8 @@ def set_archived_package(packagename, userId):
                         "  p.ctArchivedMonth = monthh, \n" + \
                         "  p.ctArchivedWeekYear = weekk \n" + \
                         "merge (rofArc:Archived:" + source + ":"+ target + " " + \
-                            "{userId:u.userId, year:yearr, month:monthh, week:weekk}) \n" + \
+                            "{userId:u.userId, year:yearr, month:monthh, week:weekk, " + \
+                                "source:" + source + ", target:" + target + "}) \n" + \
                         "on create set rofArc.ctInsert = datetime() \n" + \
                         "on match set rofArc.ctUpdate = datetime() \n" + \
                         "set rofArc." + wSCat + " = " + \
