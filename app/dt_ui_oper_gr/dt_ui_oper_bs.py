@@ -164,6 +164,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
+    """
     neo4j_statement =  "with " + str(yearr) + " as yearr, \n" + \
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
@@ -218,6 +219,88 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "c.idCat as idCat, \n" + \
                 "sc.idSCat as idCS, \n" + \
                 "0 as qtyweek "
+    """
+
+    neo4j_statement =  "with " + str(yearr) + " as yearr, \n" + \
+                        str(monthh) + " as monthh, \n" + \
+                        str(weekk) + " as weekk \n" + \
+        "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
+        "[:SUBJECT]-(c:Category {idCat:52})<-[sr:CAT_SUBCAT]-(sc:SubCategory)<-\n" + \
+        "[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
+        "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
+        "with u, o, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
+        "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
+            "{userId:u.userId, year:yearr, month:monthh, week:weekk, \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
+        "with u, o, c, sc, wordsSC, yearr, monthh, weekk, rof.week_qty as qtyweek \n" + \
+        "optional match (u)<-[:ARCHIVED_M]-(rofM:Archived_M " + \
+            "{userId:u.userId, year:yearr, month:monthh, \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, o, c, sc, wordsSC, yearr, monthh, weekk, \n" + \
+            "qtyweek, rofM.month_qty as qtymonth \n" + \
+        "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
+                "sum(qtymonth) as learned, \n" + \
+                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
+                "c.idCat as idCat, \n" + \
+                "sc.idSCat as idCS, \n" + \
+                "qtyweek as qtyweek, qtymonth as qtymonth " + \
+        "order by CatName, idCS \n" + \
+        "/* section to get words values left */ \n" + \
+        "union \n" + \
+        "with " + str(yearr) + " as yearr, \n" + \
+                        str(monthh) + " as monthh, \n" + \
+                        str(weekk) + " as weekk \n" + \
+        "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
+        "[:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
+        "match (es:Word)-[:TRANSLATOR]-(ess:Word) \n" + \
+        "where o.lSource in labels(es) and o.lTarget in labels(ess) \n" + \
+        "with u, o, c, sc, count(distinct es) as wordsSC, yearr, monthh, weekk \n" + \
+        "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
+            "{userId:u.userId, year:yearr, month:monthh, week:weekk, \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
+        "with u, o, c, sc, wordsSC, yearr, monthh, weekk, rof.week_qty as qtyweek \n" + \
+        "optional match (u)<-[:ARCHIVED_M]-(rofM:Archived_M " + \
+            "{userId:u.userId, year:yearr, month:monthh, \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, o, c, sc, wordsSC, yearr, monthh, weekk, \n" + \
+            "qtyweek, rofM.month_qty as qtymonth \n" + \
+        "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
+                "sum(qtymonth) as learned, \n" + \
+                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
+                "c.idCat as idCat, \n" + \
+                "sc.idSCat as idCS, \n" + \
+                "qtyweek as qtyweek, qtymonth as qtymonth " + \
+        "/* section to get subcategories values left */ \n" + \
+        "union \n" + \
+        "with " + str(yearr) + " as yearr, \n" + \
+                        str(monthh) + " as monthh, \n" + \
+                        str(weekk) + " as weekk \n" + \
+        "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
+        "match (og)<-[rsub:SUBJECT]-(c:Category) \n" + \
+        "where c.idCat <> 52 \n" + \
+        "match (c)<-[sr:CAT_SUBCAT]-\n" + \
+        "(sc:SubCategory {idCat:c.idCat})-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
+        "where og.lSource in labels(es) and og.lTarget in labels(ws) \n" + \
+        "with og, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
+        "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
+            "{userId:u.userId, year:yearr, month:monthh, week:weekk, \n" + \
+            "source:og.lSource, target:og.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
+        "with u, og, c, sc, wordsSC, yearr, monthh, weekk, rof.week_qty as qtyweek \n" + \
+        "optional match (u)<-[:ARCHIVED_M]-(rofM:Archived_M " + \
+            "{userId:u.userId, year:yearr, month:monthh, \n" + \
+            "source:og.lSource, target:og.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, og, c, sc, wordsSC, yearr, monthh, weekk, \n" + \
+            "qtyweek, rofM.month_qty as qtymonth \n" + \
+        "order by sc.idCat, sc.idSCat, c.name, sc.name \n" + \
+        "return c.name as CatName, \n" + \
+                "sc.name as SCatName, \n" + \
+                "wordsSC as totalwords, \n" + \
+                "sum(qtymonth) as learned, \n" + \
+                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
+                "c.idCat as idCat, \n" + \
+                "sc.idSCat as idCS, \n" + \
+                "qtyweek as qtyweek, qtymonth as qtymonth "
+    
     #"sum(size(pkg.words)) as learned, \n" + \ 
     # count(es) as wordsSC
     #print(f"neo4j_state: {neo4j_statement}")
@@ -233,12 +316,13 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         for node in nodes:
             sdict = dict(node)
             tw = ""
+            qtymonth = str(sdict["qtymonth"]) if sdict["qtymonth"] else "0"
             qtyweek = str(sdict["qtyweek"]) if sdict["qtyweek"] else "0"
             twq = sdict["totalwords"] - sdict["learned"]
-            if twq >= 320:
-                tw = "m: " + qtyweek + " / 320" + "  |  t: " + str(sdict["learned"]) + " / " + str(sdict["totalwords"])
+            if twq >= 120:
+                tw = "m: " + qtymonth + " / 120" + "  |  t: " + str(sdict["learned"]) + " / " + str(sdict["totalwords"])
             else:
-                tw = "m: " + qtyweek + " / " + str(twq) + " |  t: " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"])
+                tw = "m: " + qtymonth + " / " + str(twq) + " |  t: " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"])
             if twq >= 40:
                 tw = "w: " + qtyweek + " / 40" + "  |  " + tw
             else:

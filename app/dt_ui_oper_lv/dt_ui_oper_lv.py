@@ -88,7 +88,7 @@ def set_archived_package(packagename, userId):
     dtimenow = dt.now()
     yearr = dtimenow.year
     monthh = dtimenow.month
-    weekk = dtimenow.strftime("%W") 
+    weekk = dtimenow.strftime("%W") # , status:'open'
 
     neo4j_statement = "with '" + packagename + "' as pkgname, \n" + \
                         "'" + userId + "' as userId, \n" + \
@@ -96,19 +96,23 @@ def set_archived_package(packagename, userId):
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk, \n" + \
                         "'" + source + "' as psource \n" + \
-                        "match (p:Package {packageId:pkgname, userId:userId, status:'open'}) \n" + \
+                        "match (sc:SubCategory)<-[:PACK_SUBCAT]-\n" + \
+                        "(p:Package {packageId:pkgname, userId:userId, status:'open'}) \n" + \
                         "-[:PACKAGED]->(u:User {userId:userId}) \n" + \
                         "set p.status = 'closed', p.ctUpdate = datetime(), \n" + \
                         "  p.ctArchived = datetime(), \n" + \
                         "  p.ctArchivedYear = yearr, \n" + \
                         "  p.ctArchivedMonth = monthh, \n" + \
                         "  p.ctArchivedWeekYear = weekk \n" + \
-                        "merge (rofArc:Archived:" + source + ":"+ target + " " + \
+                        "merge (rofArc:Archived_W:" + source + ":"+ target + " " + \
                             "{userId:u.userId, year:yearr, month:monthh, week:weekk, " + \
-                                "source:" + source + ", target:" + target + "}) \n" + \
-                        "on create set rofArc.ctInsert = datetime() \n" + \
+                                "source:'" + source + "', target:'" + target + "', \n" + \
+                                    "idCat:p.idCat, idSSCat:p.idSCat}) \n" + \
+                        "on create set rofArc.week_qty = 0, rofArc.words=[], rofArc.ctInsert = datetime() \n" + \
                         "on match set rofArc.ctUpdate = datetime() \n" + \
-                        "set rofArc." + wSCat + " = " + \
+                        "set rofArc.week_qty = rofArc.week_qty  + size(p.words), \n" + \
+                            "rofArc.words = rofArc.words + p.words, \n" + \
+                            "rofArc." + wSCat + " = " + \
                         "CASE WHEN rofArc." + wSCat + " is null \n" + \
                             "THEN size(p.words) \n" + \
                             "ELSE rofArc." + wSCat + " + size(p.words) END \n" + \
@@ -117,9 +121,26 @@ def set_archived_package(packagename, userId):
                             "THEN p.words \n" + \
                             "ELSE u." + wSCat + " + p.words END, \n" + \
                         "  u.ctUpdate = datetime() \n" + \
-                        "merge (u)<-[rArc:ARCHIVED]-(rofArc) \n" + \
+                        "merge (u)<-[rArc:ARCHIVED_W]-(rofArc) \n" + \
                         "on create set rArc.ctInsert = datetime() \n" + \
                         "on match set rArc.ctUpdate = datetime() \n" + \
+                        "merge (p)-[rArcP:PACK_ARCHIVED_W]->(rofArc) \n" + \
+                        "on create set rArcP.ctInsert = datetime() \n" + \
+                        "on match set rArcP.ctUpdate = datetime() \n" + \
+                        "merge (sc)<-[rArcS:SUBCAT_ARCHIVED_W]-(rofArc) \n" + \
+                        "on create set rArcS.ctInsert = datetime() \n" + \
+                        "on match set rArcS.ctUpdate = datetime() \n" + \
+                        "merge (ArcM:Archived_M:" + source + ":"+ target + " " + \
+                            "{userId:u.userId, year:yearr, month:monthh, " + \
+                                "source:'" + source + "', target:'" + target + "', \n" + \
+                                    "idCat:p.idCat, idSSCat:p.idSCat}) \n" + \
+                        "on create set ArcM.month_qty = 0, ArcM.words=[], ArcM.ctInsert = datetime() \n" + \
+                        "on match set ArcM.ctUpdate = datetime() \n" + \
+                        "set ArcM.month_qty = ArcM.month_qty  + size(p.words), \n" + \
+                            "ArcM.words = ArcM.words + p.words \n" + \
+                        "merge (rofArc)-[rWM:WEEK_MONTH]->(ArcM) \n" + \
+                        "merge (sc)<-[rSArcM:SUBCAT_ARCHIVED_M]-(ArcM) \n" + \
+                        "merge (u)<-[rUArcM:ARCHIVED_M]-(ArcM) \n" + \
                         "return p.packageId as packageId , p.label as slabel, p.status as status " 
     
     nodes, log = neo4j_exec(session, userId,
