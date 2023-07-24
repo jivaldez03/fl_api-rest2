@@ -971,32 +971,32 @@ def post_user_words(datas:ForNewPackage
     if idSCat != 1:
         # new words package is required
         # we need to know which words are in open package to exclude of the new package  #w_idSCat
-        neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
-                    "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
-                    "-(c:Category {idCat:" + str(idCat) + "})\n" + \
-                    "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
-                "optional match (pkg:Package {status:'open', idSCat:" + str(idSCat) + "})\n" + \
-                "-[:PACKAGED]->(u) \n" + \
-                "unwind pkg.words as pkgwords \n" + \
-                "with collect(pkgwords) as pkgwords \n" + \
-                "return pkgwords "
-        
+        pass
+    neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
+                "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
+                "-(c:Category {idCat:" + str(idCat) + "})\n" + \
+                "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+            "optional match (sc)<-[:PACK_SUBCAT]-(pkg:Package {status:'open'})\n" + \
+            "-[:PACKAGED]->(u) \n" + \
+            "unwind pkg.words as pkgwords \n" + \
+            "with collect(pkgwords) as pkgwords \n" + \
+            "return pkgwords "
 
-        nodes, log = neo4j_exec(session, userId,
-                            log_description="getting new words (step 1) for new package",
-                            statement=neo4j_statement,
-                            filename=__name__, 
-                            function_name=myfunctionname())
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting new words (step 1) for new package",
+                        statement=neo4j_statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())
 
-        pkgwords = []
-        for node in nodes:
-            sdict = dict(node)
-            pkgwords = sdict["pkgwords"]
-
+    pkgwords = []
+    for node in nodes:
+        sdict = dict(node)
+        pkgwords = sdict["pkgwords"]
 
     #print("\n\n\n",'='*50," termina -pst_userwords paso 2", _getdatime_T())
     
-    if idSCat == 1:                              # words category is required        
+    if idSCat == 1:                              # words category is required
+        """
         neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
                 "set u." + lgSource + " = CASE WHEN u." + lgSource + " is null \n" + \
                     "THEN [] \n" + \
@@ -1021,10 +1021,32 @@ def post_user_words(datas:ForNewPackage
                 "return u.userId as idUser, 'words' as subCat, \n" + \
                 "ewlist[0..8] as slSource, \n" + \
                 "swlist[0..8] as slTarget "
-        
+        """
+        neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
+                "match (u:User {userId:'" + userId + "'}) \n" + \
+                "/* GETTING LEARNED WORDS */ \n" + \
+                "match (c:Category {idCat:" + str(idCat) + "})-[:CAT_SUBCAT]\n" + \
+                    "-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+                "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M:\n" + \
+                    lgSource + ":" + lgTarget +" {source:'" + lgSource + "', target:'" + lgTarget + "'})-\n" + \
+                "[rUArcM:ARCHIVED_M]->(u) \n" + \
+                "with u, pkgwords, c, sc, coalesce(arcM.words,['.']) as words \n" + \
+                "unwind words as word \n" + \
+                "with u, pkgwords, c, sc, collect(word) as words \n" + \
+                "/* GETTING NEW WORDS */ \n" + \
+                "match (n:Word:" + lgSource + ") \n" + \
+                "where not n.word in pkgwords and not n.word in words \n" + \
+                "match (n)-[tes:TRANSLATOR]->(s:Word:Spanish) \n" + \
+                "with u, n, s, tes \n" + \
+                "order by n.wordranking, tes.sorted limit 100 \n" + \
+                "with u, n, collect(distinct s.word) as swlist \n" + \
+                "with u, collect(n.word) as ewlist, collect(swlist) as swlist \n" + \
+                "return u.userId as idUser, 'words' as subCat, \n" + \
+                    "ewlist[0..8] as slSource, \n" + \
+                    "swlist[0..8] as slTarget "
 
     else: # if idSCat != 1:                                   # other one subcategory is required
-        idSCatName = "w_SC_" + str(idCat * 1000000 + idSCat) 
+        #idSCatName = "w_SC_" + str(idCat * 1000000 + idSCat) 
         """
         neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
                 "match (u:User {userId:'" + userId + "'}) \n" + \
@@ -1051,6 +1073,7 @@ def post_user_words(datas:ForNewPackage
                     "THEN [] \n" + \
                     "ELSE u." + idSCatName + " END \n" + \
                 "with  u, pkgwords \n */ \n" + \
+                "/* getting learned words */ \n" + \
                 "match (c:Category {idCat:" + str(idCat) + "})-[:CAT_SUBCAT]\n" + \
                     "-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
                 "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-\n" + \
@@ -1058,6 +1081,7 @@ def post_user_words(datas:ForNewPackage
                 "with u, pkgwords, c, sc, coalesce(arcM.words,['.']) as words \n" + \
                 "unwind words as word \n" + \
                 "with u, pkgwords, c, sc, collect(word) as words \n" + \
+                "/* getting new words */ \n" + \
                 "match (sc)<-[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]->" + \
                     "(sw:ElemSubCat:" + lgTarget + ") \n" + \
                 "where  (not ew.word in words) \n" + \

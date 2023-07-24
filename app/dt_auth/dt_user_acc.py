@@ -29,7 +29,7 @@ def login_user(datas: ForLogin):
     """
     global session
  
-    result = login_validate_user_pass_trx(session, datas.userId) # , datas.password) 
+    result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password) 
 
     if len(result) == 0:
         print("no records - fname__name__and more:",__name__)
@@ -44,7 +44,7 @@ def login_user(datas: ForLogin):
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         )
-        print("========== id: ", datas.userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
+        print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password"
@@ -53,7 +53,7 @@ def login_user(datas: ForLogin):
     elif datas.password == result["us.keypass"]:
         #print("fname__name__and more:",__name__, myfunctionname()) #, callersfunctionname(),__file__)
         
-        log = neo4_log(session, datas.userId, 'login - success access', __name__, myfunctionname())
+        log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
         resp_dict ={'status': 'OK', 
                     'text': 'successful access',
                     "userId":datas.userId,
@@ -71,7 +71,7 @@ def login_user(datas: ForLogin):
         token = funcs.return_token(data=resp_dict)
 
         #print(f"validating token: {funcs.validating_token(token.split(' ')[1], False)}")
-        print("========== id: ", datas.userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+        print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
         return {"token": token, 
                     "user_name": result["us.name"], 
                     "age":0, 
@@ -81,25 +81,25 @@ def login_user(datas: ForLogin):
         }
     else:
         print("pass invalid")
-        log = neo4_log(session, datas.userId, 'login - invalid user or password', __name__, myfunctionname())
+        log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password', "username": "",  
                     "age":0, 
                     "country_birth": "", 
                     "country_res": ""
                 }
         
-        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
+        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId.lower() + "'}) \n" + \
                     "where id(l) = " + str(log[0]) + " \n" + \
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         )
-        print("========== id: ", datas.userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
+        print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password -"
             #headers={"WWW-Authenticate": "Basic"},
         )
-    print("id: ", datas.userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return resp_dict
 #
 
@@ -115,7 +115,7 @@ def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(
     global session
     token=funcs.validating_token(Authorization)    
 
-    nodes = user_change_password(session, token['userId'], datas.oldkeypass, datas.newkeypass,
+    nodes = user_change_password(session, token['userId'].lower(), datas.oldkeypass, datas.newkeypass,
                                  filename=__name__,
                                  function_name=myfunctionname())
     if len(nodes) == 0:
@@ -124,7 +124,7 @@ def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password",
         )
-    print("========== id: ", token['userId'], " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': "password updated"}
 
 """

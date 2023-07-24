@@ -111,16 +111,7 @@ def set_archived_package(packagename, userId):
                         "on create set rofArc.week_qty = 0, rofArc.words=[], rofArc.ctInsert = datetime() \n" + \
                         "on match set rofArc.ctUpdate = datetime() \n" + \
                         "set rofArc.week_qty = rofArc.week_qty  + size(p.words), \n" + \
-                            "rofArc.words = rofArc.words + p.words, \n" + \
-                            "rofArc." + wSCat + " = " + \
-                        "CASE WHEN rofArc." + wSCat + " is null \n" + \
-                            "THEN size(p.words) \n" + \
-                            "ELSE rofArc." + wSCat + " + size(p.words) END \n" + \
-                        "set u." + wSCat + " = " + \
-                        "CASE WHEN u." + wSCat + " is null \n" + \
-                            "THEN p.words \n" + \
-                            "ELSE u." + wSCat + " + p.words END, \n" + \
-                        "  u.ctUpdate = datetime() \n" + \
+                            "rofArc.words = rofArc.words + p.words \n" + \
                         "merge (u)<-[rArc:ARCHIVED_W]-(rofArc) \n" + \
                         "on create set rArc.ctInsert = datetime() \n" + \
                         "on match set rArc.ctUpdate = datetime() \n" + \
