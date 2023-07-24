@@ -56,7 +56,7 @@ def login_user(datas: ForLogin):
         log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
         resp_dict ={'status': 'OK', 
                     'text': 'successful access',
-                    "userId":datas.userId,
+                    "userId":datas.userId.lower(),
                     "username": result["us.name"], 
                     "age":0, 
                     "country_birth": result["us.country_birth"], 
