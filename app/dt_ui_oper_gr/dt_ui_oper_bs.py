@@ -587,6 +587,7 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
                         function_name=myfunctionname())
     
     listPack = []
+    totrecs = 0
     for node in nodes:
         sdict = dict(node)    
         #subcat_list = []
@@ -612,8 +613,7 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
                 , 'maxptg_errs':sdict["maxerrs"]
                 , 'label':sdict["labelname"]
         }
-        totrecs = sdict["qtypkg"]
-        
+        totrecs = sdict["qtypkg"]        
         listPack.append(ndic)
     totalpages = totrecs // ishow 
     if totalpages * ishow != totrecs:
