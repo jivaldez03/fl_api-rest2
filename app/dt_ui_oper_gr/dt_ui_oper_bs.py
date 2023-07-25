@@ -113,9 +113,9 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
     userId = token['userId']
     
     neo4j_statement = "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]-(o:Organization)\n" + \
-                        "<-[:SUBJECT]-(c:Category)<-[:CAT_SUBCAT]-(s:SubCategory {idSCat:1}) \n" + \
+                        "<-[:SUBJECT]-(c:Category {idCat:1})<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
                         "with o, c, s.name as subcategory, c.idCat * 1000000 + s.idSCat as idCS \n" + \
-                        "order by o.idOrg, c.name, subcategory \n" + \
+                        "order by o.idOrg, c.name, idCS, subcategory \n" + \
                         "return o.name, c.name as category, c.idCat as idCat, \n" + \
                                 "collect(subcategory) as subcategories, collect(idCS) as subid \n" + \
                         "union \n" + \
