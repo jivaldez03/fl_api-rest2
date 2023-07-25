@@ -121,9 +121,9 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "union \n" + \
                         "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]-(o:Organization)\n" + \
                         "<-[:SUBJECT]-(c:Category)<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
-                        "where exists \n" + \
-                        "   {match (s)<-[:SUBCAT]-(es:ElemSubCat) \n" + \
-                        "   where o.lSource in labels(es)} \n" + \
+                        "where c.idCat <> 1 and \n" + \
+                             "exists {match (s)<-[:SUBCAT]-(es:ElemSubCat) \n" + \
+                                    " where o.lSource in labels(es)} \n" + \
                         "with o,c, s.name as subcategory, c.idCat * 1000000 + s.idSCat as idCS  \n" + \
                         "order by o.idOrg, c.name, subcategory \n" + \
                         "return o.name, c.name as category, c.idCat as idCat, \n" + \
@@ -224,6 +224,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     neo4j_statement =  "with " + str(yearr) + " as yearr, \n" + \
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
+        " /* GETING FIRST BASIC KNOWLEDGE */ \n" + \
         "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
         "[:SUBJECT]-(c:Category {idCat:52})<-[sr:CAT_SUBCAT]-(sc:SubCategory)<-\n" + \
         "[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
@@ -251,7 +252,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
         "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
-        "[:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
+        "[:SUBJECT]-(c:Category {idCat:1})<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
         "match (es:Word)-[:TRANSLATOR]-(ess:Word) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ess) \n" + \
         "with u, o, c, sc, count(distinct es) as wordsSC, yearr, monthh, weekk \n" + \
@@ -270,14 +271,44 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "c.idCat as idCat, \n" + \
                 "sc.idSCat as idCS, \n" + \
                 "qtyweek as qtyweek, qtymonth as qtymonth " + \
-        "/* section to get subcategories values left */ \n" + \
+        "/* SECTION TO GET cat = 1 and idSCat <> 1 */ \n" + \
         "union \n" + \
         "with " + str(yearr) + " as yearr, \n" + \
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
         "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
         "match (og)<-[rsub:SUBJECT]-(c:Category) \n" + \
-        "where c.idCat <> 52 \n" + \
+        "where c.idCat = 1 \n" + \
+        "match (c)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idCat:c.idCat}) \n" + \
+        "where  sc.idSCat <> 1 \n" + \
+        "match (sc)-[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
+        "where og.lSource in labels(es) and og.lTarget in labels(ws) \n" + \
+        "with og, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
+        "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
+            "{userId:u.userId, year:yearr, month:monthh, week:weekk, \n" + \
+            "source:og.lSource, target:og.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
+        "with u, og, c, sc, wordsSC, yearr, monthh, weekk, rof.week_qty as qtyweek \n" + \
+        "optional match (u)<-[:ARCHIVED_M]-(rofM:Archived_M " + \
+            "{userId:u.userId, year:yearr, month:monthh, \n" + \
+            "source:og.lSource, target:og.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, og, c, sc, wordsSC, yearr, monthh, weekk, \n" + \
+            "qtyweek, rofM.month_qty as qtymonth \n" + \
+        "order by sc.idCat, sc.idSCat, c.name, sc.name \n" + \
+        "return c.name as CatName, \n" + \
+                "sc.name as SCatName, \n" + \
+                "wordsSC as totalwords, \n" + \
+                "sum(qtymonth) as learned, \n" + \
+                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
+                "c.idCat as idCat, \n" + \
+                "sc.idSCat as idCS, \n" + \
+                "qtyweek as qtyweek, qtymonth as qtymonth " + \
+        "union \n" + \
+        "with " + str(yearr) + " as yearr, \n" + \
+                        str(monthh) + " as monthh, \n" + \
+                        str(weekk) + " as weekk \n" + \
+        "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
+        "match (og)<-[rsub:SUBJECT]-(c:Category) \n" + \
+        "where not c.idCat in [1 , 52] \n" + \
         "match (c)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idCat:c.idCat}) \n" + \
         "where exists {(sc)<-[:PACK_SUBCAT]-(:Package)-[:PACKAGED]->(u)} \n" + \
         "match (sc)-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
