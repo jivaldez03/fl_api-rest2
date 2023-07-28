@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, status, Header #, Request, Body
 from typing import Optional #, Annotated
-from _neo4j.neo4j_operations import login_validate_user_pass_trx, user_change_password, neo4_log, q01
+from _neo4j.neo4j_operations import login_validate_user_pass_trx, \
+                    user_change_password, neo4_log, neo4j_exec, \
+                    q01
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 from __generalFunctions import myfunctionname, _getdatime_T
@@ -21,7 +23,7 @@ router = APIRouter()
 #def login_user(user, keypass, User_Agent: Annotated[str | None, Header()] = None, userId: Annotated[str | None, Header()] = None):
 #def login_user(datas: Annotated[forlogin, Body(embed=True)]):
 @router.post("/login/")   # {user} {keypass}
-def login_user(datas: ForLogin):
+async def login_user(datas: ForLogin):
     """
     Function to create a new session \n
 
@@ -104,7 +106,7 @@ def login_user(datas: ForLogin):
 #
 
 @router.post("/change_pass/")
-def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(None)):
+async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(None)):
     """
     Function for change the user password \n
     {
@@ -126,6 +128,36 @@ def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(
         )
     print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': "password updated"}
+
+@router.get("/org/")
+async def get_org(Authorization: Optional[str] = Header(None)):
+    """
+    Function to get all categories and subcategories allowed for the user
+
+    """
+    global appNeo, session, log 
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+        
+    neo4j_statement = "with '" + userId + "' as userId " + \
+                        "match (u:User {userId:userId})-[:RIGHTS_TO]->(o:Organization) \n" + \
+                        "return o.idOrg as idOrg, o.name as name, o.lSource as Source, o.lTarget as Target"
+    
+    #print('cats-subcats:', neo4j_statement)
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting organization for the user",
+                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+    listcat = []
+    for node in nodes:
+        sdict = dict(node)
+        ndic = {'orgId': sdict["idOrg"], 'OrgName': sdict["name"]
+                , 'source' : sdict["Source"], 'target': sdict["Target"]}
+        listcat.append(ndic)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listcat
+
+
 
 """
 @router.get("/validatetoken/")
@@ -293,3 +325,5 @@ def login_user_NOUSAR(user, keypass, User_Agent: Annotated[str, Header()]=None, 
     return resp_dict
 
 """
+
+

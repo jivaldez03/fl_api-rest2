@@ -7,7 +7,7 @@ from __generalFunctions import myfunctionname, myConjutationLink, get_list_eleme
 
 from random import shuffle as shuffle
 
-from app.model.md_params_oper import ForNamePackages
+from app.model.md_params_oper import ForNamePackages, ForGames_KOW
 
 router = APIRouter()
 
@@ -149,3 +149,79 @@ async def pst_packagename(datas:ForNamePackages
 
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return res
+
+
+@router.get("/gamesAA/")
+async def get_valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = Header(None)):
+    """
+    Function to get the file .mp3 with the pronunciation example
+
+    params :  \n
+    orgId: str
+    limit: int
+    subcat:int
+    adj: bool
+    verb: bool
+    pt_verb: bool
+    noun: bool
+    adj : bool
+    adv : bool
+    prep : bool
+
+    """
+    global appNeo, session, log
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+
+    statement = "with " + str(datas.adj) + " as adj, \n" + \
+                            str(datas.verb) + " as verb, \n" + \
+                            str(datas.pt_verb) + " as ptense, \n" + \
+                            str(datas.noun) + " as noun, \n" + \
+                            str(datas.adv) + " as adv, \n" + \
+                            str(datas.prep) + " as prep, \n" + \
+                            "'" + datas.orgId + "' as org, \n" + \
+                            str(datas.limit) + " as limit, \n" + \
+                            "'" + userId + "' as userId, \n" + \
+                            "1 as idCat, 1 as idSCat \n" + \
+                "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-\n" + \
+                "[rc:SUBJECT]-(c:Category {idCat:idCat})-[rsc:CAT_SUBCAT]-(sc:SubCategory {idSCat:idSCat}) \n" + \
+                "with u,o.lSource as Source, o.lTarget as Target, o, sc \n" + \
+                "    , adj, verb, noun, adv, prep, ptense \n" + \
+                "match (u)-[r]-(rM:Archived_M)-[rsm:SUBCAT_ARCHIVED_M]-(sc) // :Source:Target) \n" + \
+                "where o.lSource in labels(rM) and o.lTarget in labels(rM) \n" + \
+                "with u, o, rM.words as words \n" + \
+                "    , adj, verb, noun, adv, prep, ptense \n" + \
+                "unwind words as sword \n" + \
+                "with u, o, sword, adj, verb, noun, adv, prep, ptense \n" + \
+                "match (we:Word {word:sword}) \n" + \
+                "where o.lSource in labels(we) \n" + \
+                "with u, o, we, adj, verb, noun, adv, prep, ptense, \n" + \
+                        "REDUCE(mergedString = '', \n" + \
+                            "kow IN we.ckowb_complete | mergedString+kow +',') as ckowlist \n" + \
+                "where  (ptense and ckowlist contains 'past – verb')  \n" + \
+                "        or verb and ckowlist contains 'intrans verb' \n" + \
+                "        or verb and ckowlist contains 'trans verb' \n" + \
+                "        or adj and ckowlist contains 'adj' \n" + \
+                "        or adv and ckowlist contains 'adv' \n" + \
+                "        or prep and ckowlist contains 'prep' \n" + \
+                "        or noun and ckowlist contains 'noun' \n" + \
+                "match (we)-[rt:TRANSLATOR]-(ws:Word)  \n" + \
+                "where o.lTarget in labels(ws) \n" + \
+                "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words  \n" + \
+                "order by worde, rt.sorted \n" + \
+                "with u, worde, ckow, collect(words) as words \n" + \
+                "order by rand() \n" + \
+                "return worde, words, ckow "  
+    #print(f"statement pronun: {statement}")
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting words for games: ",
+                        statement=statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    listEle = []
+    for ele in nodes:
+        elems = dict(ele)
+        listEle.append(elems)
+        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listEle

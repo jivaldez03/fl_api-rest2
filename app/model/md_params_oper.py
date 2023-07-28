@@ -18,3 +18,16 @@ class ForClosePackages(BaseModel):
 class ForNamePackages(BaseModel):
     package: str=None
     label: str = None
+
+class ForGames_KOW(BaseModel):
+    orgId: str
+    limit: int
+    subcat:int
+    adj: bool
+    verb: bool
+    pt_verb: bool
+    noun: bool
+    adj : bool
+    adv : bool
+    prep : bool
+

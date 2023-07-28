@@ -164,63 +164,6 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
-    """
-    neo4j_statement =  "with " + str(yearr) + " as yearr, \n" + \
-                        str(monthh) + " as monthh, \n" + \
-                        str(weekk) + " as weekk \n" + \
-        "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
-        "[:SUBJECT]-(c:Category {idCat:52})<-[sr:CAT_SUBCAT]-(sc:SubCategory)<-\n" + \
-        "[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]-(ws:ElemSubCat) \n" + \
-        "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
-        "with u, o, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
-        "optional match (u)<-[:ARCHIVED]-(rof:Archived " + \
-            "{userId:u.userId, year:yearr, month:monthh, week:weekk})" + \
-        "optional match (sc)<-[:PACK_SUBCAT]-" + \
-            "(pkg:Package {userId:'" + userId + "',status:'closed',idSCat:sc.idSCat, source:o.lSource}) \n" + \
-        "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
-                "sum(size(pkg.words)) as learned, \n" + \
-                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
-                "c.idCat as idCat, \n" + \
-                "sc.idSCat as idCS, \n" + \
-                "rof['w_SC_' +  toString(c.idCat * 1000000 + sc.idSCat)] as qtyweek " + \
-        "order by CatName, idCS \n" + \
-        "union \n" + \
-        "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
-        "[:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
-        "match (es:Word) where o.lSource in labels(es) \n" + \
-        "with u, o, c, sc, 8373 as wordsSC \n" + \
-        "optional match (sc)<-[:PACK_SUBCAT]-" + \
-            "(pkg:Package {userId:'" + userId + "',status:'closed',idSCat:sc.idSCat, source:o.lSource}) \n" + \
-        "optional match (pkg)<-[rst:STUDY]-(pkgS:PackageStudy) \n" + \
-        "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
-                "sum(size(pkg.words)) as learned, \n" + \
-                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
-                "c.idCat as idCat, \n" + \
-                "sc.idSCat as idCS, \n" + \
-                "0 as qtyweek " + \
-        "union \n" + \
-        "match (pkg:Package {userId:'" + userId + "'}) \n" + \
-        "where pkg.idCat <> 52 \n" + \
-        "with distinct pkg.idSCat as idSCats \n" + \
-        "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
-        "match (og)<-[rsub:SUBJECT]-(c:Category)<-[sr:CAT_SUBCAT]-\n" + \
-        "(sc:SubCategory {idSCat:idSCats})-[esr]-(es:ElemSubCat) " + \
-        "-[tr]-(ws:ElemSubCat) \n" + \
-        "where og.lSource in labels(es) and og.lTarget in labels(ws) \n" + \
-        "with c, sc, count(es) as wordsSC \n" + \
-        "order by sc.idSCat, c.name, sc.name \n" + \
-        "optional match (sc)<-[:PACK_SUBCAT]-" + \
-                "(pkg:Package {userId:'" + userId + "',status:'closed'}) \n" + \
-        "return c.name as CatName, \n" + \
-                "sc.name as SCatName, \n" + \
-                "wordsSC as totalwords, \n" + \
-                "sum(size(pkg.words)) as learned, \n" + \
-                "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
-                "c.idCat as idCat, \n" + \
-                "sc.idSCat as idCS, \n" + \
-                "0 as qtyweek "
-    """
-
     neo4j_statement =  "with " + str(yearr) + " as yearr, \n" + \
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
@@ -1694,7 +1637,7 @@ async def get_user_word_pronunciation(word:str, idWord:int):
     global appNeo, session, log
 
     #token=funcs.validating_token(Authorization) 
-    userId = '__public__' #token['userId']
+    userId = '__publicPron__' #token['userId']
 
     #word = datas.word
     #idWord = datas.idNode
