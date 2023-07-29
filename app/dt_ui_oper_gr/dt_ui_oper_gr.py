@@ -181,7 +181,6 @@ async def get_valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str]
                             str(datas.adv) + " as adv, \n" + \
                             str(datas.prep) + " as prep, \n" + \
                             "'" + datas.orgId + "' as org, \n" + \
-                            str(datas.limit) + " as limit, \n" + \
                             "'" + userId + "' as userId, \n" + \
                             "1 as idCat, 1 as idSCat \n" + \
                 "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-\n" + \
@@ -212,7 +211,7 @@ async def get_valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str]
                 "order by worde, rt.sorted \n" + \
                 "with u, worde, ckow, collect(words) as words \n" + \
                 "order by rand() \n" + \
-                "return worde, words, ckow "  
+                "return worde, words, ckow  limit "  + str(datas.limit) 
     #print(f"statement pronun: {statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for games: ",
