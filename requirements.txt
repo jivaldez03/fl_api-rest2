@@ -8,12 +8,14 @@ cryptography==41.0.1
 fastapi==0.95.1
 Flask==2.2.3
 Flask-RESTful==0.3.9
+gunicorn==21.2.0
 h11==0.14.0
 idna==3.4
 itsdangerous==2.1.2
 Jinja2==3.1.2
 MarkupSafe==2.1.2
 neo4j==5.7.0
+packaging==23.1
 pycparser==2.21
 pydantic==1.10.7
 PyJWT==2.7.0
