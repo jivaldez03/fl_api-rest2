@@ -45,7 +45,8 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
         clicksQty = cardsQty * 2
     gradeval = (float(clicksQty) / cardsQty - 1) * 100  # 10 / 8 = 1.25 - 1 = .25 * 100 = 25
         
-    neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', userId:'" + userId + "'}) \n" + \
+    neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', status:'open', \n" + \
+                        "userId:'" + userId + "'}) \n" + \
                     "create (pkgS:PackageStudy {studing_dt:datetime('" + updtime + "')})-[rs:STUDY]->(pkg) \n" + \
                     "set pkgS.level = '" + level + "', \n" + \
                         "pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "], \n" + \
