@@ -1,1 +1,1 @@
-web: gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b 0.0.0.0:3000 "main_fapirest:_gunic_create_app"
+web: gunicorn --worker-class uvicorn.workers.UvicornWorker --preload "main_fapirest:_gunic_create_app"

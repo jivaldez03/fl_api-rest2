@@ -72,7 +72,7 @@ def _gunic_create_app():
 def index():
     return "Hello EVERYBODY ..... dELTA-pHASE is now working for you"
 
-@app.get("/hello")
+@app.get("/hello/")
 def helloworld():
     return {'message': "hello world"}
 

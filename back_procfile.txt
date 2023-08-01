@@ -12,3 +12,37 @@ import uvicorn.workers.UvicornWorker
 The issue here is that you're not running any web dynos. You can tell Heroku to do this via:
 
 $ heroku ps:scale web=1
+
+
+2023-08-01T21:23:11.821635+00:00 heroku[web.1]: Starting process with command `gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b 0.0.0.0:3000 "main_fapirest:_gunic_create_app"`
+2023-08-01T21:23:14.133134+00:00 app[web.1]: [2023-08-01 21:23:14 +0000] [2] [INFO] Starting gunicorn 21.2.0
+2023-08-01T21:23:14.133436+00:00 app[web.1]: [2023-08-01 21:23:14 +0000] [2] [INFO] Listening at: http://0.0.0.0:3000 (2)
+2023-08-01T21:23:14.133483+00:00 app[web.1]: [2023-08-01 21:23:14 +0000] [2] [INFO] Using worker: uvicorn.workers.UvicornWorker
+2023-08-01T21:23:14.136098+00:00 app[web.1]: [2023-08-01 21:23:14 +0000] [7] [INFO] Booting worker with pid: 7
+2023-08-01T21:23:14.156298+00:00 app[web.1]: [2023-08-01 21:23:14 +0000] [8] [INFO] Booting worker with pid: 8
+2023-08-01T21:23:14.918342+00:00 app[web.1]: 
+2023-08-01T21:23:14.918359+00:00 app[web.1]: 
+2023-08-01T21:23:14.918360+00:00 app[web.1]: ************************
+2023-08-01T21:23:14.918361+00:00 app[web.1]: conexión a neo4j
+2023-08-01T21:23:14.918365+00:00 app[web.1]: ************************
+2023-08-01T21:23:14.925232+00:00 app[web.1]: 
+2023-08-01T21:23:14.925234+00:00 app[web.1]: 
+2023-08-01T21:23:14.925235+00:00 app[web.1]: ************************
+2023-08-01T21:23:14.925236+00:00 app[web.1]: conexión a neo4j
+2023-08-01T21:23:14.925241+00:00 app[web.1]: ************************
+2023-08-01T21:23:14.979795+00:00 app[web.1]: 
+2023-08-01T21:23:14.979797+00:00 app[web.1]: 
+2023-08-01T21:23:14.979802+00:00 app[web.1]: from encrypted pass
+2023-08-01T21:23:14.980126+00:00 app[web.1]: 
+2023-08-01T21:23:14.980126+00:00 app[web.1]: 
+2023-08-01T21:23:14.980127+00:00 app[web.1]: from encrypted pass
+2023-08-01T21:23:14.980390+00:00 app[web.1]: creating objet Neo4j App:  <_neo4j.App object at 0x7fb0ee2c5510>
+2023-08-01T21:23:14.980695+00:00 app[web.1]: creating objet Neo4j App:  <_neo4j.App object at 0x7fb0ed7e0e50>
+2023-08-01T21:23:15.448879+00:00 app[web.1]: [2023-08-01 21:23:15 +0000] [8] [WARNING] ASGI app factory detected. Using it, but please consider setting the --factory flag explicitly.
+2023-08-01T21:23:15.449349+00:00 app[web.1]: [2023-08-01 21:23:15 +0000] [8] [INFO] Started server process [8]
+2023-08-01T21:23:15.449388+00:00 app[web.1]: [2023-08-01 21:23:15 +0000] [8] [INFO] Waiting for application startup.
+2023-08-01T21:23:15.449602+00:00 app[web.1]: [2023-08-01 21:23:15 +0000] [8] [INFO] Application startup complete.
+2023-08-01T21:23:15.451149+00:00 app[web.1]: [2023-08-01 21:23:15 +0000] [7] [WARNING] ASGI app factory detected. Using it, but please consider setting the --factory flag explicitly.
+2023-08-01T21:23:15.451784+00:00 app[web.1]: [2023-08-01 21:23:15 +0000] [7] [INFO] Started server process [7]
+2023-08-01T21:23:15.451834+00:00 app[web.1]: [2023-08-01 21:23:15 +0000] [7] [INFO] Waiting for application startup.
+2023-08-01T21:23:15.452114+00:00 app[web.1]: [2023-08-01 21:23:15 +0000] [7] [INFO] Application startup complete.
