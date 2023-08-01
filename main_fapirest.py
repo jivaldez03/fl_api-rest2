@@ -17,7 +17,7 @@ source __flapiR2/bin/activate
 uvicorn main_fapirest:app --reload --host localhost --port 3000 --timeout-keep-alive=20 --limit-concurrency=30
 """
 #from fastapi import HTTPException #, FastAPI
-from app import create_app, app_fastapi as app
+from app import create_app, app_fastapi #as app
 from fastapi import Response #, Header
 #from typing import Optional
 
@@ -38,17 +38,34 @@ from app.dt_auth.base import api_router as dt_auth_router
 from app.dt_ui_oper_gr.base import api_router as dt_api_oper_gr_router
 from app.dt_ui_oper_lv.base import api_router as dt_api_oper_lv_router
 
-def include_router(app):
-	#app.include_router(api_router)   # login + auth
-	#app.include_router(api_oper_gr_router)   # ui - operaciones generales        
-	#app.include_router(api_oper_lv_router)   # ui - operaciones de registro de avance    
-	app.include_router(dt_auth_router)   # ui - testing
-	app.include_router(dt_api_oper_gr_router)   # ui - testing
-	app.include_router(dt_api_oper_lv_router)   # ui - testing
+def _include_router(apps):
+	apps.include_router(dt_auth_router)   # ui - testing        
+	apps.include_router(dt_api_oper_gr_router)   # ui - testing
+	apps.include_router(dt_api_oper_lv_router)   # ui - testingreturn app   #app
 
-#app = create_app()
-include_router(app)
+def _include(apps):
+    apps.include_router(dt_auth_router)   # ui - testing        
+    apps.include_router(dt_api_oper_gr_router)   # ui - testing
+    apps.include_router(dt_api_oper_lv_router)   # ui - testingreturn app   #app
+    return apps 
 
+def _create_app():
+    app=_include(app_fastapi)   #app
+
+
+    @app.route("/index/")
+    def index():
+        return f"Hello world, my name es jorge Ivaldez <br> Testing value: index"
+    
+    @app.get("/")
+    def root():
+        return "Hello EVERYBODY ..... dELTA-pHASE is now working for you"
+
+    return app
+
+
+#_create_app()
+#app = _include(app_fastapi)   #app
         
 #appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
 
@@ -67,7 +84,7 @@ class Book(BaseModel):
     pages: int
     editorial: Optional[str]
 """
-
+"""
 @app.get("/")
 def index():
     return "Hello EVERYBODY ..... dELTA-pHASE is now working for you"
@@ -158,6 +175,7 @@ def get_categories2(user_id):
 
     return {'message': listcat}
 
+"""
 """
 @app.get("/get_/user_words/{user_id} {idSCatName}")
 def get_user_words(user_id, idSCatName):
@@ -366,7 +384,7 @@ def get_user_words2(user_id:str, idSCat:int):
     return {"message": result}
 
 
-@app.get("/get_/user_word_pron2/{word} {idWord}")
+#@app.get("/get_/user_word_pron2/{word} {idWord}")
 def get_user_word_pron2(word, idWord):
     global appNeo, session, log
     user = 'admin'
@@ -395,4 +413,6 @@ def get_user_word_pron2(word, idWord):
 
 if __name__ == "__main__":
     #print('GETENV:', getenv("SEC_KEY")) 
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    #app.run(host='0.0.0.0', port=3000, debug=True)
+    pass
+
