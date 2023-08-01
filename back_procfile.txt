@@ -4,3 +4,4 @@ web: gunicorn main_fapirest
 
 gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b localhost:3000 "main_fapirest:_create_app()"
 gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b localhost:3000 "main_fapirest"
+gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b localhost:3000 "main_fapirest:_create_app()"

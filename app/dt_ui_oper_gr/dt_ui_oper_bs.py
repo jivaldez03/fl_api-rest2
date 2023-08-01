@@ -4,6 +4,7 @@ from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 from datetime import datetime as dt
+import asyncio 
 
 from __generalFunctions import myfunctionname, myConjutationLink, get_list_element,_getdatime_T, get_list_elements
 
@@ -704,7 +705,7 @@ def get_words(userId, pkgname):
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
                         filename=__name__, 
-                        function_name=myfunctionname())  
+                        function_name=myfunctionname())      
     
     # creating the structure to return data   # ESTA SECCIÓN HASTA EL FINAL ES IGUAL GET_USER_WORDS4
     pkgdescriptor = {}
@@ -878,6 +879,8 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
         pkgname = dtexec 
     
     #pkgdescriptor["message"] = get_words(userId, pkgname, dtexec)
+    await asyncio.sleep(0)
+
     pkgdescriptor = get_words(userId, pkgname)
 
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
