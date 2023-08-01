@@ -1,1 +1,2 @@
-web: uvicorn main_fapirest:app --host=0.0.0.0 --port=${PORT:-3000} --timeout-keep-alive=20 --limit-concurrency=100
+heroku ps:scale web=1
+web: gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b localhost:5000 "main_fapirest:_gunic_create_app"

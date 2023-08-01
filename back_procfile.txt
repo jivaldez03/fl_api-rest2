@@ -6,3 +6,9 @@ gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b localhost:5000
 gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b localhost:5000 "main_fapirest:_gunic_create_app"
 
 import uvicorn.workers.UvicornWorker
+
+
+
+The issue here is that you're not running any web dynos. You can tell Heroku to do this via:
+
+$ heroku ps:scale web=1
