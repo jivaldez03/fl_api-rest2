@@ -50,12 +50,17 @@ def include_router(app):
 	app.include_router(dt_api_oper_gr_router)   # ui - testing
 	app.include_router(dt_api_oper_lv_router)   # ui - testing
 
-app = create_app()
-include_router(app)
-
-        
+       
 #appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
 
+app = create_app()
+#//include_router(app)
+
+def _gunic_create_app():
+     global app
+     app = create_app()
+     include_router(app)
+     return app
 
 @app.get("/")
 def index():
