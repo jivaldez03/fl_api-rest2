@@ -43,16 +43,20 @@ def _include_router(apps):
 	apps.include_router(dt_api_oper_gr_router)   # ui - testing
 	apps.include_router(dt_api_oper_lv_router)   # ui - testingreturn app   #app
 
+
 def _include(apps):
     apps.include_router(dt_auth_router)   # ui - testing        
     apps.include_router(dt_api_oper_gr_router)   # ui - testing
     apps.include_router(dt_api_oper_lv_router)   # ui - testingreturn app   #app
     return apps 
 
+
+app=_include(app_fastapi)   #app
+
+"""
 def _create_app():
     app=_include(app_fastapi)   #app
-
-
+    
     @app.route("/index/")
     def index():
         return f"Hello world, my name es jorge Ivaldez <br> Testing value: index"
@@ -60,13 +64,13 @@ def _create_app():
     @app.get("/")
     def root():
         return "Hello EVERYBODY ..... dELTA-pHASE is now working for you"
-
+    
     return app
 
 
 #_create_app()
-app = _include(app_fastapi)   #app = _include(app_fastapi)   #app
-        
+app = _include(app_fastapi)   #app
+"""    
 #appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
 
 """
