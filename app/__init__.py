@@ -14,4 +14,4 @@ def create_app():
         )
     return app
 
-app_fastapi = create_app()
+#app_fastapi = create_app()
