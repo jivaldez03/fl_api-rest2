@@ -38,10 +38,10 @@ from app.dt_auth.base import api_router as dt_auth_router
 from app.dt_ui_oper_gr.base import api_router as dt_api_oper_gr_router
 from app.dt_ui_oper_lv.base import api_router as dt_api_oper_lv_router
 
-def _include_router(apps):
-	apps.include_router(dt_auth_router)   # ui - testing        
-	apps.include_router(dt_api_oper_gr_router)   # ui - testing
-	apps.include_router(dt_api_oper_lv_router)   # ui - testingreturn app   #app
+def _include_router(app):
+	app.include_router(dt_auth_router)   # ui - testing        
+	app.include_router(dt_api_oper_gr_router)   # ui - testing
+	app.include_router(dt_api_oper_lv_router)   # ui - testingreturn app   #app
 
 
 #def _include(apps):
