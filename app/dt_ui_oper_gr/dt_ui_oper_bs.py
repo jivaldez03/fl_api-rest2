@@ -4,7 +4,7 @@ from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 from datetime import datetime as dt
-import asyncio 
+from asyncio import sleep as awsleep
 
 from __generalFunctions import myfunctionname, myConjutationLink, get_list_element,_getdatime_T, get_list_elements
 
@@ -14,7 +14,9 @@ from app.model.md_params_oper import ForPackages as ForNewPackage
 
 router = APIRouter()
 
-def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):    
+def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):
+    print("========== starting get_w_SCat id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    
     if idCat == None:
         neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "'})\n" + \
                 "-[:PACKAGED]->(u:User {userId:'" + userId + "'}) \n" + \
@@ -53,7 +55,9 @@ def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):
     else:
         wSCat = "w_SC_" + str(idCat * 1000000 + idSCat) # 'w_idSCat_' + str(idSCat)
 
-    print("\n\n\n","="*50,"wsCat =", wSCat, idCat, idSCat)
+    #print("\n\n\n","="*50,"wsCat =", wSCat, idCat, idSCat)
+    print("        ->   ========== ending get_w_SCat id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+
     return [wSCat, pkgsource, pkgtarget]
 
 def get_pronunciationId(words, packagename, userId):
@@ -61,6 +65,8 @@ def get_pronunciationId(words, packagename, userId):
     Function to identify and return the id() of pronunciation file
     into the WordSound collection
     """
+    print("========== starting get_pronunciationId id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+
     # getting the WordSound id for each word and example
     neo4j_statement = "with " + str(list(words)) + " as wordlist \n" + \
                     "unwind wordlist as wordtext \n" + \
@@ -99,6 +105,7 @@ def get_pronunciationId(words, packagename, userId):
                         'target':example_target} # binfile.decode("ISO-8859-1")} #utf-8")}
         result.append(dict_pronunciation)
 
+    print("        ->   ========== ending get_pronunciationId id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")    
     return result
 
 
@@ -108,10 +115,15 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
     Function to get all categories and subcategories allowed for the user
 
     """
+    
     global appNeo, session, log 
 
     token=funcs.validating_token(Authorization)
     userId = token['userId']
+    print("========== starting get_categories id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    
+
+    #
     
     neo4j_statement = "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]-(o:Organization)\n" + \
                         "<-[:SUBJECT]-(c:Category {idCat:1})<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
@@ -134,6 +146,8 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting categories for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+    await awsleep(0)
+    
     listcat = []
     for node in nodes:
         sdict = dict(node)        
@@ -145,7 +159,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
             subcat_list.append(subs)
         ndic["subcategories"] = subcat_list[:]
         listcat.append(ndic)
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending get_categories id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'message': listcat}
 
 
@@ -155,15 +169,18 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     Function to get how many words has the user worked for each subcategory
 
     """
+    
     global appNeo, session, log  # w_SC_10000053
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+    print("========== starting get_dashboard_table id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
 
     dtimenow = dt.now()
     yearr = dtimenow.year
     monthh = dtimenow.month
     weekk = dtimenow.strftime("%W") 
 
-    token=funcs.validating_token(Authorization)
-    userId = token['userId']
+    
 
     neo4j_statement =  "with " + str(yearr) + " as yearr, \n" + \
                         str(monthh) + " as monthh, \n" + \
@@ -280,6 +297,8 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     #"sum(size(pkg.words)) as learned, \n" + \ 
     # count(es) as wordsSC
     #print(f"neo4j_state: {neo4j_statement}")
+    await awsleep(0)
+    
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting data for dashboard table",
                         statement=neo4j_statement, 
@@ -309,7 +328,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     except Exception as error:
         msg = "error on empty nodes - no iterable"
 
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg,"\n\n")
+    print("        ->   ========== ending ending get_dashboard_table id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg,"\n\n")
     return {'message': listcat}
 
 
@@ -319,10 +338,12 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
     Function to get some options or data of the user
 
     """
-    global appNeo, session, log 
+
 
     token=funcs.validating_token(Authorization)
     userId = token['userId']
+    print("==========  starting get_config_uid id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    global appNeo, session, log 
 
     neo4j_statement = "match (us:User {userId:'" + userId + "'})-[r]-(rep:FirstContact) \n" + \
                     "return us.userId as userId \n" + \
@@ -341,7 +362,8 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
                  statement=neo4j_statement, 
                         filename=__name__, 
                         function_name=myfunctionname())
-    
+    await awsleep(0)
+        
     sdict={}
     msg = ""
     try:
@@ -349,7 +371,7 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
             sdict = dict(node)
     except Exception as error:
         msg = "error on empty nodes - no iterable"
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg,"\n\n")
+    print("==========  ending get_config_uid id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg,"\n\n")
     return sdict
 
 
@@ -359,14 +381,17 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     Function to get to get category name and subcategory name \n
 
     """
+    
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+    print("========== starting get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     global appNeo, session, log 
 
     idCat = idSCat // 1000000
     idSCat = idSCat % 1000000
 
     #print('idcattt:', idCat, 'idSCat:', idSCat)
-    token=funcs.validating_token(Authorization)
-    userId = token['userId']    
+    #
 
     statement = "match (u:User {userId:'" + userId + "'})\n" + \
                 "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
@@ -380,6 +405,8 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                         statement=statement,
                         filename=__name__, 
                         function_name=myfunctionname())
+    await awsleep(0)
+    
     
     catscname = {}
     for node in nodes:
@@ -388,7 +415,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                      , 'CatName': sdict["catname"]
                     , 'scatname': sdict["scname"]
         }
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return catscname
 
 
@@ -398,14 +425,16 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     Function to get opened package list in a specific SubCategory \n
 
     """
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+    print("========== starting get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     global appNeo, session, log 
 
     idCat = idSCat // 1000000
     idSCat = idSCat % 1000000
 
     #print('idcattt:', idCat, 'idSCat:', idSCat)
-    token=funcs.validating_token(Authorization)
-    userId = token['userId']    
+    #
 
     statement = "match (u:User {userId:'" + userId + "'})\n" + \
                 "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
@@ -434,7 +463,8 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                         statement=statement,
                         filename=__name__, 
                         function_name=myfunctionname())
-    
+    await awsleep(0)
+        
     listPack = []
     for node in nodes:
         sdict = dict(node)    
@@ -463,7 +493,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
         }
         
         listPack.append(ndic)
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'message': listPack}
 
 
@@ -481,14 +511,17 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
     Function to get opened package list in a specific SubCategory \n
 
     """
+    
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+    print("========== starting get_user_packagehistorylist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     global appNeo, session, log 
 
     idCat = idSCat // 1000000
     idSCat = idSCat % 1000000
 
     #print('idcattt:', idCat, 'idSCat:', idSCat)
-    token=funcs.validating_token(Authorization)
-    userId = token['userId']
+    #
     if ssearch == None:
         ssearch = ''
     if sword == None:
@@ -529,6 +562,7 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
                         statement=statement,
                         filename=__name__, 
                         function_name=myfunctionname())
+    await awsleep(0)    
     
     listPack = []
     totrecs = 0
@@ -563,7 +597,7 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
     if totalpages * ishow != totrecs:
         totalpages += 1
     
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending get_user_packagehistorylist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'page': ipage, 'show': ishow, 'totrecs': totrecs, 'lastpage':totalpages, 'data':listPack}
 
 
@@ -573,10 +607,13 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
     Function to get package level \n
 
     """
-    global appNeo, session, log 
-
+    global appNeo, session, log
+    
     token=funcs.validating_token(Authorization)
     userId = token['userId']
+    print("========== starting get_user_package_st id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+
+    #
     
     statement = "match (u:User {userId:'" + userId + "'})-[]-\n" + \
                 "(pkg:Package {packageId: '" + packageId + "'}) \n" + \
@@ -603,7 +640,8 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
                         statement=statement,
                         filename=__name__, 
                         function_name=myfunctionname())
-    
+    await awsleep(0)
+        
     listPack = []
     for node in nodes:
         sdict = dict(node)    
@@ -630,11 +668,13 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
         }
         
         listPack.append(ndic)
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending get_user_package_st id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'message': listPack}
 
 def get_words(userId, pkgname):
     global app, session, log
+
+    print("========== starting get words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
 
     #print('='*50," inicia get_userwords", _getdatime_T())
 
@@ -855,7 +895,7 @@ def get_words(userId, pkgname):
 
     #print('='*50," finaliza -get_words", _getdatime_T())
 
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending get words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor
 
 @router.get("/get_/user_words/{pkgname}")
@@ -867,11 +907,14 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
     pkgname: str  (package Code) \n
     }
 
-    """
-    global appNeo, session, log 
-
+    """    
+    
     token=funcs.validating_token(Authorization)
     userId = token['userId']
+    print("========== starting get_user_words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    global appNeo, session, log 
+
+    #
 
     #print(f'input: {user_id} - {pkgname} for get_user_words')
     dtexec = funcs._getdatime_T()    
@@ -879,16 +922,16 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
         pkgname = dtexec 
     
     #pkgdescriptor["message"] = get_words(userId, pkgname, dtexec)
-    await asyncio.sleep(0)
+    await awsleep(0)
 
     pkgdescriptor = get_words(userId, pkgname)
 
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending get_user_words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor
 
 
 @router.post("/pst_/user_words/")
-def post_user_words(datas:ForNewPackage
+async def post_user_words(datas:ForNewPackage
                     , Authorization: Optional[str] = Header(None)):
     """
     Function to create new words package \n
@@ -899,12 +942,15 @@ def post_user_words(datas:ForNewPackage
         capacity:int=8    \n
     }
     """
+    
+    token=funcs.validating_token(Authorization) 
+    userId = token['userId']
+    print("========== starting post_user_words id:  ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     global appNeo, session, log
 
     #print("\n\n\n",'='*50," inicia -pst_userwords", _getdatime_T())
 
-    token=funcs.validating_token(Authorization) 
-    userId = token['userId']
+    #
 
     dtexec = funcs._getdatime_T()
 
@@ -919,7 +965,8 @@ def post_user_words(datas:ForNewPackage
     if pkgname in ['', None]:        
         pkgname = dtexec 
 
-
+    await awsleep(0)
+    
     # getting SubCat, Category, and Organization values for Subcategory
     neo4j_statement_pre = "match (u:User {userId:'" + userId + "'})\n" + \
                             "-[rt:RIGHTS_TO]->(o:Organization)<-\n" + \
@@ -934,8 +981,9 @@ def post_user_words(datas:ForNewPackage
                         filename=__name__, 
                         function_name=myfunctionname())
     
-    #print("\n\n\n",'='*50," termina -pst_userwords paso 1", _getdatime_T())
-    
+    #print("\n\n\n",'='*50," termina -pst_userwords paso 1", _getdatime_T())    
+    await awsleep(0)
+
     #npackage = []
     #continueflag = False
     for node in nodes:
@@ -968,6 +1016,8 @@ def post_user_words(datas:ForNewPackage
                         filename=__name__, 
                         function_name=myfunctionname())
 
+    await awsleep(0)
+
     pkgwords = []
     for node in nodes:
         sdict = dict(node)
@@ -976,32 +1026,7 @@ def post_user_words(datas:ForNewPackage
     #print("\n\n\n",'='*50," termina -pst_userwords paso 2", _getdatime_T())
     
     if idSCat == 1:                              # words category is required
-        """
-        neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
-                "set u." + lgSource + " = CASE WHEN u." + lgSource + " is null \n" + \
-                    "THEN [] \n" + \
-                    "ELSE u." + lgSource + " END \n" + \
-                "with u \n" + \
-                "match (u)-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT] \n" + \
-                "-(c:Category {idCat:" + str(idCat) + "}) \n" + \
-                "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat: 1}) \n" + \
-                "optional match (u)<-[:PACKAGED]-(pkg:Package {status:'open'})-[:PACK_SUBCAT]->(sc) \n" + \
-                "with u, pkg, coalesce(pkg.words,['.']) as pkgw \n" + \
-                "unwind pkgw as pkgword \n" + \
-                "with u, collect(pkgword) as pkgwords \n" + \
-                "match (n:Word:" + lgSource + ") \n" + \
-                "where not n.word in pkgwords  \n" + \
-                "with u, n, n.word in u." + lgSource + " as alreadystored \n" + \
-                "where alreadystored = False \n" + \
-                "match (n)-[tes:TRANSLATOR]->(s:Word:Spanish) \n" + \
-                "with u, n, s, tes \n" + \
-                "order by n.wordranking, tes.sorted limit 100 \n" + \
-                "with u, n, collect(distinct s.word) as swlist \n" + \
-                "with u, collect(n.word) as ewlist, collect(swlist) as swlist \n" + \
-                "return u.userId as idUser, 'words' as subCat, \n" + \
-                "ewlist[0..8] as slSource, \n" + \
-                "swlist[0..8] as slTarget "
-        """
+
         neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
                 "match (u:User {userId:'" + userId + "'}) \n" + \
                 "/* GETTING LEARNED WORDS */ \n" + \
@@ -1027,26 +1052,7 @@ def post_user_words(datas:ForNewPackage
 
     else: # if idSCat != 1:                                   # other one subcategory is required
         #idSCatName = "w_SC_" + str(idCat * 1000000 + idSCat) 
-        """
-        neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
-                "match (u:User {userId:'" + userId + "'}) \n" + \
-                "set u." + idSCatName + " = CASE WHEN u." + idSCatName + " is null \n" + \
-                    "THEN [] \n" + \
-                    "ELSE u." + idSCatName + " END \n" + \
-                "with  u, pkgwords \n" + \
-                "match (c:Category {idCat:" + str(idCat) + "})-[:CAT_SUBCAT]\n" + \
-                    "-(s:SubCategory {idSCat:" + str(idSCat) + "})-\n" + \
-                "[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]-" + \
-                    "(sw:ElemSubCat:" + lgTarget + ") \n" + \
-                "where  (not ew.word in u." + idSCatName + " or u." + idSCatName + " is NULL) \n" + \
-                    "and not ew.word in pkgwords \n" + \
-                "with s, u, ew, collect(distinct sw.word) as sw, scat \n" + \
-                "order by scat.wordranking, ew.word \n" + \
-                "with s, u, collect(distinct ew.word) as ewlist, collect(sw) as swlist \n" + \
-                "return u.userId as idUser, s.name as subCat, \n" + \
-                        "ewlist[0.." + str(capacity) + "] as slSource, \n" + \
-                        "swlist[0.." + str(capacity) + "] as slTarget"
-        """
+
         neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
                 "match (u:User {userId:'" + userId + "'}) \n" + \
                 "/*set u." + idSCatName + " = CASE WHEN u." + idSCatName + " is null \n" + \
@@ -1076,6 +1082,8 @@ def post_user_words(datas:ForNewPackage
                 #"ewlist[0.." + str(capacity) + "] as slSource, " + \
                 #"swlist[0.." + str(capacity) + "] as slTarget"
         #print(f"ne04j_state: {ne04j_statement}")
+    await awsleep(0)
+    
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting new words (step 2) for new package",
                         statement=neo4j_statement,
@@ -1085,6 +1093,7 @@ def post_user_words(datas:ForNewPackage
 
     #print("\n\n\n",'='*50," termina -pst_userwords paso 3", _getdatime_T())
     # creating the data structure to return it
+    
     words = []
     for node in nodes:
         sdict = dict(node)        
@@ -1128,11 +1137,13 @@ def post_user_words(datas:ForNewPackage
         # now, getting the package using the same endpoint function to return words package
 
         #print("\n\n\n",'='*50," finaliza -pst_userwords", _getdatime_T(), " y sigue get_words")
+    await awsleep(0)
+    
     pkgdescriptor = get_words(userId, pkgname)
     #else:
     #    pkgdescriptor = get_words(userId, pkgname)
-
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    
+    print("        ->   ========== ending ending post_user_words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor #pkgname #pkgdescriptor
 
 
@@ -1141,6 +1152,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
     """
     internal function, it is not an endpoint
     """
+    print("========== starting get_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     global appNeo, session, log
 
     npackage = []
@@ -1196,10 +1208,10 @@ def get_user_words4(userId:str, pkgname:str, level:str):
     words = []
     kow, kowc = [], []
     npackage = []
-    print("\n\ninicia ciclos de nodes:\n\n")
+    #print("\n\ninicia ciclos de nodes:\n\n")
     for node in nodes:
         sdict = dict(node)    
-        print("sdict in nodes:", sdict)   
+        #print("sdict in nodes:", sdict)   
         npackage = []
         pkgdescriptor = {"packageId": pkgname
                           , "label": sdict["label"]
@@ -1241,7 +1253,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
     s_kow_verb, s_kow, s_kow_past_verb = {'title': None}, {'title': None}, {'title': None}
     for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
         # kow section
-        print(gia, len(npackage), 'len-kow:', len(kow))
+        #print(gia, len(npackage), 'len-kow:', len(kow))
         if len(kow)>0:  # if existe referencia a kind of word
             if len(kow[gia]) == 0:
                 isitaverb = [False, []]
@@ -1345,6 +1357,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
     pkgdescriptor["message"] = result2
 
     #print('='*50," finaliza -get_words", _getdatime_T())
+    
     """
     pkgdescriptor = {}
     words = []
@@ -1471,7 +1484,8 @@ def get_user_words4(userId:str, pkgname:str, level:str):
         result2.append(new_element)
     pkgdescriptor["message"] = result2
     """
-    print("========== id: GET_USER_WORDS4", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    
+    print("        ->   ========== ending ending get_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return pkgdescriptor
 
 
@@ -1489,15 +1503,16 @@ async def post_user_words4(datas:ForNewPackage
     """
     global appNeo, session
     
+    token=funcs.validating_token(Authorization) 
+    userId = token['userId']
+    print("========== starting post_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    
     idSCat = datas.idScat
 
     idCat = idSCat // 1000000
     idSCat = idSCat % 1000000
     pkgname = datas.package
     capacity = datas.capacity    
-    
-    token=funcs.validating_token(Authorization) 
-    userId = token['userId']
 
     level = 'lvl_40_01'
 
@@ -1505,34 +1520,7 @@ async def post_user_words4(datas:ForNewPackage
 
     #wSCat = get_w_SCat (userId, pkgname, idCat, idSCat)
     #wSCat = wSCat[0]
-    """
-    neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
-            "'" + wSCat + "' as wSCat, \n" + \
-            "'" + userId + "' as user_id, \n" + \
-            str(capacity) + " as capacity \n" + \
-            "match (u:User {userId:user_id}) \n" + \
-            "set u." + wSCat + "= CASE WHEN u." + wSCat + " = [] \n" + \
-                "THEN null \n" + \
-                "ELSE u." + wSCat + " END \n" + \
-            "with u.userId as userId, COALESCE(u[wSCat],['.']) as uwords, packageId, wSCat, capacity \n" + \
-            "unwind uwords as words \n" + \
-            "with userId, words, packageId, wSCat, capacity order by rand() \n" + \
-            "with userId, collect(words) as words, packageId, wSCat, capacity \n" + \
-            "with userId, words[0..capacity] as lwords, packageId, wSCat, capacity \n" + \
-            "match (u)-[rp:PACKAGED]-(pkg:Package {packageId:packageId}) \n" + \
-            "set pkg.words40=(pkg.words + lwords)[0..capacity], \n" + \
-                "pkg.status='open', \n" + \
-                "pkg.ctUpdate = datetime('" + dtexec + "') \n" + \
-            "create (pkgS:PackageStudy {level:'" + level + "'})-[rs:STUDY]->(pkg) \n" + \
-            "set pkgS.studying_dt = datetime('" + dtexec + "'), \n" + \
-                "pkgS.grade = [0,capacity] \n" + \
-            "with userId, packageId, pkg, wSCat \n" + \
-            "match (u2:User {userId:userId}) \n" + \
-            "where u2." + wSCat + " is null \n" + \
-            "match (pkg2:Package {packageId:packageId})-[]-(u2) \n" + \
-            "set pkg2.words40 = pkg.words40[0..-1] \n" + \
-            "return userId, packageId limit 1 "
-    """
+
 
     neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
             "'" + userId + "' as user_id, \n" + \
@@ -1559,6 +1547,8 @@ async def post_user_words4(datas:ForNewPackage
                         "{(sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-[rUArcM:ARCHIVED_M]->(u2)} \n" + \
                         "THEN pkg2.words40[0..-1] ELSE pkg2.words40 END \n" + \
             "return userId, packageId, pkg2.words40 limit 1 "
+    await awsleep(0)
+    
     nodes, log = neo4j_exec(session, userId,
                     log_description="post_user_words4 -level_40_ \n packageId: " + pkgname,
                     statement=neo4j_statement,
@@ -1566,8 +1556,10 @@ async def post_user_words4(datas:ForNewPackage
                         function_name=myfunctionname())
     
     # now, getting the package using the same endpoint function to return words package
+    await awsleep(0)
+    
     result = get_user_words4(userId, pkgname, "words40")
-    print("========== id: PST_USER_WORDS4", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending post_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return result
 
 
@@ -1583,6 +1575,7 @@ async def post_user_words5(datas:ForNewPackage
         capacity:int=24    // 8, 16, 24, 32, 40 \n
     }
     """
+    print("========== starting post_user_words5 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     global appNeo, session, log
     
     idSCat = datas.idScat
@@ -1629,10 +1622,11 @@ async def post_user_words5(datas:ForNewPackage
                     statement=neo4j_statement, 
                     filename=__name__, 
                     function_name=myfunctionname())
-    
+    await awsleep(0)
+        
     # now, getting the package using the same endpoint function to return words package
     result = get_user_words4(userId, pkgname, "words50")
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("        ->   ========== ending ending post_user_words5 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return result
 
 
@@ -1646,10 +1640,12 @@ async def get_user_word_pronunciation(word:str, idWord:int):
         word:str, \n
         idNode: int
     """
+    userId = '__publicPron__' #token['userId']
+    print("========== starting get_user_word_pronunciation id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     global appNeo, session, log
 
     #token=funcs.validating_token(Authorization) 
-    userId = '__publicPron__' #token['userId']
+    #
 
     #word = datas.word
     #idWord = datas.idNode
@@ -1663,10 +1659,13 @@ async def get_user_word_pronunciation(word:str, idWord:int):
                         statement=statement, 
                         filename=__name__, 
                         function_name=myfunctionname())
+    
+    await awsleep(0)
+    
     for ele in nodes:
         elems = dict(ele)
-        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
-        return Response(elems['ws.binfile'])
+    print("        ->   ========== ending ending get_user_word_pronunciation id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return Response(elems['ws.binfile'])
 
 
 @router.get("/get_/user_word_pron/{word} {idWord}")
@@ -1679,10 +1678,14 @@ def get_user_word_pron2(word:str, idWord:int
         word:str, \n
         idWord: int
     """
-    global appNeo, session, log
 
+    
     token=funcs.validating_token(Authorization) 
     userId = token['userId']
+    print("========== starting  get_user_word_pron2 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    global appNeo, session, log
+
+    #
 
     statement = 'match (ws:WordSound {word: "' +  word + '"}) ' + \
                 "where id(ws) = " + str(idWord) + " " + \
@@ -1695,6 +1698,6 @@ def get_user_word_pron2(word:str, idWord:int
                         function_name=myfunctionname())
     for ele in nodes:
         elems = dict(ele)
-        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
-        return Response(elems['ws.binfile'])
+    print("        ->   ========== ending ending get_user_word_pron2 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return Response(elems['ws.binfile'])
 
