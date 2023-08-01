@@ -284,7 +284,7 @@ def get_user_words_neo(user_id, idSCatName):
     return npackage
 """
 
-#@app.get("/get_/user_words2/{user_id} {idSCat}")
+@app.get("/get_/user_words2/{user_id} {idSCat}")
 def get_user_words2(user_id:str, idSCat:int):
     global appNeo, session, log
     user = 'admin'
@@ -388,7 +388,7 @@ def get_user_words2(user_id:str, idSCat:int):
     return {"message": result}
 
 
-#@app.get("/get_/user_word_pron2/{word} {idWord}")
+@app.get("/get_/user_word_pron2/{word} {idWord}")
 def get_user_word_pron2(word, idWord):
     global appNeo, session, log
     user = 'admin'
