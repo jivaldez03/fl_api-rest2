@@ -65,7 +65,7 @@ def _create_app():
 
 
 #_create_app()
-#app = _include(app_fastapi)   #app
+app = _include(app_fastapi)   #app = _include(app_fastapi)   #app
         
 #appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
 
