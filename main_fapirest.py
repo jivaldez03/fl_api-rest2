@@ -42,24 +42,30 @@ from app.dt_auth.base import api_router as dt_auth_router
 from app.dt_ui_oper_gr.base import api_router as dt_api_oper_gr_router
 from app.dt_ui_oper_lv.base import api_router as dt_api_oper_lv_router
 
-def include_router(app):
+def include_router():
+    global app
+    app.include_router(dt_auth_router)
+    app.include_router(dt_api_oper_gr_router)
+    app.include_router(dt_api_oper_lv_router)
+    return
+
 	#app.include_router(api_router)   # login + auth
 	#app.include_router(api_oper_gr_router)   # ui - operaciones generales        
 	#app.include_router(api_oper_lv_router)   # ui - operaciones de registro de avance    
-	app.include_router(dt_auth_router)   # ui - testing
-	app.include_router(dt_api_oper_gr_router)   # ui - testing
-	app.include_router(dt_api_oper_lv_router)   # ui - testing
+	#app.include_router(dt_auth_router)   # ui - testing
+	#app.include_router(dt_api_oper_gr_router)   # ui - testing
+	#app.include_router(dt_api_oper_lv_router)   # ui - testing
 
        
 #appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
 
 app = create_app()
-#//include_router(app)
+include_router()
 
 def _gunic_create_app():
      global app
      app = create_app()
-     include_router(app)
+     include_router()
      return app
 
 @app.get("/")
