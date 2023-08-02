@@ -101,7 +101,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
 
     if not function_name:
         function_name = 'null'
-    print(f"\n\nexecution requested by {user} - FUNTION__NAME: {function_name}")
+    print(f"execution requested by {user} - FUNTION__NAME: {function_name}")
     # next line is the log's record for the user's execution
     if monitoring_function(function_name):
         log_description += "\n----\n" + statement
@@ -145,7 +145,7 @@ def neo4j_exec_back_borrar(session, user, log_description, statement, filename= 
             log = neo4_log(session, user, log_description, filename, function_name)
             #pass
         except Exception as error:
-            print("An error occurred recording log:", log_description, "\n\n",  type(error).__name__, " - ", error)
+            print("An error occurred recording log:", log_description, "->",  type(error).__name__, " - ", error)
             log = [-1,""]
         # process the transaction or request
         try:
@@ -155,18 +155,18 @@ def neo4j_exec_back_borrar(session, user, log_description, statement, filename= 
             break
         except SessionExpired as error:
             print("X X X X X X X X X X X X session expired X X X X X X X X X X ")
-            reconect_neo4j()
             sleep(2)
+            reconect_neo4j()
             continue
         except SessionError as error:
             print("X X X X X X X X X X X X session error X X X X X X X X X X ")
-            reconect_neo4j()
             sleep(2)
+            reconect_neo4j()
             continue    
         except ServiceUnavailable as error:
             print("X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
-            reconect_neo4j()
             sleep(3)
+            reconect_neo4j()
             continue
         except ResultError as error:
             print("X X X X X X X X X X X X result error  X X X X X X X X X X ")
