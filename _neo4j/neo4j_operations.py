@@ -101,28 +101,28 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
 
     if not function_name:
         function_name = 'null'
-    print(f"execution requested by {user} - FUNTION__NAME: {function_name}")
+    print(f"\n\nexecution requested by {user} - FUNTION__NAME: {function_name}")
     # next line is the log's record for the user's execution
     if monitoring_function(function_name):
         log_description += "\n----\n" + statement
-    print("\n\n**********", user, "----> recording logs - the beginning" , function_name)
+    #print("\n\n**********", user, "----> recording logs - the beginning" , function_name)
     log = [-1,""]
     log = neo4_log(session, user, log_description, filename, function_name)    
 
-    print("**********", user, "-", log[0], "->           inicia ejecución en neo4_exec " , function_name)
+    #print("**********", user, "-", log[0], "->           inicia ejecución en neo4_exec " , function_name)
 
     nodes = execution(function_name, statement, user, log)
     
-    print("**********", user, "-", log[0], "->           finaliza ejecución en neo4_exec", function_name, type(nodes))
+    #print("**********", user, "-", log[0], "->           finaliza ejecución en neo4_exec", function_name, type(nodes))
         
-    print("**********", user, "-", log[0], "-> recording logs - the end for log's at: ", str(log[1]))
+    #print("**********", user, "-", log[0], "-> recording logs - the end for log's at: ", str(log[1]))
     if log[0] > 0:
         statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
                     "where id(l) = " + str(log[0]) + " \n" + \
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         execution(function_name, statement, user, log)
-        print("*********************** log's record - the end" , function_name)
+        #print("*********************** log's record - the end" , function_name)
     return nodes, log
 
 
@@ -196,7 +196,7 @@ def get_sugcategories(session, user):
     scatdic = {}
     for node in nodes:
         nodedic = dict(node)
-        print(nodedic["scat.idCat"], nodedic["scat.idSCat"], nodedic["scat.name"])
+        #print(nodedic["scat.idCat"], nodedic["scat.idSCat"], nodedic["scat.name"])
         scatdic[nodedic["scat.idSCat"]] =  nodedic["scat.name"]
     return scatdic
 
@@ -252,12 +252,12 @@ def user_change_password(session, login, old_pass, new_pass, filename=None, func
     return result
 
 def create_new_word_sound(tx, session, word, bfield):
-    print(f"\nsession: {session} \n")
+    #print(f"\nsession: {session} \n")
     tx.run("merge (ws: word_sound {word:$updateword}) set ws.binfile=$newfile,ws.actived='yes' ", 
                     updateword = word, newfile = bfield)
     
 def unload_word_sound(tx, session, word):
-    print(f"\nsession: {session} \n")
+    #print(f"\nsession: {session} \n")
     tx.run("match (ws: word_sound {word:$updateword}) return ws.binfile", 
                 updateword = word) #, newfile = bfield)
     
