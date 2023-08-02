@@ -170,7 +170,9 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     global appNeo, session, log  # w_SC_10000053
     token=funcs.validating_token(Authorization)
     userId = token['userId']
-    print("========== starting get_dashboard_table id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    startinat = _getdatime_T()
+    tm1 = dt.now()
+    print("========== starting get_dashboard_table id: ", userId, " dt: ", startinat, " -> ", myfunctionname())
 
     dtimenow = dt.now()
     yearr = dtimenow.year
@@ -183,18 +185,18 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         str(weekk) + " as weekk \n" + \
         "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
         "[:SUBJECT]-(c:Category {idCat:1})<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
-        "match (es:Word)-[:TRANSLATOR]-(ess:Word) \n" + \
-        "where o.lSource in labels(es) and o.lTarget in labels(ess) \n" + \
-        "with u, o, c, sc, count(distinct es) as wordsSC, yearr, monthh, weekk \n" + \
         "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
             "{userId:u.userId, year:yearr, month:monthh, week:weekk, \n" + \
             "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
-        "with u, o, c, sc, wordsSC, yearr, monthh, weekk, rof.week_qty as qtyweek \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, sum(rof.week_qty) as qtyweek \n" + \
         "optional match (u)<-[:ARCHIVED_M]-(rofM:Archived_M " + \
             "{userId:u.userId, year:yearr, month:monthh, \n" + \
             "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
-        "with u, o, c, sc, wordsSC, yearr, monthh, weekk, \n" + \
-            "qtyweek, rofM.month_qty as qtymonth \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, \n" + \
+            "qtyweek, sum(rofM.month_qty) as qtymonth \n" + \
+        "match (es:Word)-[:TRANSLATOR]-(ess:Word) \n" + \
+        "where o.lSource in labels(es) and o.lTarget in labels(ess) \n" + \
+        "with u, o, c, sc, count(distinct es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth \n" + \
         "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
                 "sum(qtymonth) as learned, \n" + \
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
@@ -206,22 +208,22 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         "with " + str(yearr) + " as yearr, \n" + \
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
-        "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
-        "match (og)<-[rsub:SUBJECT]-(c:Category {idCat:1}) \n" + \
+        "match (o:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
+        "match (o)<-[rsub:SUBJECT]-(c:Category {idCat:1}) \n" + \
         "match (c)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idCat:c.idCat}) \n" + \
         "where  sc.idSCat <> 1 \n" + \
-        "match (sc)<-[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]->(ws:ElemSubCat) \n" + \
-        "where og.lSource in labels(es) and og.lTarget in labels(ws) \n" + \
-        "with og, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
         "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
             "{userId:u.userId, year:yearr, month:monthh, week:weekk, \n" + \
-            "source:og.lSource, target:og.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
-        "with u, og, c, sc, wordsSC, yearr, monthh, weekk, rof.week_qty as qtyweek \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, sum(rof.week_qty) as qtyweek \n" + \
         "optional match (u)<-[:ARCHIVED_M]-(rofM:Archived_M " + \
             "{userId:u.userId, year:yearr, month:monthh, \n" + \
-            "source:og.lSource, target:og.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
-        "with u, og, c, sc, wordsSC, yearr, monthh, weekk, \n" + \
-            "qtyweek, rofM.month_qty as qtymonth \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, \n" + \
+            "qtyweek, sum(rofM.month_qty) as qtymonth \n" + \
+        "match (sc)<-[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]->(ws:ElemSubCat) \n" + \
+        "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
+        "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth \n" + \
         "order by sc.idCat, sc.idSCat, c.name, sc.name \n" + \
         "return c.name as CatName, \n" + \
                 "sc.name as SCatName, \n" + \
@@ -236,23 +238,23 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         "with " + str(yearr) + " as yearr, \n" + \
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
-        "match (og:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
-        "match (og)<-[rsub:SUBJECT]-(c:Category) \n" + \
+        "match (o:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
+        "match (o)<-[rsub:SUBJECT]-(c:Category) \n" + \
         "where c.idCat <> 1  \n" + \
         "match (c)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idCat:c.idCat}) \n" + \
         "where exists {(sc)<-[:PACK_SUBCAT]-(:Package)-[:PACKAGED]->(u)} \n" + \
-        "match (sc)<-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]->(ws:ElemSubCat) \n" + \
-        "where og.lSource in labels(es) and og.lTarget in labels(ws) \n" + \
-        "with og, c, sc, count(es) as wordsSC, yearr, monthh, weekk \n" + \
         "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
             "{userId:u.userId, year:yearr, month:monthh, week:weekk, \n" + \
-            "source:og.lSource, target:og.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
-        "with u, og, c, sc, wordsSC, yearr, monthh, weekk, rof.week_qty as qtyweek \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, sum(rof.week_qty) as qtyweek \n" + \
         "optional match (u)<-[:ARCHIVED_M]-(rofM:Archived_M " + \
             "{userId:u.userId, year:yearr, month:monthh, \n" + \
-            "source:og.lSource, target:og.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
-        "with u, og, c, sc, wordsSC, yearr, monthh, weekk, \n" + \
-            "qtyweek, rofM.month_qty as qtymonth \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, \n" + \
+            "qtyweek, sum(rofM.month_qty) as qtymonth \n" + \
+        "match (sc)<-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]->(ws:ElemSubCat) \n" + \
+        "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
+        "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth \n" + \
         "order by sc.idCat, sc.idSCat, c.name, sc.name \n" + \
         "return c.name as CatName, \n" + \
                 "sc.name as SCatName, \n" + \
@@ -265,6 +267,8 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     
     #"sum(size(pkg.words)) as learned, \n" + \ 
     # count(es) as wordsSC
+    beforeNeo4 =  _getdatime_T()
+    print(startinat, ' antes de ejecución en neo4j:', beforeNeo4)
     #print(f"neo4j_state: {neo4j_statement}")
     await awsleep(0)
     #print(f"\n\n dashboard: \n{neo4j_statement}")
@@ -274,10 +278,13 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         filename=__name__, 
                         function_name=myfunctionname())
     
+    afterNeo4 =  _getdatime_T()
+    print(startinat, '\n antes de neo4j:', beforeNeo4, 'despues de neo4j:', afterNeo4)
     listcat,  listBasicK= [], []
     msg = ""
     try:
-        for node in nodes:
+        for node in nodes:            
+            #print('ciclos en nodes:', _getdatime_T())
             sdict = dict(node)
             tw = ""
             qtymonth = str(sdict["qtymonth"]) if sdict["qtymonth"] else "0"
@@ -299,7 +306,8 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 listcat.append(sdict)
     except Exception as error:
         msg = "error on empty nodes - no iterable"
-    
+    diftime = str(dt.now() - tm1)
+    print("==> ",startinat, '\n antes de neo4j:', beforeNeo4, 'despues de neo4j:', afterNeo4, " termina a ", _getdatime_T(), " = ", diftime)
     print("        ->   ========== ending get_dashboard_table id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg)
     return {'message': listBasicK + listcat}
 
@@ -397,7 +405,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     Function to get opened package list in a specific SubCategory \n
 
     """
-    token=funcs.validating_token(Authorization)
+    token=funcs.validating_token(Authorization, myfunctionname())
     userId = token['userId']
     print("========== starting get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log 
