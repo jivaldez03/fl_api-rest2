@@ -76,17 +76,17 @@ def validating_token(token):
         #print(f'getenv: {getenv("SEC_KEY")}, {token}')                
         return decode(token, key=getenv("SEC_KEY"), algorithms=["HS256"])
     except DecodeError:
-        print("error por token decodeerror")
+        print("====> TOKEN DECODE ERROR")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Token",
+            detail="====> INVALID TOKEN",
             #headers={"WWW-Authenticate": "Basic"},
         )
     except ExpiredSignatureError:
-        print("error por token expired")
+        print("====> EXPIRED TOKEN ERROR")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Expired - Invalid Token"
+            detail="====> EXPIRED TOKEN ERROR"
         )
 
 def level_seq(level, forward=False, position=False):

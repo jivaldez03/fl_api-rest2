@@ -267,7 +267,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     # count(es) as wordsSC
     #print(f"neo4j_state: {neo4j_statement}")
     await awsleep(0)
-    print(f"\n\n dashboard: \n{neo4j_statement}")
+    #print(f"\n\n dashboard: \n{neo4j_statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting data for dashboard table",
                         statement=neo4j_statement, 
