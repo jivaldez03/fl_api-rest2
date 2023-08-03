@@ -31,3 +31,9 @@ class ForGames_KOW(BaseModel):
     adv : bool
     prep : bool
 
+class ForGames_archive(BaseModel):
+    orgId: str
+    subcat:int
+    words  : str
+    average: float
+    kogame : str

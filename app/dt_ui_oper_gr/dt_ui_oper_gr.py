@@ -3,11 +3,14 @@ from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
-from __generalFunctions import myfunctionname, myConjutationLink, get_list_element,_getdatime_T, get_list_elements
+from __generalFunctions import myfunctionname \
+                            ,_getdatime_T
+
+#, get_list_elements #, myConjutationLink, get_list_element
 
 from random import shuffle as shuffle
 
-from app.model.md_params_oper import ForNamePackages, ForGames_KOW
+from app.model.md_params_oper import ForNamePackages, ForGames_KOW, ForGames_archive
 
 router = APIRouter()
 
@@ -215,6 +218,59 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
     #print(f"statement pronun: {statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for games: ",
+                        statement=statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    listEle = []
+    for ele in nodes:
+        elems = dict(ele)
+        listEle.append(elems)
+        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listEle
+
+
+@router.post("/gamesAA_archive/")
+async def valuesforgames_AA(datas:ForGames_archive, Authorization: Optional[str] = Header(None)):
+    """
+    Function to get the file .mp3 with the pronunciation example
+
+    params :  \n
+    orgId: str
+    subcat:int
+    words: str   # ['tree','car','table', 'apple']
+    average: float
+    kogame: str
+    """
+    global appNeo, session, log
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+
+    kogame = datas.kogame.upper()
+    if kogame in ["GUESS_TW", "TRY_TW"]:
+        pass
+    else: 
+        kogame = 'G_UNKNOWN'
+    swords = str(datas.words)
+    print("\n\n", datas, type(swords), type(datas.words), "\n\n")
+
+    statement = "with " + "'" + datas.orgId + "' as org, \n" + \
+                            "'" + userId + "' as userId, \n" + \
+                            swords + 'as words, \n' + \
+                            '"' + swords + '" as swords, \n' + \
+                            str(datas.average) + " as average, \n" + \
+                            "1 as idCat, 1 as idSCat \n" + \
+                "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})\n" + \
+                "with u,o.lSource as Source, o.lTarget as Target, words, swords, average \n" + \
+                "merge (u)<-[rg:" + kogame + "]-(gm:Game {swords:swords}) \n" + \
+                "set gm.lSource = Source, gm.lTarget = Target, \n" + \
+                    " gm.words = words, \n" + \
+                    " gm.average = average, \n" + \
+                    " gm.ctInsert = datetime() \n" + \
+                "return u.userId as userId, size(gm.words) as qtywords "
+    print(f"statement pronun: {statement}")
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="archiving words for games",
                         statement=statement, 
                         filename=__name__, 
                         function_name=myfunctionname())
