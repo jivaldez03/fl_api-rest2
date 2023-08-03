@@ -268,7 +268,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     #"sum(size(pkg.words)) as learned, \n" + \ 
     # count(es) as wordsSC
     beforeNeo4 =  _getdatime_T()
-    print(startinat, ' antes de ejecución en neo4j:', beforeNeo4)
+    #print(startinat, ' antes de ejecución en neo4j:', beforeNeo4)
     #print(f"neo4j_state: {neo4j_statement}")
     await awsleep(0)
     #print(f"\n\n dashboard: \n{neo4j_statement}")
@@ -279,7 +279,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         function_name=myfunctionname())
     
     afterNeo4 =  _getdatime_T()
-    print(startinat, '\n antes de neo4j:', beforeNeo4, 'despues de neo4j:', afterNeo4)
+    #print(startinat, '\n antes de neo4j:', beforeNeo4, 'despues de neo4j:', afterNeo4)
     listcat,  listBasicK= [], []
     msg = ""
     try:

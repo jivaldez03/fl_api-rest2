@@ -151,8 +151,8 @@ async def pst_packagename(datas:ForNamePackages
     return res
 
 
-@router.get("/gamesAA/")
-async def get_valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = Header(None)):
+@router.post("/gamesAA/")
+async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = Header(None)):
     """
     Function to get the file .mp3 with the pronunciation example
 
