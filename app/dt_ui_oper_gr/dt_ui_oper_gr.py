@@ -199,7 +199,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "match (we:Word {word:sword}) \n" + \
                 "where o.lSource in labels(we) \n" + \
                 "with u, o, we, adj, verb, noun, adv, prep, ptense, \n" + \
-                        "REDUCE(mergedString = '', \n" + \
+                        "REDUCE(mergedString = ',', \n" + \
                             "kow IN we.ckowb_complete | mergedString+kow +',') as ckowlist \n" + \
                 "where  (ptense and ckowlist contains 'past – verb')  \n" + \
                 "        or verb and ckowlist contains 'intrans verb' \n" + \
@@ -230,7 +230,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
 
 
 @router.post("/gamesAA_archive/")
-async def valuesforgames_AA(datas:ForGames_archive, Authorization: Optional[str] = Header(None)):
+async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optional[str] = Header(None)):
     """
     Function to get the file .mp3 with the pronunciation example
 
@@ -252,12 +252,13 @@ async def valuesforgames_AA(datas:ForGames_archive, Authorization: Optional[str]
     else: 
         kogame = 'G_UNKNOWN'
     swords = str(datas.words)
+    sswords = swords.replace("[",",").replace("]",",").replace("'","").replace(", ",",")
     print("\n\n", datas, type(swords), type(datas.words), "\n\n")
 
     statement = "with " + "'" + datas.orgId + "' as org, \n" + \
                             "'" + userId + "' as userId, \n" + \
                             swords + 'as words, \n' + \
-                            '"' + swords + '" as swords, \n' + \
+                            '"' + sswords + '" as swords, \n' + \
                             str(datas.average) + " as average, \n" + \
                             "1 as idCat, 1 as idSCat \n" + \
                 "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})\n" + \

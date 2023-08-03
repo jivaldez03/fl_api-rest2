@@ -6,6 +6,9 @@ import __generalFunctions as funcs
 from datetime import datetime as dt
 from asyncio import sleep as awsleep
 
+import signal
+signal.signal(signal.SIGWINCH, signal.SIG_IGN)
+
 from __generalFunctions import myfunctionname, myConjutationLink, get_list_element,_getdatime_T, get_list_elements
 
 from random import shuffle as shuffle
@@ -890,7 +893,9 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
     
     token=funcs.validating_token(Authorization)
     userId = token['userId']
-    print("========== starting get_user_words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    startinat = _getdatime_T()
+    tm1 = dt.now()
+    print("========== starting get_user_words id: ", userId, " dt: ", startinat, " -> ", myfunctionname())
     global appNeo, session, log 
 
     #
@@ -901,11 +906,15 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
         pkgname = dtexec 
     
     #pkgdescriptor["message"] = get_words(userId, pkgname, dtexec)
-    await awsleep(0)
+    #await awsleep(0)
 
-    pkgdescriptor = get_words(userId, pkgname)
+    pkgdescriptor = {} #get_words(userId, pkgname)
 
-    print("        ->   ========== ending get_user_words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    diftime = str(dt.now() - tm1)
+    print("==> ",startinat, ' - antes de neo4j:', '---', '- despues de neo4j:', '---', \
+          " termina a ", _getdatime_T(), " tiempo exec: = ", diftime)
+        
+    #print("        ->   ========== ending get_user_words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return pkgdescriptor
 
 

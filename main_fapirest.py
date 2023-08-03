@@ -50,16 +50,8 @@ def include_router():
     app.include_router(dt_api_oper_lv_router)
 
     app.include_router(root_router)
-    
+
     return
-
-	#app.include_router(api_router)   # login + auth
-	#app.include_router(api_oper_gr_router)   # ui - operaciones generales        
-	#app.include_router(api_oper_lv_router)   # ui - operaciones de registro de avance    
-	#app.include_router(dt_auth_router)   # ui - testing
-	#app.include_router(dt_api_oper_gr_router)   # ui - testing
-	#app.include_router(dt_api_oper_lv_router)   # ui - testing
-
        
 #appNeo, session, log = trx.connectNeo4j('admin', 'starting session')
 
@@ -72,6 +64,7 @@ def _gunic_create_app():
      include_router()
      return app
 
+"""
 @app.get("/")
 def index():
     return "Hello EVERYBODY ..... dELTA-pHASE is now working for you"
@@ -79,7 +72,7 @@ def index():
 @app.get("/hello/")
 def helloworld():
     return {'message': "hello world"}
-
+"""
 
 if __name__ == "__main__":
     #print('GETENV:', getenv("SEC_KEY")) 
