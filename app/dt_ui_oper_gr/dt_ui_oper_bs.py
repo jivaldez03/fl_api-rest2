@@ -405,7 +405,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     Function to get opened package list in a specific SubCategory \n
 
     """
-    token=funcs.validating_token(Authorization, myfunctionname())
+    token=funcs.validating_token(Authorization)
     userId = token['userId']
     print("========== starting get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log 
