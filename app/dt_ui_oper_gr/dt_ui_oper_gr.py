@@ -268,7 +268,7 @@ async def valuesforgames_AA(datas:ForGames_archive, Authorization: Optional[str]
                     " gm.average = average, \n" + \
                     " gm.ctInsert = datetime() \n" + \
                 "return u.userId as userId, size(gm.words) as qtywords "
-    print(f"statement pronun: {statement}")
+    #print(f"statement pronun: {statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="archiving words for games",
                         statement=statement, 

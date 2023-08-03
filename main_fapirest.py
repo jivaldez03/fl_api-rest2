@@ -41,12 +41,16 @@ from _neo4j import appNeo, session, log
 from app.dt_auth.base import api_router as dt_auth_router
 from app.dt_ui_oper_gr.base import api_router as dt_api_oper_gr_router
 from app.dt_ui_oper_lv.base import api_router as dt_api_oper_lv_router
+from app._root.base import api_router as root_router
 
 def include_router():
     global app
     app.include_router(dt_auth_router)
     app.include_router(dt_api_oper_gr_router)
     app.include_router(dt_api_oper_lv_router)
+
+    app.include_router(root_router)
+    
     return
 
 	#app.include_router(api_router)   # login + auth
