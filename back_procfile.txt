@@ -5,7 +5,7 @@ web: gunicorn main_fapirest
 gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b localhost:5000 "main_fapirest:_gunic_create_app()"
 gunicorn --worker-class uvicorn.workers.UvicornWorker --reload -b localhost:5000 "main_fapirest:_gunic_create_app"
 web: gunicorn --workers=8 --worker-class uvicorn.workers.UvicornWorker --preload "main_fapirest:_gunic_create_app" --timeout 50
-web: gunicorn --workers=8 --worker-class uvicorn.workers.UvicornWorker --preload "main_fapirest:_gunic_create_app" --timeout 50
+web: gunicorn --workers=4 --worker-class uvicorn.workers.UvicornWorker --preload "main_fapirest:_gunic_create_app" --timeout 50
 
 import uvicorn.workers.UvicornWorker
 
