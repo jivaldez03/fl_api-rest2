@@ -1,5 +1,5 @@
 from neo4j import GraphDatabase
-from .config import Config as cfg, get_pass
+from .config import Config as cfg, Configp as cfgp, get_pass, kodb
 
 class App:
     def __init__(self, uri, user, password):
@@ -63,9 +63,17 @@ class App:
  """
 
 def create_neo4j_app():
-    SECRET_KEY = get_pass(cfg.USERNAME)
-    app = App(cfg.URI, cfg.USERNAME, SECRET_KEY)
-    print(f'creating objet Neo4j App:  {app}')
+    if kodb() == 1:
+        SECRET_KEY = get_pass(cfg.USERNAME)
+        #print(SECRET_KEY, cfg.URI, cfg.USERNAME, SECRET_KEY)
+        #input ("cr to continue Ctrl to interrupt")
+        app = App(cfg.URI, cfg.USERNAME, SECRET_KEY)
+    elif kodb() == 2: 
+        SECRET_KEY = get_pass(cfgp.USERNAME)
+        #print(SECRET_KEY, cfgp.URI, cfgp.USERNAME, SECRET_KEY)
+        #input ("cr to continue Ctrl to interrupt")
+        app = App(cfgp.URI, cfgp.USERNAME, SECRET_KEY)
+    #print(f'creating objet Neo4j App:  {app}')
     return app, app.driver.session(database="neo4j")
 
 def connectNeo4j(user, description):
@@ -77,6 +85,7 @@ def connectNeo4j(user, description):
                             "set n.ctInsert = datetime() " \
                             "return n"
     log = session.run(logofaccess)
+    #input ("you can review the log record for user admin - cr to continue Ctrl to interrupt")
     #print('type-log:', type(log))
     #for x in log:
     #    print('log:', x)
@@ -86,5 +95,9 @@ def connectNeo4j(user, description):
 
 print(f"\n\n************************\nconexión a neo4j\n************************")
 user = 'admin'
+#print("\n\n========== kodb: ", kodb(), "\n\n")
+#input ("cr to continue Ctrl-c to interrupt ")
+
 appNeo, session, log = connectNeo4j(user, 'starting session')
+
 

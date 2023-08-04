@@ -722,6 +722,67 @@ def get_words(userId, pkgname):
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
     
+
+    neo4j_statement = "/* EXTRACCIÓN PARA SUBCATEGORÍA WORDS  idSCat = 1*/ \n" + \
+                        "match (pkg:Package {packageId:'" + pkgname + "', idSCat: 1})" + \
+                        "-[:PACKAGED]-(u:User {userId:'" + userId + "'})\n" + \
+                        "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
+                        "-(c:Category {idCat:pkg.idCat})<-[:CAT_SUBCAT]-" + \
+                            "(sc:SubCategory {idSCat:pkg.idSCat})<-[:PACK_SUBCAT]-(pkg)\n" + \
+                        "where o.lSource = pkg.source and o.lTarget = pkg.target \n" + \
+                        "unwind pkg.words as pkgwords \n" + \
+                        "with pkg, pkg.packageId as pkgname, o.ptgmaxerrs as maxerrs, \n" + \
+                            " pkg.label as pkglabel, pkgwords as pkgwords, \n" + \
+                            "pkg.source as source, pkg.target as target \n" + \
+                        "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
+                        "where source in labels(n) and target in labels(s) \n" + \
+                        "with pkg, pkgname, pkglabel, maxerrs, n, s, tes \n" + \
+                        "order by n.wordranking, tes.sorted \n" + \
+                        "with pkg, pkgname, pkglabel, maxerrs, n, collect(s.word) as swlist \n" + \
+                        "with pkg, pkgname, pkglabel, maxerrs, \n" + \
+                            "COALESCE(n.ckow, []) as kow, \n" + \
+                            "COALESCE(n.ckowb_complete, []) as kowc, \n" + \
+                            "COALESCE(n.cword_ref, []) as wordref, \n" + \
+                            "COALESCE(n.wrword_ref, '') as wr_wordref, \n" + \
+                            "COALESCE(n.wr_kow, []) as wr_kow, \n" + \
+                            "n.word as ewlist, \n" + \
+                            "swlist as swlist \n" + \
+                        "optional match (pkgS:PackageStudy)-[]-(pkg) \n" + \
+                            "where pkgS.ptgerror <= maxerrs \n" + \
+                        "return 'words' as subCat, pkg.idSCat as idSCat, pkglabel as label, " + \
+                            "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, [] as linktitles, [] as links, \n" + \
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
+                            "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget  \n" + \
+                        "/* EXTRACCIÓN PARA OTRAS SUBCATEGORÍAS  */ \n" + \
+                        "union \n" + \
+                        "match (u:User {userId:'" + userId + "'})-[:PACKAGED]-\n" + \
+                        "(pkg:Package {packageId:'" + pkgname + "'})\n" + \
+                        "-[:PACK_SUBCAT]->(s:SubCategory {idSCat:pkg.idSCat})-[:CAT_SUBCAT]\n" + \
+                            "->(cat:Category {idCat:pkg.idCat})\n" + \
+                        "-[:SUBJECT]->(org:Organization) \n" + \
+                        "where org.lSource = pkg.source and org.lTarget = pkg.target \n" + \
+                        "unwind pkg.words as pkgwords \n" + \
+                        "match(s)-[rscat:SUBCAT]-(ew:ElemSubCat {word:pkgwords})\n" + \
+                        "-[:TRANSLATOR]->(sw:ElemSubCat) \n" + \
+                        "where pkg.source in labels(ew) and pkg.target in labels(sw) \n" + \
+                        "with org, pkg, s, ew, collect(distinct sw.word) as sw, rscat \n" + \
+                        "order by rscat.wordranking, ew.wordranking, ew.word  \n" + \
+                        "with org, pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links, \n" + \
+                            "COALESCE(ew.ckow, []) as kow, \n" + \
+                            "COALESCE(ew.ckowb_complete, []) as kowc, \n" + \
+                            "COALESCE(ew.cword_ref, []) as wordref, \n" + \
+                            "COALESCE(ew.wrword_ref, '') as wr_wordref, \n" + \
+                            "COALESCE(ew.wr_kow, []) as wr_kow, \n" + \
+                            "ew.word as ewlist, \n" + \
+                            "sw as swlist \n" + \
+                        "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
+                        "with pkg, s, ewlist, swlist, kow, kowc, wordref, \n" + \
+                        "COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links, wr_wordref, wr_kow \n" + \
+                        "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
+                            "level as maxlevel, linktitles, links, \n" + \
+                            "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
+                            "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
+    
     #print("--neo4j_statement:", neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
@@ -732,32 +793,53 @@ def get_words(userId, pkgname):
     # creating the structure to return data   # ESTA SECCIÓN HASTA EL FINAL ES IGUAL GET_USER_WORDS4
     pkgdescriptor = {}
     words = []
-    kow, kowc = [], []
-    for node in nodes:
+    npackage = []
+    kow, kowc, wrkowc, wr_wordref, langs, langt  = [], [], [], [], [], []
+    for gia, node in enumerate(nodes):
         sdict = dict(node)        
-        npackage = []
+        #npackage = []
         pkgdescriptor = {"packageId": pkgname
                           , "label": sdict["label"]
                           , "maxlevel":sdict["maxlevel"]
         }
-        kow = sdict["kow"]
-        kowc = sdict["kowc"]
-        wrkowc = sdict["wr_kow"]
-        wr_wordref = sdict["wr_wordref"]
-        langs = sdict["langsource"]
-        langt = sdict["langtarget"]
-        for gia, value in enumerate(sdict['slSource']):
-            prnReference = funcs.get_list_element(sdict["linktitles"], gia)
-            prnLink     = funcs.get_list_element(sdict["links"], gia)
-            ltarget = funcs.get_list_element(sdict["slTarget"],gia)
-            wordref = funcs.get_list_element(sdict["wordref"],gia)
-            if type(ltarget) == type(list()):
-                pass
-            else:
-                ltarget = [ltarget]
-            npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
-            words.append(value) # (value, sdict['kow']))
-            #print("----------------------------------------------wwword:", value)
+        kow.append(sdict["kow"])
+        kowc.append(sdict["kowc"])
+        wrkowc.append(sdict["wr_kow"])
+        wr_wordref.append(sdict["wr_wordref"])
+        langs.append(sdict["langsource"])
+        langt.append(sdict["langtarget"])
+
+        #kow = sdict["kow"]
+        #kowc = sdict["kowc"]
+        #wrkowc = sdict["wr_kow"]
+        #wr_wordref = sdict["wr_wordref"]
+        #langs = sdict["langsource"]
+        #langt = sdict["langtarget"]
+
+        value = sdict["slSource"]
+        prnReference = sdict["linktitles"]
+        prnLink = sdict["links"]
+        ltarget = sdict["slTarget"]
+        wordref = sdict["wordref"]
+        if type(ltarget) == type(list()):
+            pass
+        else:
+            ltarget = [ltarget]
+        npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
+        words.append(value) # (value, sdict['kow']))
+
+        #for gia, value in enumerate(sdict['slSource']):
+        #    prnReference = funcs.get_list_element(sdict["linktitles"], gia)
+        #    prnLink     = funcs.get_list_element(sdict["links"], gia)
+        #    ltarget = funcs.get_list_element(sdict["slTarget"],gia)
+        #    wordref = funcs.get_list_element(sdict["wordref"],gia)
+        #    if type(ltarget) == type(list()):
+        #        pass
+        #    else:
+        #        ltarget = [ltarget]
+        #    npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
+        #    words.append(value) # (value, sdict['kow']))
+         #print("----------------------------------------------wwword:", value)
 
     #print('gggget_pronunciationId(:', words, pkgname, userId)
           
@@ -908,7 +990,7 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
     #pkgdescriptor["message"] = get_words(userId, pkgname, dtexec)
     #await awsleep(0)
 
-    pkgdescriptor = {} #get_words(userId, pkgname)
+    pkgdescriptor = get_words(userId, pkgname)
 
     diftime = str(dt.now() - tm1)
     print("==> ",startinat, ' - antes de neo4j:', '---', '- despues de neo4j:', '---', \

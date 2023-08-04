@@ -202,8 +202,9 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                         "REDUCE(mergedString = ',', \n" + \
                             "kow IN we.ckowb_complete | mergedString+kow +',') as ckowlist \n" + \
                 "where  (ptense and ckowlist contains 'past – verb')  \n" + \
-                "        or verb and ckowlist contains 'intrans verb' \n" + \
-                "        or verb and ckowlist contains 'trans verb' \n" + \
+                "        or ((verb and ckowlist contains 'intrans verb' \n" + \
+                "        or verb and ckowlist contains 'trans verb') \n" + \
+                "        and not ckowlist contains 'past – verb') \n" + \
                 "        or adj and ckowlist contains 'adj' \n" + \
                 "        or adv and ckowlist contains 'adv' \n" + \
                 "        or prep and ckowlist contains 'prep' \n" + \
@@ -225,7 +226,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
     for ele in nodes:
         elems = dict(ele)
         listEle.append(elems)
-        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
 
 
@@ -279,5 +280,5 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     for ele in nodes:
         elems = dict(ele)
         listEle.append(elems)
-        print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle

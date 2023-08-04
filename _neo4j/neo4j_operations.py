@@ -45,19 +45,20 @@ def execution(function_name, statement, user, log):
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
         except SessionExpired as error:
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session expired X X X X X X X X X X ")
             reconect_neo4j()
-            sleep(2)
+            #sleep(2)
             continue
         except SessionError as error:
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session error X X X X X X X X X X ")
             reconect_neo4j()
-            sleep(2)
+            #sleep(2)
             continue    
         except ServiceUnavailable as error:
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
+            sleep(2)
             reconect_neo4j()
-            sleep(3)
             continue
         except ResultError as error:
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X result error  X X X X X X X X X X ")
