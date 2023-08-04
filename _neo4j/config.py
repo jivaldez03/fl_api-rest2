@@ -16,7 +16,7 @@ def kodb():
     return service_value #1 # 1 = dev / 2 = prod
 
 def read_key():
-    return open("./_neo4j/keyfile.key","rb").read()
+    return open("./_neo4j/file.yek","rb").read()
 
 
 class Config:    
@@ -34,10 +34,10 @@ def get_pass(username):
     # inicializar fernet
     fern=Fernet(key)
     if kodb() == 1:
-        with open("./_neo4j/key_pass_file.key","rb") as fbo:
+        with open("./_neo4j/kfile.yek","rb") as fbo:
             msg_encripreadit = fbo.read()
     elif kodb() == 2:
-        with open("./_neo4j/key_pass_filep.key","rb") as fbo:
+        with open("./_neo4j/kfilep.yek","rb") as fbo:
             msg_encripreadit = fbo.read()
     else:
         msg_encripreadit = None
