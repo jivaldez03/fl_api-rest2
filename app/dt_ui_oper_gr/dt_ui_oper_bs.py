@@ -420,10 +420,10 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     #
 
     statement = "match (u:User {userId:'" + userId + "'})\n" + \
-                "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
+                "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
                 "-(c:Category {idCat:" + str(idCat) + "})\n" + \
                 "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
-                "-[:PACK_SUBCAT]-(pkg:Package {userId: u.userId, status:'open'}) \n" + \
+                "<-[:PACK_SUBCAT]-(pkg:Package {userId: u.userId, status:'open'}) \n" + \
                 "optional match (pkgS:PackageStudy)-[rs:STUDY]->(pkg) \n" + \
                 "with u, pkg, c,  pkgS.level as level, \n" + \
                 "min(pkgS.ptgerror) as grade, \n" + \
@@ -440,7 +440,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     
     #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
-    print("============================\n", statement)
+    #print("============================\n", statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
@@ -514,10 +514,10 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
 
     statement = "with '" + ssearch + "' as slabel, '" + sword + "' as sword \n" + \
                 "match (u:User {userId:'" + userId + "'})\n" + \
-                "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
+                "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
                 "-(c:Category {idCat:" + str(idCat) + "})\n" + \
                 "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
-                "-[:PACK_SUBCAT]-(pkg:Package {userId: u.userId, status:'closed'})-[]->(u) \n" + \
+                "<-[:PACK_SUBCAT]-(pkg:Package {userId: u.userId, status:'closed'})-[]->(u) \n" + \
                 "where (pkg.label contains slabel or slabel = '') \n" + \
                     "and (sword in pkg.words or sword = '') \n" + \
                 "with u, o, c, collect(pkg) as pkgs, count(pkg) as qtypkg \n" + \
@@ -539,7 +539,7 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
     
     #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
-    print("\n\n\n",'='*50,"statement:\n", statement)
+    #print("\n\n\n",'='*50,"statement:\n", statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
