@@ -440,7 +440,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     
     #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
-    #print(statement)
+    print("============================\n", statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
@@ -539,7 +539,7 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
     
     #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
-    #print("\n\n\n",'='*50,"statement:\n", statement)
+    print("\n\n\n",'='*50,"statement:\n", statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
