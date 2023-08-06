@@ -142,7 +142,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "return o.name, c.name as category, c.idCat as idCat, \n" + \
                                 "collect(subcategory) as subcategories, collect(idCS) as subid"
     
-    #print('cats-subcats:', neo4j_statement)
+    print('cats-subcats:', neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting categories for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
