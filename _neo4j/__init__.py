@@ -99,5 +99,6 @@ user = 'admin'
 #input ("cr to continue Ctrl-c to interrupt ")
 
 appNeo, session, log = connectNeo4j(user, 'starting session')
+timeout_const = 60
 
 

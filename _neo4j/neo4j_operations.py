@@ -2,7 +2,7 @@ from neo4j import GraphDatabase, Result, unit_of_work #neo4j._sync.work.result.R
 from __generalFunctions import monitoring_function
 from neo4j.exceptions import SessionExpired, SessionError, ServiceUnavailable, ResultError
 #Neo4j.Driver.SessionExpiredException error
-from _neo4j import appNeo, session, log, connectNeo4j
+from _neo4j import appNeo, session, log, connectNeo4j, timeout_const
 from time import sleep
 from datetime import datetime as dt
 
@@ -29,10 +29,10 @@ def q01(session, strtoexec= None):
         q01 = 'match (n:English)-->(s:Spanish) return n.word, s.word'
     else:
         q01 = strtoexec        
-    nodes = session.run(q01, timeout = 60)
+    nodes = session.run(q01, timeout = timeout_const)
     return nodes
 
-@unit_of_work(timeout=60)  # seconds
+#@unit_of_work(timeout=timeout_const)  # seconds
 def execution(function_name, statement, user, log):
     global appNeo, session
 
@@ -42,7 +42,7 @@ def execution(function_name, statement, user, log):
         trying += 1        
         try:
             #print("*********************** inicia ejecución en neo4_exec " , function_name)
-            nodes = session.run(statement)
+            nodes = session.run(statement, timeout=timeout_const)
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
         except SessionExpired as error:
