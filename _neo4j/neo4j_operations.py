@@ -1,4 +1,4 @@
-from neo4j import GraphDatabase, Result, unit_of_work #neo4j._sync.work.result.Result
+from neo4j import Query #, GraphDatabase, Result, unit_of_work #neo4j._sync.work.result.Result
 from __generalFunctions import monitoring_function
 from neo4j.exceptions import SessionExpired, SessionError, ServiceUnavailable, ResultError
 #Neo4j.Driver.SessionExpiredException error
@@ -42,7 +42,10 @@ def execution(function_name, statement, user, log):
         trying += 1        
         try:
             #print("*********************** inicia ejecución en neo4_exec " , function_name)
-            nodes = session.run(statement, timeout=timeout_const)
+            #nodes = session.run(statement, timeout=timeout_const)
+            nodes = session.run(Query(statement, timeout=timeout_const), name='query')
+
+            
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
         except SessionExpired as error:
