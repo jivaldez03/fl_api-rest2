@@ -947,7 +947,7 @@ def get_words(userId, pkgname):
             s_kow = {"type": "kow_diff_verb"
                             , "position" : "source"
                             , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : []
+                            , "link" : ""
                             , "title": get_list_elements(kowo,3)
                             #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                             }
