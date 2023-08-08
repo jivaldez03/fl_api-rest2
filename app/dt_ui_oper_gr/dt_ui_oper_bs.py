@@ -815,7 +815,9 @@ def get_words(userId, pkgname):
     pkgdescriptor = {}
     words = []
     npackage = []
-    kow, kowc, wrkowc, wr_wordref, langs, langt  = [], [], [], [], [], []
+    kow, kowc, wrkowc = [], [], [] 
+    wr_wordref, langs, langt = [], [], []
+
     for gia, node in enumerate(nodes):
         sdict = dict(node)        
         #npackage = []
