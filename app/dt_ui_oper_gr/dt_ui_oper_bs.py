@@ -770,7 +770,7 @@ def get_words(userId, pkgname):
                         "optional match (pkgS:PackageStudy)-[]-(pkg) \n" + \
                             "where pkgS.ptgerror <= maxerrs \n" + \
                         "return 'words' as subCat, pkg.idSCat as idSCat, pkglabel as label, " + \
-                            "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, [] as linktitles, [] as links, \n" + \
+                            "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, '' as linktitles, '' as links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget  \n" + \
                         "/* EXTRACCIÓN PARA OTRAS SUBCATEGORÍAS  */ \n" + \
@@ -787,7 +787,7 @@ def get_words(userId, pkgname):
                         "where pkg.source in labels(ew) and pkg.target in labels(sw) \n" + \
                         "with org, pkg, s, ew, collect(distinct sw.word) as sw, rscat \n" + \
                         "order by rscat.wordranking, ew.wordranking, ew.word  \n" + \
-                        "with org, pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links, \n" + \
+                        "with org, pkg, s, ew.link_title as linktitles, ew.link as links, \n" + \
                             "COALESCE(ew.ckow, []) as kow, \n" + \
                             "COALESCE(ew.ckowb_complete, []) as kowc, \n" + \
                             "COALESCE(ew.cword_ref, []) as wordref, \n" + \
@@ -947,7 +947,7 @@ def get_words(userId, pkgname):
             s_kow = {"type": "kow_diff_verb"
                             , "position" : "source"
                             , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : []
+                            , "link" : ""
                             , "title": get_list_elements(kowo,3)
                             #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                             }
