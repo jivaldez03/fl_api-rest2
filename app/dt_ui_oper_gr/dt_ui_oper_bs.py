@@ -804,6 +804,7 @@ def get_words(userId, pkgname):
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
     
     #print("--neo4j_statement:", neo4j_statement)
+    # claro que se modificó el código, es una ejecucioon enntre comillas , para neo4j
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
