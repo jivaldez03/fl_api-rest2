@@ -124,7 +124,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
     token=funcs.validating_token(Authorization)
     userId = token['userId']
     print("========== starting get_categories id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
-    
+    """
     neo4j_statement = "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]-(o:Organization)\n" + \
                         "<-[:SUBJECT]-(c:Category {idCat:1})<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
                         "with o, c, s.name as subcategory, c.idCat * 1000000 + s.idSCat as idCS \n" + \
@@ -141,7 +141,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "order by o.idOrg, c.name, subcategory \n" + \
                         "return o.name, c.name as category, c.idCat as idCat, \n" + \
                                 "collect(subcategory) as subcategories, collect(idCS) as subid"
-    
+    """
     neo4j_statement ="match (u:User {userId:'jivaldez032'})-[rt:RIGHTS_TO]->(o:Organization) \n" + \
                         "<-[:SUBJECT]-(c:Category {idCat:1})<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
                         "with o.idOrg as idOrg, o.name as oname, \n" + \
@@ -162,7 +162,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "order by idOrg, cname, subcategory \n" + \
                         "return oname, cname as category, idCat as idCat, \n" + \
                         "collect(subcategory) as subcategories, collect(idCS) as subid "
-    print('cats-subcats:', neo4j_statement)
+    #print('cats-subcats:', neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting categories for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -348,7 +348,7 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
     print("==========  starting get_config_uid id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log 
 
-    neo4j_statement = "match (us:User {userId:'" + userId + "'})-[r]-(rep:FirstContact) \n" + \
+    neo4j_statement = "match (us:User {userId:'" + userId + "'})-[r]->(rep:FirstContact) \n" + \
                     "return us.userId as userId \n" + \
                         ", us.name as name \n" + \
                         ", us.birth_year as birth_year, us.month_year as month_year \n" + \
@@ -947,7 +947,7 @@ def get_words(userId, pkgname):
             s_kow = {"type": "kow_diff_verb"
                             , "position" : "source"
                             , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : ""
+                            , "link" : []
                             , "title": get_list_elements(kowo,3)
                             #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                             }
@@ -961,7 +961,7 @@ def get_words(userId, pkgname):
                         }
         ladds = []
         for ele in [s_kow_verb, s_kow, s_object, s_kow_past_verb]:
-            if ele["title"] != None:
+            if ele["title"]:
                 ladds.append(ele)
 
         new_element = {'word': element[0]
