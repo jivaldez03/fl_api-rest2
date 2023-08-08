@@ -950,18 +950,22 @@ def get_words(userId, pkgname):
             s_kow = {"type": "kow_diff_verb"
                             , "position" : "source"
                             , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : ""
+                            , "link" : []
                             , "title": get_list_elements(kowo,3)
                             #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                             }
         else:
             s_kow = {'title': None}
-        s_object={"type": "location"
-                        , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior
-                        , "apply_link": True if element[3] else False
-                        , "link" : element[4]
-                        , "title": element[3]
-                        }
+        if element[3] not in [None, ""]:
+            s_object={"type": "location"
+                            , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior
+                            , "apply_link": True if element[3] else False
+                            , "link" : [element[4]]
+                            , "title": [element[3]]
+                            }
+        else:
+            s_object={"title": None}
+
         ladds = []
         for ele in [s_kow_verb, s_kow, s_object, s_kow_past_verb]:
             if ele["title"]:
