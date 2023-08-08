@@ -922,7 +922,7 @@ def get_words(userId, pkgname):
             s_kow_verb = {"type": "kow_verb"
                         , "position" : "source"
                         , "apply_link": isitaverb[0] # is it a verb?
-                        , "link" : conjLink
+                        , "link" : [conjLink]
                         , "title": get_list_elements(kowv, 3) 
                         #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                         }
@@ -936,7 +936,7 @@ def get_words(userId, pkgname):
                 s_kow_past_verb = {"type": "kow_verb"
                             , "position" : "target"
                             , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : conjLink
+                            , "link" : [conjLink]
                             , "title": get_list_elements(kowv, 3) 
                             #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                             }
