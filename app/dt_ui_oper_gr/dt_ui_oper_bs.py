@@ -925,7 +925,7 @@ def get_words(userId, pkgname):
             s_kow_verb = {"type": "kow_verb"
                         , "position" : "source"
                         , "apply_link": isitaverb[0] # is it a verb?
-                        , "link" : [conjLink]
+                        , "link" : conjLink
                         , "title": get_list_elements(kowv, 3) 
                         #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                         }
@@ -939,7 +939,7 @@ def get_words(userId, pkgname):
                 s_kow_past_verb = {"type": "kow_verb"
                             , "position" : "target"
                             , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : [conjLink]
+                            , "link" : conjLink
                             , "title": get_list_elements(kowv, 3) 
                             #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                             }
@@ -950,7 +950,7 @@ def get_words(userId, pkgname):
             s_kow = {"type": "kow_diff_verb"
                             , "position" : "source"
                             , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : []
+                            , "link" : ""
                             , "title": get_list_elements(kowo,3)
                             #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
                             }
@@ -960,11 +960,11 @@ def get_words(userId, pkgname):
             s_object={"type": "location"
                             , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior
                             , "apply_link": True if element[3] else False
-                            , "link" : [element[4]]
-                            , "title": [element[3]]
+                            , "link" : element[4]
+                            , "title": [element[3]]   # se añade en lista, para igual la salida con words
                             }
         else:
-            s_object={"title": None}
+            s_object={"title":None }
 
         ladds = []
         for ele in [s_kow_verb, s_kow, s_object, s_kow_past_verb]:
