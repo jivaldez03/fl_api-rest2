@@ -207,7 +207,8 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
         "match (u:User {userId:'" + userId + "'})-[:RIGHTS_TO]->(o:Organization)<-\n" + \
-        "[:SUBJECT]-(c:Category {idCat:1})<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
+        "[:SUBJECT]-(c:Category {idCat:case when o.lSource = 'English' then 1 else 101 end})" + \
+            "<-[sr:CAT_SUBCAT]-(sc:SubCategory {idSCat:1}) \n" + \
         "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
             "{userId:u.userId, year:yearr, month:monthh, week:weekk, \n" + \
             "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_W]->(sc) \n" + \
@@ -232,7 +233,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         str(monthh) + " as monthh, \n" + \
                         str(weekk) + " as weekk \n" + \
         "match (o:Organization)<-[rr:RIGHTS_TO]-(u:User {userId:'" + userId + "'}) \n" + \
-        "match (o)<-[rsub:SUBJECT]-(c:Category {idCat:1}) \n" + \
+        "match (o)<-[rsub:SUBJECT]-(c:Category {idCat:case when o.lSource = 'English' then 1 else 101 end}) \n" + \
         "match (c)<-[sr:CAT_SUBCAT]-(sc:SubCategory {idCat:c.idCat}) \n" + \
         "where  sc.idSCat <> 1 \n" + \
         "optional match (u)<-[:ARCHIVED_W]-(rof:Archived_W " + \
@@ -839,11 +840,12 @@ def get_words(userId, pkgname):
         #langs = sdict["langsource"]
         #langt = sdict["langtarget"]
 
-        value = sdict["slSource"]
-        prnReference = sdict["linktitles"]
-        prnLink = sdict["links"]
-        ltarget = sdict["slTarget"]
-        wordref = sdict["wordref"]
+        value = sdict["slSource"]               # element[0]
+        prnReference = sdict["linktitles"]      # element[3]
+        prnLink = sdict["links"]                # element[4]
+        ltarget = sdict["slTarget"]             # element[1]
+        wordref = sdict["wordref"]              # element[5]
+        # position  # element[2]
         if type(ltarget) == type(list()):
             pass
         else:
@@ -958,7 +960,7 @@ def get_words(userId, pkgname):
             s_kow = {'title': None}
         if element[3] not in [None, ""]:
             s_object={"type": "location"
-                            , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior
+                            , "position" : "source" # source para tarjeta superior, 'target' para tarjeta inferior
                             , "apply_link": True if element[3] else False
                             , "link" : element[4]
                             , "title": [element[3]]   # se añade en lista, para igual la salida con words
@@ -967,7 +969,7 @@ def get_words(userId, pkgname):
             s_object={"title":None }
 
         ladds = []
-        for ele in [s_kow_verb, s_kow, s_object, s_kow_past_verb]:
+        for ele in [s_kow_verb, s_kow, s_object]: #, s_kow_past_verb]:
             if ele["title"]:
                 ladds.append(ele)
 
