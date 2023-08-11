@@ -218,7 +218,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
         "with u, o, c, sc, yearr, monthh, weekk, \n" + \
             "qtyweek, sum(rofM.month_qty) as qtymonth \n" + \
-        "match (es:Word)-[:TRANSLATOR]-(ess:Word) \n" + \
+        "match (es:Word)-[:TRANSLATOR]->(ess:Word) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ess) \n" + \
         "with u, o, c, sc, count(distinct es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth \n" + \
         "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
@@ -1206,7 +1206,7 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "with pkg, pkg.packageId as pkgname, pkgwords as pkgwords \n" + \
                         "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
                         "where pkg.source in labels(n) and pkg.target in labels(s) \n" + \
-                        "with pkg, pkgname, n, s, tes order by n.wordranking, tes.sorded \n" + \
+                        "with pkg, pkgname, n, s, tes order by n.wordranking, tes.sorted \n" + \
                         "with pkg, pkgname, n, reverse(collect(distinct s.word)) as swlist  \n" + \
                         "with pkg, pkgname, \n" + \
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
@@ -1454,7 +1454,6 @@ async def post_user_words4(datas:ForNewPackage
             "with sc, userId, words[0..capacity] as lwords, packageId, idCat, idSCat, capacity \n" + \
             "match (u)-[rp:PACKAGED]-(pkg:Package {packageId:packageId})-[:PACK_SUBCAT]->(sc) \n" + \
             "set pkg.words40=(pkg.words + lwords)[0..capacity], \n" + \
-                "pkg.status='open', \n" + \
                 "pkg.ctUpdate = datetime('" + dtexec + "') \n" + \
             "with sc, userId, packageId, pkg, idCat, idSCat \n" + \
             "match (u2:User {userId:userId}) \n" + \
