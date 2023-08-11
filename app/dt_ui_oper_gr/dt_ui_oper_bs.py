@@ -1453,7 +1453,9 @@ async def post_user_words4(datas:ForNewPackage
             "with sc, userId, collect(words) as words, packageId, idCat, idSCat, capacity \n" + \
             "with sc, userId, words[0..capacity] as lwords, packageId, idCat, idSCat, capacity \n" + \
             "match (u)-[rp:PACKAGED]-(pkg:Package {packageId:packageId})-[:PACK_SUBCAT]->(sc) \n" + \
-            "set pkg.words40=(pkg.words + lwords)[0..capacity], \n" + \
+            "set pkg.words40=case when pkg.status = 'open' \n" + \
+                "then (pkg.words + lwords)[0..capacity] \n" + \
+                "else lwords[0..capacity] end, \n" + \
                 "pkg.ctUpdate = datetime('" + dtexec + "') \n" + \
             "with sc, userId, packageId, pkg, idCat, idSCat \n" + \
             "match (u2:User {userId:userId}) \n" + \

@@ -111,8 +111,8 @@ def set_archived_package(packagename, userId):
                                     "idCat:p.idCat, idSCat:p.idSCat}) \n" + \
                         "on create set rofArc.week_qty = 0, rofArc.words=[], rofArc.ctInsert = datetime() \n" + \
                         "on match set rofArc.ctUpdate = datetime() \n" + \
-                        "set rofArc.week_qty = rofArc.week_qty  + size(p.words), \n" + \
-                            "rofArc.words = rofArc.words + p.words \n" + \
+                        "set rofArc.words = rofArc.words + [ele in p.words where not ele in rofArc.words] \n" + \
+                        "set rofArc.week_qty = size(rofArc.words) \n" + \
                         "merge (u)<-[rArc:ARCHIVED_W]-(rofArc) \n" + \
                         "on create set rArc.ctInsert = datetime() \n" + \
                         "on match set rArc.ctUpdate = datetime() \n" + \
@@ -128,13 +128,15 @@ def set_archived_package(packagename, userId):
                                     "idCat:p.idCat, idSCat:p.idSCat}) \n" + \
                         "on create set ArcM.month_qty = 0, ArcM.words=[], ArcM.ctInsert = datetime() \n" + \
                         "on match set ArcM.ctUpdate = datetime() \n" + \
-                        "set ArcM.month_qty = ArcM.month_qty  + size(p.words), \n" + \
-                            "ArcM.words = ArcM.words + p.words \n" + \
+                        "set ArcM.words = ArcM.words + [ele in p.words where not ele in ArcM.words] \n" + \
+                        "set ArcM.month_qty = size(ArcM.words) \n" + \
                         "merge (rofArc)-[rWM:WEEK_MONTH]->(ArcM) \n" + \
                         "merge (sc)<-[rSArcM:SUBCAT_ARCHIVED_M]-(ArcM) \n" + \
                         "merge (u)<-[rUArcM:ARCHIVED_M]-(ArcM) \n" + \
                         "return p.packageId as packageId , p.label as slabel, p.status as status " 
-    
+    # filter (x in n.A where x<>"newValue")
+    # "ArcM.words = ArcM.words + p.words \n" + \
+    #print('archiving: ", neo4j_statement')
     nodes, log = neo4j_exec(session, userId,
                         log_description="archive package" + packagename,
                         statement=neo4j_statement,
