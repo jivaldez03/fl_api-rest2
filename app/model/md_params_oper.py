@@ -37,3 +37,10 @@ class ForGames_archive(BaseModel):
     words  : str
     average: float
     kogame : str
+
+class ForLevelEval(BaseModel):
+    orgId   : str
+    starton : int
+    limit   : int
+    word    : str
+    setlevel: bool

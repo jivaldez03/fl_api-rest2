@@ -10,7 +10,7 @@ from __generalFunctions import myfunctionname \
 
 from random import shuffle as shuffle
 
-from app.model.md_params_oper import ForNamePackages, ForGames_KOW, ForGames_archive
+from app.model.md_params_oper import ForNamePackages, ForGames_KOW, ForGames_archive, ForLevelEval
 
 router = APIRouter()
 
@@ -157,8 +157,6 @@ async def pst_packagename(datas:ForNamePackages
 @router.post("/gamesAA/")
 async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = Header(None)):
     """
-    Function to get the file .mp3 with the pronunciation example
-
     params :  \n
     orgId: str
     limit: int
@@ -273,6 +271,44 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     #print(f"statement pronun: {statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="archiving words for games",
+                        statement=statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    listEle = []
+    for ele in nodes:
+        elems = dict(ele)
+        listEle.append(elems)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listEle
+
+
+@router.post("/leval/")
+async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(None)):
+    """
+    orgId   : str  DTL-01 for English
+    starton : int
+    limit   : int
+    word    : string
+    setlevel: 
+    """
+    global appNeo, session, log
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+
+    statement = "with '" + datas.orgId + "' as org, \n" + \
+                str(datas.starton) + " as prevmax \n" + \
+                "match (og:Organization {idOrg:'" + datas.orgId + "'}) \n" + \
+                "match (we:Word:English) \n" + \
+                "where exists {(we)-[r:TRANSLATOR]-(ws:Word:Spanish)} \n" + \
+                "with we order by we.wordranking, we.word \n" + \
+                "skip "  + str(datas.starton) + " \n" + \
+                "limit " + str(datas.limit) + "\n" + \
+                "return we.word as word, we.wordranking as prevmax"
+    
+    print(f"statement pronun: {statement}")
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting words for evaluation: ",
                         statement=statement, 
                         filename=__name__, 
                         function_name=myfunctionname())
