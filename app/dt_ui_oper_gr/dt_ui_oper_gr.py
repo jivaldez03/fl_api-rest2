@@ -4,7 +4,9 @@ from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 from __generalFunctions import myfunctionname \
-                            ,_getdatime_T
+                            ,_getdatime_T, _getdatetime
+
+from asyncio import sleep as awsleep
 
 #, get_list_elements #, myConjutationLink, get_list_element
 
@@ -188,7 +190,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "[rc:SUBJECT]-(c:Category {idCat:idCat})-[rsc:CAT_SUBCAT]-(sc:SubCategory {idSCat:idSCat}) \n" + \
                 "with u,o.lSource as Source, o.lTarget as Target, o, sc \n" + \
                 "    , adj, verb, noun, adv, prep, ptense \n" + \
-                "match (u)-[r]-(rM:Archived_M)-[rsm:SUBCAT_ARCHIVED_M]-(sc) // :Source:Target) \n" + \
+                "match (u)<-[r:ARCHIVED_M]-(rM:Archived_M)-[rsm:SUBCAT_ARCHIVED_M]->(sc) \n" + \
                 "where o.lSource in labels(rM) and o.lTarget in labels(rM) \n" + \
                 "with u, o, rM.words as words \n" + \
                 "    , adj, verb, noun, adv, prep, ptense \n" + \
@@ -215,6 +217,9 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "order by rand() \n" + \
                 "return worde, words, ckow  limit "  + str(datas.limit) 
     #print(f"statement pronun: {statement}")
+
+    await awsleep(0)
+
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for games: ",
                         statement=statement, 
@@ -245,6 +250,11 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
+    dtimenow = _getdatetime()
+    yearr = dtimenow.year
+    monthh = dtimenow.month
+    weekk = dtimenow.strftime("%W") # , status:'open'
+
     kogame = datas.kogame.upper()
     if kogame in ["GUESS_TW", "TRY_TW"]:
         pass
@@ -252,23 +262,33 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
         kogame = 'G_UNKNOWN'
     swords = str(datas.words)
     sswords = swords.replace("[",",").replace("]",",").replace("'","").replace('"',"").replace(", ",",")
-    print("\n\n", datas, type(swords), type(datas.words), "\n\n")
+    #print("\n\n", datas, type(swords), type(datas.words), "\n\n")
 
     statement = "with " + "'" + datas.orgId + "' as org, \n" + \
                             "'" + userId + "' as userId, \n" + \
+                            "'" + kogame + "' as kogame, \n" + \
+                            str(yearr) + " as yearr, \n" + \
+                            str(monthh) + " as monthh, \n" + \
+                            str(weekk) + " as weekk, \n" + \
                             swords + 'as words, \n' + \
                             '"' + sswords + '" as swords, \n' + \
                             str(datas.average) + " as average, \n" + \
                             "1 as idCat, 1 as idSCat \n" + \
                 "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})\n" + \
-                "with u,o.lSource as Source, o.lTarget as Target, words, swords, average \n" + \
-                "merge (u)<-[rg:" + kogame + "]-(gm:Game {swords:swords}) \n" + \
+                "with u, kogame, userId, yearr, monthh, weekk, \n" + \
+                    "o.lSource as Source, o.lTarget as Target, words, swords, average \n" + \
+                "merge (u)<-[rg:" + kogame + "]-(gm:Game \n" + \
+                    "{game:kogame, userId:userId, swords:swords, \n" + \
+                        " year:yearr, month:monthh, week:weekk}) \n" + \
                 "set gm.lSource = Source, gm.lTarget = Target, \n" + \
                     " gm.words = words, \n" + \
                     " gm.average = average, \n" + \
                     " gm.ctInsert = datetime() \n" + \
                 "return u.userId as userId, size(gm.words) as qtywords "
     #print(f"statement pronun: {statement}")
+
+    await awsleep(0)
+
     nodes, log = neo4j_exec(session, userId,
                         log_description="archiving words for games",
                         statement=statement, 
@@ -296,17 +316,55 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
-    statement = "with '" + datas.orgId + "' as org, \n" + \
-                str(datas.starton) + " as prevmax \n" + \
-                "match (og:Organization {idOrg:'" + datas.orgId + "'}) \n" + \
-                "match (we:Word:English) \n" + \
-                "where exists {(we)-[r:TRANSLATOR]-(ws:Word:Spanish)} \n" + \
-                "with we order by we.wordranking, we.word \n" + \
-                "skip "  + str(datas.starton) + " \n" + \
-                "limit " + str(datas.limit) + "\n" + \
-                "return we.word as word, we.wordranking as prevmax"
+    if datas.orgId == 'DTL-01':
+        source = 'English'
+        target = 'Spanish'
+        idCat = 1
+        idSCat = 1
+    elif datas.orgId == 'DTL-02':
+        source = 'German'
+        target = 'Spanish'
+        idCat = 101
+        idSCat = 1
+    else:
+        source = None
+        target = None
+
+    if datas.setlevel == False:
+        statement = "with '" + datas.orgId + "' as org \n" + \
+                    "match (og:Organization {idOrg:org}) \n" + \
+                    "match (we:Word:" + source + ") \n" + \
+                    "where exists {(we)-[r:TRANSLATOR]-(ws:Word:" + target + ")} \n" + \
+                    "with we order by we.wordranking, we.word \n" + \
+                    "skip "  + str(datas.starton) + " \n" + \
+                    "limit " + str(datas.limit) + "\n" + \
+                    "return we.word as word, we.wordranking as prevmax"        
+    else:
+        statement = "with '" + datas.orgId + "' as org, \n" + \
+                    "'" + str(datas.word) + "' as word \n" + \
+                    "match (u:User {userId:'" + userId + "'}) \n" + \
+                    "-[ruo:RIGHTS_TO]-> \n" + \
+                    "(og:Organization {idOrg:org}) \n" + \
+                    "<-[rc:SUBJECT]-(c:Category {idCat:"+ str(idCat) + "}) \n" + \
+                    "<-[rcs:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
+                    "match (we:Word:" + source + ") \n" + \
+                    "where exists {(we)-[r:TRANSLATOR]-(ws:Word:" + target + ")} \n" + \
+                    "with og, sc, u, we order by we.wordranking, we.word \n" + \
+                        " limit " + str(datas.starton) + " \n" + \
+                    "with og, sc,  u, collect(we.word) as words \n" + \
+                    "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
+                    "    source:og.lSource, target:og.lTarget, \n" + \
+                    "    reference:'Initial_Level'}) \n" + \
+                    "on create set arcM.ctInsert = datetime() \n" + \
+                    "on match set arcM.ctUpdate = datetime(),  \n" + \
+                        "arcM.wordsBack=[toString(datetime())] + arcM.words \n" + \
+                    "set arcM.words = words \n" + \
+                    "merge (u)<-[rua:ARCHIVED_M]-(arcM)-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+                    "return arcM.words, arcM.wordsBack  \n"
     
-    print(f"statement pronun: {statement}")
+    await awsleep(0)
+    
+    #print(f"statement pronun: {statement}")
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for evaluation: ",
                         statement=statement, 
@@ -316,5 +374,6 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     for ele in nodes:
         elems = dict(ele)
         listEle.append(elems)
+
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle

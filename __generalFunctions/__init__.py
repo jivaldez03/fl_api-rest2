@@ -19,8 +19,8 @@ load_dotenv()
 myConjutationLink = lambda verb, lang: (getenv("CONJUGATION_VERBS_LINK")) + verb if lang == 'English' else 'https://www.ingles.com/verbos/' + verb
 
 
-def _getdatime():
-    return str(dt.now())
+def _getdatetime():
+    return dt.now()
 
 
 def _getdatime_T():

@@ -3,18 +3,18 @@ from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs # import reg_exp as rexp #  as funcs^(lev([0-9][0-9])(_)([09][0-9]))$
-from __generalFunctions import myfunctionname, _getdatime_T
+from __generalFunctions import myfunctionname, _getdatime_T, _getdatetime
 #from dt_ui_oper_gr.dt_ui_oper_bs import get_w_SCat
 from ..dt_ui_oper_gr.dt_ui_oper_bs import get_w_SCat
 
 from app.model.md_params_oper import ForClosePackages
 
-from datetime import datetime as dt
+from asyncio import sleep as awsleep
 
 router = APIRouter()
 
 @router.post("/level/")
-def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(None)):
+async def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(None)):
     """
     Function to record each task in the frontend
 
@@ -44,7 +44,7 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     if clicksQty < cardsQty:
         clicksQty = cardsQty * 2
     gradeval = (float(clicksQty) / cardsQty - 1) * 100  # 10 / 8 = 1.25 - 1 = .25 * 100 = 25
-        
+    
     neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', status:'open', \n" + \
                         "userId:'" + userId + "'}) \n" + \
                     "create (pkgS:PackageStudy {studing_dt:datetime('" + updtime + "')})-[rs:STUDY]->(pkg) \n" + \
@@ -56,6 +56,8 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
                     "return pkg.packageId as packageId, pkgS.studing_dt, \n" + \
                          "pkgS.level as level, pkgS.grade as grade, pkgS.ptgerror as ptgerror"
     
+    await awsleep(0)
+
     nodes, log = neo4j_exec(session, userId,
                         log_description="updating activity on package = '" + pkgname + "'\nlevel = '" + level + "'" + \
                                     "\npkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "]",
@@ -77,7 +79,7 @@ def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(Non
     return {'message': listcat}
 
 
-def set_archived_package(packagename, userId):
+async def set_archived_package(packagename, userId):
     """
     Function to closed and add package words to the user's learned words
     """
@@ -86,7 +88,7 @@ def set_archived_package(packagename, userId):
     wSCat, source, target = wSCat  # subcategoria w_SC_10000053, source, target del paquete
     #source = wSCat[1]
 
-    dtimenow = dt.now()
+    dtimenow = _getdatetime()
     yearr = dtimenow.year
     monthh = dtimenow.month
     weekk = dtimenow.strftime("%W") # , status:'open'
@@ -137,6 +139,8 @@ def set_archived_package(packagename, userId):
     # filter (x in n.A where x<>"newValue")
     # "ArcM.words = ArcM.words + p.words \n" + \
     #print('archiving: ", neo4j_statement')
+    await awsleep(0)
+
     nodes, log = neo4j_exec(session, userId,
                         log_description="archive package" + packagename,
                         statement=neo4j_statement,
@@ -170,6 +174,8 @@ async def pst_packagearchive(package:str
     token=funcs.validating_token(Authorization) 
     userId = token['userId']
 
+    await awsleep(0)
+    
     print("\n\n\n","="*30, "se ejecuta cierre de package")
 
     res = set_archived_package(package, userId)
