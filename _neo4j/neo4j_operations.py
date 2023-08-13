@@ -5,7 +5,7 @@ from neo4j.exceptions import SessionExpired, SessionError, ServiceUnavailable, R
 from _neo4j import appNeo, session, log, connectNeo4j, timeout_const
 from time import sleep
 from datetime import datetime as dt
-
+from fastapi import HTTPException, status
 """
 https://neo4j.com/docs/python-manual/current/transformers/
 
@@ -38,13 +38,14 @@ def execution(function_name, statement, user, log):
 
     # next loop exist only if we have an error about our session, it try to reconnect again
     trying = 0
+    statuserror = 200
     while trying < 4:
         trying += 1        
         try:
             #print("*********************** inicia ejecución en neo4_exec " , function_name)
             #nodes = session.run(statement, timeout=timeout_const)
             nodes = session.run(Query(statement, timeout=timeout_const), name='query')
-
+            statuserror = 200
             
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
@@ -52,27 +53,38 @@ def execution(function_name, statement, user, log):
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session expired X X X X X X X X X X ")
             reconect_neo4j()
+            statuserror = 503
             #sleep(2)
             continue
         except SessionError as error:
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session error X X X X X X X X X X ")
             reconect_neo4j()
             #sleep(2)
+            statuserror = 503
             continue    
         except ServiceUnavailable as error:
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
             sleep(2)
             reconect_neo4j()
+            statuserror = 503
             continue
         except ResultError as error:
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X result error  X X X X X X X X X X ")
             #reconect_neo4j()
             sleep(1)
+            statuserror = 503
             continue
         except Exception as error:
             print("**********", user, "-", log[0], " ->            An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
             print("exception as : ", Exception)
+            statuserror = 503
             continue 
+    if statuserror != 200:
+        print("====> SERVICE UNAVAILABLE")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="====> Geeneral server error"
+        )
     return nodes
 
 def neo4_log(session, user, log_description, filename= None, function_name=None, log=[0,""]):
@@ -128,6 +140,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
                     "return count(l)"
         execution(function_name, statement, user, log)
         #print("*********************** log's record - the end" , function_name)
+    
     return nodes, log
 
 
