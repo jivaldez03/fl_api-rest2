@@ -915,7 +915,7 @@ def get_words(userId, pkgname):
             s_object={"title":None }
 
         ladds = []
-        for ele in [s_kow_verb, s_kow, s_object]: #, s_kow_past_verb]:
+        for ele in [s_kow_verb, s_kow, s_object, s_kow_past_verb]:
             if ele["title"]:
                 ladds.append(ele)
 
