@@ -33,8 +33,11 @@ async def login_user(datas: ForLogin):
  
     result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password) 
 
+    detailmessage = ""
+    messageforuser = ""
+    
     if len(result) == 0:
-        print("no records - fname__name__and more:",__name__)
+        #print("no records - fname__name__and more:",__name__)
         log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us', "userId":"",  "username": "", 
                     "age":0, 
@@ -49,7 +52,7 @@ async def login_user(datas: ForLogin):
         print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect user or password"
+            detail="Incorrect User or Password"
             #headers={"WWW-Authenticate": "Basic"},
         )
     elif datas.password == result["us.keypass"]:
@@ -82,7 +85,7 @@ async def login_user(datas: ForLogin):
                     "native_lang" : result["us.nativeLang"]
         }
     else:
-        print("pass invalid")
+        # print("pass invalid")
         log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password', "username": "",  
                     "age":0, 
@@ -97,8 +100,8 @@ async def login_user(datas: ForLogin):
         )
         print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect user or password -"
+            status_code=status.HTTP_401_UNAUTHORIZED,            
+            detail ="Incorrect User or Password"
             #headers={"WWW-Authenticate": "Basic"},
         )
     print("id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
