@@ -674,7 +674,7 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
     print("        ->   ========== ending get_user_package_st id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': listPack}
 
-def get_words(userId, pkgname):
+def get_words(userId, pkgname, wordslevel='words'):
     global app, session, log
 
     print("========== starting get words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
@@ -696,14 +696,14 @@ def get_words(userId, pkgname):
                         "-(c:Category {idCat:pkg.idCat})<-[:CAT_SUBCAT]-" + \
                             "(sc:SubCategory {idSCat:pkg.idSCat})<-[:PACK_SUBCAT]-(pkg)\n" + \
                         "where o.lSource = pkg.source and o.lTarget = pkg.target \n" + \
-                        "unwind pkg.words as pkgwords \n" + \
+                        "unwind pkg. " + wordslevel + " as pkgwords \n" + \
                         "with pkg, pkg.packageId as pkgname, o.ptgmaxerrs as maxerrs, \n" + \
                             " pkg.label as pkglabel, pkgwords as pkgwords, \n" + \
                             "pkg.source as source, pkg.target as target \n" + \
                         "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
                         "where source in labels(n) and target in labels(s) \n" + \
                         "with pkg, pkgname, pkglabel, maxerrs, n, s, tes \n" + \
-                        "order by n.wordranking, tes.sorted \n" + \
+                        "order by n, tes.sorted \n" + \
                         "with pkg, pkgname, pkglabel, maxerrs, n, collect(s.word) as swlist \n" + \
                         "with pkg, pkgname, pkglabel, maxerrs, \n" + \
                             "COALESCE(n.ckow, []) as kow, \n" + \
@@ -930,6 +930,7 @@ def get_words(userId, pkgname):
         #element.append([s_kow, s_object])
         #result.append(element)
         result2.append(new_element)
+    shuffle(result2)
     pkgdescriptor["message"] = result2
 
     #print('='*50," finaliza -get_words", _getdatime_T())
@@ -965,7 +966,7 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
     #pkgdescriptor["message"] = get_words(userId, pkgname, dtexec)
     #await awsleep(0)
 
-    pkgdescriptor = get_words(userId, pkgname)
+    pkgdescriptor = get_words(userId, pkgname, 'words')
 
     diftime = str(dt.now() - tm1)
     print("==> ",startinat, ' - antes de neo4j:', '---', '- despues de neo4j:', '---', \
@@ -1083,27 +1084,29 @@ async def post_user_words(datas:ForNewPackage
                 "with u, pkgwords, c, sc, coalesce(arcM.words,['.']) as words \n" + \
                 "unwind words as word \n" + \
                 "with u, pkgwords, c, sc, collect(word) as words \n" + \
+                "with u, c, sc, apoc.coll.union(pkgwords, words) as words" + \
                 "/* GETTING NEW WORDS */ \n" + \
                 "match (n:Word:" + lgSource + ") \n" + \
-                "where not n.word in pkgwords and not n.word in words \n" + \
-                "match (n)-[tes:TRANSLATOR]->(s:Word:Spanish) \n" + \
-                "with u, n, s, tes \n" + \
-                "order by n.wordranking, tes.sorted limit 100 \n" + \
-                "with u, n, collect(distinct s.word) as swlist \n" + \
-                "with u, collect(n.word) as ewlist, collect(swlist) as swlist \n" + \
+                "where not n.word in words \n" + \
+                    " and exists {(n)-[tes:TRANSLATOR]->(s:Word:Spanish)}" + \
+                "with u, collect(n.word) as ewlist \n" + \
                 "return u.userId as idUser, 'words' as subCat, \n" + \
-                    "ewlist[0..8] as slSource, \n" + \
-                    "swlist[0..8] as slTarget "
+                    "ewlist[0..8] as slSource "
+        
+                #"match (n)-[tes:TRANSLATOR]->(s:Word:Spanish) \n" + \
+                #"with u, n, s, tes \n" + \
+                #"order by n.wordranking, tes.sorted limit 100 \n" + \
+                #"with u, n, collect(distinct s.word) as swlist \n" + \
+                #"with u, collect(n.word) as ewlist, collect(swlist) as swlist \n" + \
+                #"return u.userId as idUser, 'words' as subCat, \n" + \
+                #    "ewlist[0..8] as slSource, \n" + \
+                #    "swlist[0..8] as slTarget "
 
     else: # if idSCat != 1:                                   # other one subcategory is required
         #idSCatName = "w_SC_" + str(idCat * 1000000 + idSCat) 
 
         neo4j_statement = "with " + str(pkgwords) + " as pkgwords \n" + \
                 "match (u:User {userId:'" + userId + "'}) \n" + \
-                "/*set u." + idSCatName + " = CASE WHEN u." + idSCatName + " is null \n" + \
-                    "THEN [] \n" + \
-                    "ELSE u." + idSCatName + " END \n" + \
-                "with  u, pkgwords \n */ \n" + \
                 "/* getting learned words */ \n" + \
                 "match (c:Category {idCat:" + str(idCat) + "})-[:CAT_SUBCAT]\n" + \
                     "-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
@@ -1112,21 +1115,22 @@ async def post_user_words(datas:ForNewPackage
                 "with u, pkgwords, c, sc, coalesce(arcM.words,['.']) as words \n" + \
                 "unwind words as word \n" + \
                 "with u, pkgwords, c, sc, collect(word) as words \n" + \
+                "with u, c, sc, apoc.coll.union(pkgwords, words) as words" + \
                 "/* getting new words */ \n" + \
-                "match (sc)<-[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ")-[:TRANSLATOR]->" + \
-                    "(sw:ElemSubCat:" + lgTarget + ") \n" + \
-                "where  (not ew.word in words) \n" + \
-                    "and (not ew.word in pkgwords) \n" + \
-                "with sc, u, ew, collect(distinct sw.word) as sw, scat \n" + \
+                "match (sc)<-[scat:SUBCAT]-(ew:ElemSubCat:" + lgSource + ") \n" + \
+                "where  not ew.word in words \n" + \
+                    " and exists { (ew)-[:TRANSLATOR]->" + \
+                            "(sw:ElemSubCat:" + lgTarget + ") } \n" + \
+                "with sc, u, ew, scat \n" + \
                 "order by scat.wordranking, ew.word \n" + \
-                "with sc, u, collect(distinct ew.word) as ewlist, collect(sw) as swlist \n" + \
+                "with sc, u, collect(distinct ew.word) as ewlist \n" + \
                 "return u.userId as idUser, sc.name as subCat, \n" + \
-                        "ewlist[0.." + str(capacity) + "] as slSource, \n" + \
-                        "swlist[0.." + str(capacity) + "] as slTarget"
+                        "ewlist[0.." + str(capacity) + "] as slSource \n" 
+                # "swlist[0.." + str(capacity) + "] as slTarget"
                 #+ \
                 #"ewlist[0.." + str(capacity) + "] as slSource, " + \
                 #"swlist[0.." + str(capacity) + "] as slTarget"
-        #print(f"ne04j_state: {ne04j_statement}")
+    print(f"ne04j_state: {neo4j_statement}")
     await awsleep(0)
     
     nodes, log = neo4j_exec(session, userId,
@@ -1193,7 +1197,7 @@ async def post_user_words(datas:ForNewPackage
 
 
 #@router.get("/get_/user_words4/{user_id} {pkgname}")
-def get_user_words4(userId:str, pkgname:str, level:str):
+def get_user_words4_borrar(userId:str, pkgname:str, level:str):
     """
     internal function, it is not an endpoint
     """
@@ -1206,8 +1210,8 @@ def get_user_words4(userId:str, pkgname:str, level:str):
                         "with pkg, pkg.packageId as pkgname, pkgwords as pkgwords \n" + \
                         "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
                         "where pkg.source in labels(n) and pkg.target in labels(s) \n" + \
-                        "with pkg, pkgname, n, s, tes order by n.wordranking, tes.sorted \n" + \
-                        "with pkg, pkgname, n, reverse(collect(distinct s.word)) as swlist  \n" + \
+                        "with pkg, pkgname, n, s, tes order by n, tes.sorted \n" + \
+                        "with pkg, pkgname, n, collect(distinct s.word) as swlist  \n" + \
                         "with pkg, pkgname, \n" + \
                             "collect(COALESCE(n.ckow, [])) as kow, \n" + \
                             "collect(COALESCE(n.ckowb_complete, [])) as kowc, \n" + \
@@ -1446,25 +1450,32 @@ async def post_user_words4(datas:ForNewPackage
             "-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
             "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-\n" + \
             "[rUArcM:ARCHIVED_M]->(u) \n" + \
-            "with u.userId as userId, c.idCat as idCat, sc.idSCat as idSCat, \n" + \
+            "with u.userId as userId, \n" + \
                 "coalesce(arcM.words,['.']) as uwords, packageId, capacity, sc \n" + \
             "unwind uwords as words \n" + \
-            "with sc, userId, words, packageId, idCat, idSCat, capacity order by rand() \n" + \
-            "with sc, userId, collect(words) as words, packageId, idCat, idSCat, capacity \n" + \
-            "with sc, userId, words[0..capacity] as lwords, packageId, idCat, idSCat, capacity \n" + \
+            "with sc, userId, collect(words) as words, packageId, capacity \n" + \
+            "with sc, userId, words[0..capacity] as lwords, packageId, capacity \n" + \
             "match (u)-[rp:PACKAGED]-(pkg:Package {packageId:packageId})-[:PACK_SUBCAT]->(sc) \n" + \
             "set pkg.words40=case when pkg.status = 'open' \n" + \
                 "then (pkg.words + lwords)[0..capacity] \n" + \
                 "else lwords[0..capacity] end, \n" + \
                 "pkg.ctUpdate = datetime('" + dtexec + "') \n" + \
-            "with sc, userId, packageId, pkg, idCat, idSCat \n" + \
-            "match (u2:User {userId:userId}) \n" + \
-            "match (sc)<-[PACK_SUBCAT]-(pkg2:Package {packageId:packageId})-[:PACKAGED]->(u2) \n" + \
-            "set pkg2.words40 = CASE WHEN not exists \n" + \
-                        "{(sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-[rUArcM:ARCHIVED_M]->(u2)} \n" + \
-                        "THEN pkg2.words40[0..-1] ELSE pkg2.words40 END \n" + \
-            "return userId, packageId, pkg2.words40 limit 1 "
+            "set pkg.words40 = case when size(pkg.words40) = 9 \n" + \
+                    "then pkg.words40[0..-1] \n" + \
+                    "else pkg.words40 \n" + \
+                "end \n" + \
+            "return userId, packageId, pkg.words40 limit 1 "
+    
+            #"set pkg.words40 = apoc.coll.shuffle(pkg.words40) \n" + \
+            #"with sc, userId, words, packageId, idCat, idSCat, capacity order by rand() \n" + \
+            #"match (u2:User {userId:userId}) \n" + \
+            #"match (sc)<-[PACK_SUBCAT]-(pkg2:Package {packageId:packageId})-[:PACKAGED]->(u2) \n" + \
+            #"set pkg2.words40 = CASE WHEN not exists \n" + \
+            #            "{(sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-[rUArcM:ARCHIVED_M]->(u2)} \n" + \
+            #            "THEN pkg2.words40[0..-1] ELSE pkg2.words40 END \n" + \
+            #"return userId, packageId, pkg2.words40 limit 1 "
     await awsleep(0)
+    print("neo4j_statement:", neo4j_statement)
     
     nodes, log = neo4j_exec(session, userId,
                     log_description="post_user_words4 -level_40_ \n packageId: " + pkgname,
@@ -1475,13 +1486,15 @@ async def post_user_words4(datas:ForNewPackage
     # now, getting the package using the same endpoint function to return words package
     await awsleep(0)
     
-    result = get_user_words4(userId, pkgname, "words40")
+    #result = get_user_words4(userId, pkgname, "words40")
+    result = get_words(userId, pkgname, 'words40')
+
     print("        ->   ========== ending post_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return result
 
 
-@router.post("/pst_/user_words5/")
-async def post_user_words5(datas:ForNewPackage
+#@router.post("/pst_/user_words5/")
+async def post_user_words5_borrar(datas:ForNewPackage
                     , Authorization: Optional[str] = Header(None)):
     """
     Function to create the word list for level 5 (lvl_50_01) \n    
