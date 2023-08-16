@@ -4,8 +4,8 @@ from datetime import datetime as dt
 
 class ForPackages(BaseModel):
     idScat: int
-    package: str=None
-    capacity:int=None
+    package: str
+    capacity:int
 
 class ForClosePackages(BaseModel):
     package: str=None

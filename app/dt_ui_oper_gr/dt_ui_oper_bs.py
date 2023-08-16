@@ -999,6 +999,7 @@ async def post_user_words(datas:ForNewPackage
     #
 
     dtexec = funcs._getdatime_T()
+    print("datas:", datas)
 
     idCat = datas.idScat // 1000000
     idSCat = datas.idScat % 1000000
@@ -1008,7 +1009,7 @@ async def post_user_words(datas:ForNewPackage
     if not capacity or capacity < 8:
         capacity = 8
 
-    if pkgname in ['', None]:        
+    if pkgname == None or pkgname.strip() in ['']:
         pkgname = dtexec 
 
     await awsleep(0)
