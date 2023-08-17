@@ -18,7 +18,7 @@ from app.model.md_params_oper import ForPackages as ForNewPackage
 router = APIRouter()
 
 def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):
-    print("========== starting get_w_SCat id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting get_w_SCat id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     
     if idCat == None:
         neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "'})\n" + \
@@ -59,7 +59,7 @@ def get_w_SCat(userId, pkgname, idCat=None, idSCat=None):
         wSCat = "w_SC_" + str(idCat * 1000000 + idSCat) # 'w_idSCat_' + str(idSCat)
 
     #print("\n\n\n","="*50,"wsCat =", wSCat, idCat, idSCat)
-    print("        ->   ========== ending get_w_SCat id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("        ->   ========== ending get_w_SCat id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
 
     return [wSCat, pkgsource, pkgtarget]
 
@@ -68,7 +68,7 @@ def get_pronunciationId(words, packagename, userId):
     Function to identify and return the id() of pronunciation file
     into the WordSound collection
     """
-    print("========== starting get_pronunciationId id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting get_pronunciationId id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
 
     # getting the WordSound id for each word and example
     neo4j_statement = "with " + str(list(words)) + " as wordlist \n" + \
@@ -108,7 +108,7 @@ def get_pronunciationId(words, packagename, userId):
                         'target':example_target} # binfile.decode("ISO-8859-1")} #utf-8")}
         result.append(dict_pronunciation)
 
-    print("        ->   ========== ending get_pronunciationId id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())    
+    #print("        ->   ========== ending get_pronunciationId id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())    
     return result
 
 
@@ -123,7 +123,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
 
     token=funcs.validating_token(Authorization)
     userId = token['userId']
-    print("========== starting get_categories id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting get_categories id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     """
     neo4j_statement = "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]-(o:Organization)\n" + \
                         "<-[:SUBJECT]-(c:Category {idCat:1})<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
@@ -195,7 +195,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     userId = token['userId']
     startinat = _getdatime_T()
     tm1 = dt.now()
-    print("========== starting get_dashboard_table id: ", userId, " dt: ", startinat, " -> ", myfunctionname())
+    #print("========== starting get_dashboard_table id: ", userId, " dt: ", startinat, " -> ", myfunctionname())
 
     dtimenow = dt.now()
     yearr = dtimenow.year
@@ -289,13 +289,11 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "sc.idSCat as idCS, \n" + \
                 "qtyweek as qtyweek, qtymonth as qtymonth "
     
-    #"sum(size(pkg.words)) as learned, \n" + \ 
-    # count(es) as wordsSC
+    
     beforeNeo4 =  _getdatime_T()
-    #print(startinat, ' antes de ejecución en neo4j:', beforeNeo4)
-    #print(f"neo4j_state: {neo4j_statement}")
+
     await awsleep(0)
-    #print(f"\n\n dashboard: \n{neo4j_statement}")
+    
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting data for dashboard table",
                         statement=neo4j_statement, 
@@ -303,12 +301,11 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                         function_name=myfunctionname())
     
     afterNeo4 =  _getdatime_T()
-    #print(startinat, '\n antes de neo4j:', beforeNeo4, 'despues de neo4j:', afterNeo4)
+    
     listcat,  listBasicK= [], []
     msg = ""
     try:
-        for node in nodes:            
-            #print('ciclos en nodes:', _getdatime_T())
+        for node in nodes:          
             sdict = dict(node)
             tw = ""
             qtymonth = str(sdict["qtymonth"]) if sdict["qtymonth"] else "0"
@@ -331,7 +328,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     except Exception as error:
         msg = "error on empty nodes - no iterable"
     diftime = str(dt.now() - tm1)
-    print("==> ",startinat, '\n antes de neo4j:', beforeNeo4, 'despues de neo4j:', afterNeo4, " termina a ", _getdatime_T(), " = ", diftime)
+    #print("==> ",startinat, '\n antes de neo4j:', beforeNeo4, 'despues de neo4j:', afterNeo4, " termina a ", _getdatime_T(), " = ", diftime)
     print("        ->   ========== ending get_dashboard_table id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg)
     return {'message': listBasicK + listcat}
 
@@ -346,7 +343,7 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
 
     token=funcs.validating_token(Authorization)
     userId = token['userId']
-    print("==========  starting get_config_uid id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("==========  starting get_config_uid id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log 
 
     neo4j_statement = "match (us:User {userId:'" + userId + "'})-[r]->(rep:FirstContact) \n" + \
@@ -388,14 +385,11 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     
     token=funcs.validating_token(Authorization)
     userId = token['userId']
-    print("========== starting get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log 
 
     idCat = idSCat // 1000000
     idSCat = idSCat % 1000000
-
-    #print('idcattt:', idCat, 'idSCat:', idSCat)
-    #
 
     statement = "match (u:User {userId:'" + userId + "'})\n" + \
                 "-[rt:RIGHTS_TO]-(o:Organization)<-[:SUBJECT]\n" + \
@@ -403,7 +397,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                 "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
                 "return c.idCat as idCat, c.name as catname, sc.name as scname limit 1" 
     
-    #print(statement)
+
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
@@ -431,14 +425,11 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     """
     token=funcs.validating_token(Authorization)
     userId = token['userId']
-    print("========== starting get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting get_user_packagelist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log 
 
     idCat = idSCat // 1000000
     idSCat = idSCat % 1000000
-
-    #print('idcattt:', idCat, 'idSCat:', idSCat)
-    #
 
     statement = "match (u:User {userId:'" + userId + "'})\n" + \
                 "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
@@ -459,9 +450,7 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
                     "coalesce(pkg.ctUpdate, pkg.ctInsert) as updatedate \n" + \
                 "order by updatedate desc, labelname"
     
-    #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
-    #print("============================\n", statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
@@ -472,8 +461,6 @@ async def get_user_packagelist(idSCat:int, Authorization: Optional[str] = Header
     listPack = []
     for node in nodes:
         sdict = dict(node)    
-        #subcat_list = []
-        #print('sdict:', sdict)
         
         if sdict["grade"] == None:
             ptg_errors = 100
@@ -518,14 +505,12 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
     
     token=funcs.validating_token(Authorization)
     userId = token['userId']
-    print("========== starting get_user_packagehistorylist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting get_user_packagehistorylist id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log 
 
     idCat = idSCat // 1000000
     idSCat = idSCat % 1000000
 
-    #print('idcattt:', idCat, 'idSCat:', idSCat)
-    #
     if ssearch == None:
         ssearch = ''
     if sword == None:
@@ -558,9 +543,7 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
                 "skip " + str((ipage - 1) * ishow) + " \n" + \
                 "limit " + str(ishow) 
     
-    #"max(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
 
-    #print("\n\n\n",'='*50,"statement:\n", statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
                         statement=statement,
@@ -615,9 +598,8 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
     
     token=funcs.validating_token(Authorization)
     userId = token['userId']
-    print("========== starting get_user_package_st id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
-
-    #    
+    #print("========== starting get_user_package_st id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    
     statement = "match (u:User {userId:'" + userId + "'})-[]-\n" + \
                 "(pkg:Package {packageId: '" + packageId + "'}) \n" + \
                 "-[:PACK_SUBCAT]-(sc:SubCategory)\n" + \
@@ -635,8 +617,6 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
                 "split(level,'-,-')[0] as level, \n" + \
                 "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
     
-    #print(statement)
-    #"min(((pkgS.grade[0] / toFloat(pkgS.grade[1]) - 1 ) * 100)) as grade, \n" + \
     
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting opened packages list",
@@ -677,17 +657,11 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
 def get_words(userId, pkgname, wordslevel='words'):
     global app, session, log
 
-    print("========== starting get words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
-
-    #print('='*50," inicia get_userwords", _getdatime_T())
+    #print("========== starting get words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())    
 
     npackage = []
 
-    level = 'null'  # elementary level
-
-    #print("\n\n\n*******************************\nuuuuserid:", userId, pkgname)    
-
-      
+    level = 'null'  # elementary level        
 
     neo4j_statement = "/* EXTRACCIÓN PARA SUBCATEGORÍA WORDS  idSCat = 1*/ \n" + \
                         "match (pkg:Package {packageId:'" + pkgname + "', idSCat: 1})" + \
@@ -748,16 +722,13 @@ def get_words(userId, pkgname, wordslevel='words'):
                             "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
-    
-    #print("--neo4j_statement:", neo4j_statement)
-    # claro que se modificó el código, es una ejecucioon enntre comillas , para neo4j
+        
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
                         filename=__name__, 
                         function_name=myfunctionname())      
     
-    # creating the structure to return data   # ESTA SECCIÓN HASTA EL FINAL ES IGUAL GET_USER_WORDS4
     pkgdescriptor = {}
     words = []
     npackage = []
@@ -809,14 +780,10 @@ def get_words(userId, pkgname, wordslevel='words'):
         #        ltarget = [ltarget]
         #    npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
         #    words.append(value) # (value, sdict['kow']))
-         #print("----------------------------------------------wwword:", value)
+        #print("----------------------------------------------wwword:", value)
 
-    #print('gggget_pronunciationId(:', words, pkgname, userId)
-          
     lpron = get_pronunciationId(words, pkgname, userId)
-
-    #print(' lpront:', lpron)
-          
+         
     result = []
     result2 = []
 
@@ -931,9 +898,7 @@ def get_words(userId, pkgname, wordslevel='words'):
         #result.append(element)
         result2.append(new_element)
     shuffle(result2)
-    pkgdescriptor["message"] = result2
-
-    #print('='*50," finaliza -get_words", _getdatime_T())
+    pkgdescriptor["message"] = result2   
 
     print("        ->   ========== ending get words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return pkgdescriptor
@@ -953,7 +918,7 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
     userId = token['userId']
     startinat = _getdatime_T()
     tm1 = dt.now()
-    print("========== starting get_user_words id: ", userId, " dt: ", startinat, " -> ", myfunctionname())
+    #print("========== starting get_user_words id: ", userId, " dt: ", startinat, " -> ", myfunctionname())
     global appNeo, session, log 
 
     #
@@ -1198,218 +1163,6 @@ async def post_user_words(datas:ForNewPackage
     return pkgdescriptor #pkgname #pkgdescriptor
 
 
-#@router.get("/get_/user_words4/{user_id} {pkgname}")
-def get_user_words4_borrar(userId:str, pkgname:str, level:str):
-    """
-    internal function, it is not an endpoint
-    """
-    print("========== starting get_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
-    global appNeo, session, log
-
-    npackage = []
-    neo4j_statement = "match (pkg:Package {packageId:'" + pkgname + "', idSCat:1}) \n" + \
-                        "unwind pkg." + level + " as pkgwords  \n" + \
-                        "with pkg, pkg.packageId as pkgname, pkgwords as pkgwords \n" + \
-                        "match (n:Word {word:pkgwords})-[tes:TRANSLATOR]->(s:Word)  \n" + \
-                        "where pkg.source in labels(n) and pkg.target in labels(s) \n" + \
-                        "with pkg, pkgname, n, s, tes order by n, tes.sorted \n" + \
-                        "with pkg, pkgname, n, collect(distinct s.word) as swlist  \n" + \
-                        "with pkg, pkgname, \n" + \
-                            "collect(COALESCE(n.ckow, [])) as kow, \n" + \
-                            "collect(COALESCE(n.ckowb_complete, [])) as kowc, \n" + \
-                            "collect(COALESCE(n.cword_ref, [])) as wordref, \n" + \
-                            "collect(COALESCE(n.wrword_ref, '')) as wr_wordref, \n" + \
-                            "collect(COALESCE(n.wr_kow, [])) as wr_kow, \n" + \
-                            "collect(n.word) as ewlist, \n" + \
-                            "collect(swlist) as swlist \n" + \
-                        "optional match (pkg)<-[:STUDY]-(pkgS:PackageStudy) \n" + \
-                        "return 'words' as subCat, 1 as idSCat, pkg.label as label, " + \
-                            "max(pkgS.level) as maxlevel, [] as linktitles, [] as links, \n" + \
-                            "ewlist as slSource, kow, kowc, wordref, \n" + \
-                            "swlist as slTarget, wr_wordref, wr_kow, \n" + \
-                            "pkg.source as langsource, pkg.target as langtarget \n" + \
-                        "union " + \
-                        "match (pkg:Package {packageId:'" + pkgname + "'}) \n" + \
-                        "unwind pkg." + level + " as pkgwords  " + \
-                        "match (pkg)-[:PACK_SUBCAT]->(s:SubCategory)<-[scat:SUBCAT]-" + \
-                            "(ew:ElemSubCat {word:pkgwords})-[:TRANSLATOR]->(sw:ElemSubCat)  \n" + \
-                        "where pkg.source in labels(ew) and pkg.target in labels(sw) \n" + \
-                        "with pkg, s, ew, collect(distinct sw.word) as sw, scat \n" + \
-                            "order by scat.wordranking, ew.wordranking, ew.word  \n" + \
-                        "with pkg, s, collect(ew.link_title) as linktitles, collect(ew.link) as links,  \n" + \
-                            "collect(ew.word) as ewlist, collect(sw) as swlist  \n" + \
-                        "optional match (pkg)<-[rps:STUDY]-(pkgS:PackageStudy) \n" + \
-                        "with pkg, s, ewlist, swlist, max(pkgS.level) as level, linktitles, links order by rand() \n" + \
-                        "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
-                            "level as maxlevel, linktitles, links, \n" + \
-                            "ewlist as slSource, [] as kow, [] as kowc, [] as wordref, \n" + \
-                            "swlist as slTarget, [] as wr_wordref, [] as wr_kow, \n" + \
-                            "pkg.source as langsource, pkg.target as langtarget "
-    
-    #print("--neo4j_statement:", neo4j_statement)
-    nodes, log = neo4j_exec(session, userId,
-                        log_description="getting words for user and pkgId="+pkgname,
-                        statement=neo4j_statement,
-                        filename=__name__, 
-                        function_name=myfunctionname())  
-    
-    # creating the structure to return data # ESTA SECCIÓN HASTA EL FINAL ES IGUAL A GET_WORDS
-        # creating the structure to return data   # ESTA SECCIÓN HASTA EL FINAL ES IGUAL GET_USER_WORDS4
-    pkgdescriptor = {}
-    words = []
-    kow, kowc = [], []
-    npackage = []
-    #print("\n\ninicia ciclos de nodes:\n\n")
-    for node in nodes:
-        sdict = dict(node)    
-        #print("sdict in nodes:", sdict)   
-        npackage = []
-        pkgdescriptor = {"packageId": pkgname
-                          , "label": sdict["label"]
-                          , "maxlevel":sdict["maxlevel"]
-        }
-        kow = sdict["kow"]
-        kowc = sdict["kowc"]
-        wrkowc = sdict["wr_kow"]
-        wr_wordref = sdict["wr_wordref"]
-        langs = sdict["langsource"]
-        langt = sdict["langtarget"]
-        for gia, value in enumerate(sdict['slSource']):
-            prnReference = funcs.get_list_element(sdict["linktitles"], gia)
-            prnLink     = funcs.get_list_element(sdict["links"], gia)
-            ltarget = funcs.get_list_element(sdict["slTarget"],gia)
-            wordref = funcs.get_list_element(sdict["wordref"],gia)
-            if type(ltarget) == type(list()):
-                pass
-            else:
-                ltarget = [ltarget]
-            npackage.append([value, ltarget, gia + 1, prnReference, prnLink, wordref])
-            words.append(value) # (value, sdict['kow']))
-            #print("----------------------------------------------wwword:", value)
-
-    #print('gggget_pronunciationId(:', words, pkgname, userId)
-          
-    lpron = get_pronunciationId(words, pkgname, userId)
-
-    #print(' lpront:', lpron)
-          
-    result = []
-    result2 = []
-
-    # we have a list with neo4 values, we need to add some elements like:
-    # - pronunciation with sentence example (lpron)
-    # - kind of word and link for conjungation verbs
-    # - location or more information for countries, skeleton, etc 
-    kowv, kowo, past_verb = [], [], False
-    s_kow_verb, s_kow, s_kow_past_verb = {'title': None}, {'title': None}, {'title': None}
-    for gia, element in enumerate(npackage): # element Strcuture:[value, ltarget, gia + 1, prnReference, prnLink]
-        # kow section
-        #print(gia, len(npackage), 'len-kow:', len(kow))
-        if len(kow)>0:  # if existe referencia a kind of word
-            if len(kow[gia]) == 0:
-                isitaverb = [False, []]
-            else:
-                verbis = str(kowc[gia]).lower().replace("adverb","xxxxx")
-                isitaverb = [('verb' in verbis), kowc[gia]]
-            
-            s_kow_verb, s_kow_past_verb = {'title': None}, {'title': None}
-            kowv, kowo, past_verb = [], [], False
-            if isitaverb[0] or 'v ' in str(wrkowc[gia]): # si es verbo
-                if not isitaverb[0]:
-                    isitaverb[0] = 1
-                #print("lene elemente:", len(element[5]), element[5])
-                if wr_wordref[gia] != "":
-                    conjLink = myConjutationLink(wr_wordref[gia], langs)   # wordref
-                elif element[5] == [''] or len(element[5]) == 0:  ## es el infintivo del verbo o no hay referencia ligada
-                    conjLink = myConjutationLink(element[0], langs)      # c' wordref 
-                else:
-                    conjLink = myConjutationLink(element[5][0], langs)   # c' wordref            
-                    
-                for k in kowc[gia]:
-                    #print("valor de kkk:", k , 'verb' in k)
-                    if 'verb' in k:
-                        kowv.append(k)
-                    else: 
-                        kowo.append(k)
-                if len(kowv) == 0:
-                    if 'v ' in str(wrkowc[gia]):
-                        if "v past" in str(wrkowc[gia]) and "v past p" in str(wrkowc[gia]):
-                            kowv.append('past - verb, past part - verb')
-                            past_verb = True
-                        elif "v past" in str(wrkowc[gia]):
-                            kowv.append('past - verb')
-                            past_verb = True
-                        elif  "v past p" in str(wrkowc[gia]):
-                            kowv.append('past part - verb')
-                            past_verb = True
-                        else:
-                            kowv.append('verb')
-                else:
-                    if "v past" in str(wrkowc[gia]) or "v past p" in str(wrkowc[gia]):
-                        past_verb = True
-
-                s_kow_verb = {"type": "kow_verb"
-                            , "position" : "source"
-                            , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : conjLink
-                            , "title": get_list_elements(kowv, 3) 
-                            #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
-                            }
-                if past_verb: 
-                    if wr_wordref[gia] != "":
-                        conjLink = myConjutationLink(wr_wordref[gia], langt)   # wordref
-                    elif element[5] == [''] or len(element[5]) == 0:  ## es el infintivo del verbo o no hay referencia ligada
-                        conjLink = myConjutationLink(element[0], langt)      # c' wordref 
-                    else:
-                        conjLink = myConjutationLink(element[5][0], langt)   # c' wordref   
-                    s_kow_past_verb = {"type": "kow_verb"
-                                , "position" : "target"
-                                , "apply_link": isitaverb[0] # is it a verb?
-                                , "link" : conjLink
-                                , "title": get_list_elements(kowv, 3) 
-                                #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
-                                }
-            else:
-                kowo = kowc[gia]
-                conjLink = ''
-        if len(kowo) > 0:
-            s_kow = {"type": "kow_diff_verb"
-                            , "position" : "source"
-                            , "apply_link": isitaverb[0] # is it a verb?
-                            , "link" : ""
-                            , "title": get_list_elements(kowo,3)
-                            #(isitaverb[1],3) # kow[gia] # list of different kind of word for the same word
-                            }
-        else:
-            s_kow = {'title': None}
-
-        s_object={"type": "location"
-                        , "position" : "source" # source para tarjeta superio, 'target' para tarjeta inferior
-                        , "apply_link": True if element[3] else False
-                        , "link" : element[4]
-                        , "title": element[3]
-                        }
-        ladds = []
-        for ele in [s_kow_verb, s_kow, s_object, s_kow_past_verb]:
-            if ele["title"] != None:
-                ladds.append(ele)
-
-        new_element = {'word': element[0]
-                        , "tranlate": element[1]
-                        , "position": element[2]
-                        , "pronunciation": lpron[gia]
-                        , "additional": ladds
-                        }        
-
-        #element.append(lpron[gia])
-        #element.append([s_kow, s_object])
-        #result.append(element)
-        result2.append(new_element)
-    pkgdescriptor["message"] = result2
-    #print('='*50," finaliza -get_words", _getdatime_T())       
-    print("        ->   ========== ending get_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
-    return pkgdescriptor
-
 
 @router.post("/pst_/user_words4/")
 async def post_user_words4(datas:ForNewPackage
@@ -1427,7 +1180,7 @@ async def post_user_words4(datas:ForNewPackage
     
     token=funcs.validating_token(Authorization) 
     userId = token['userId']
-    print("========== starting post_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting post_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     
     idSCat = datas.idScat
 
@@ -1477,7 +1230,7 @@ async def post_user_words4(datas:ForNewPackage
             #            "THEN pkg2.words40[0..-1] ELSE pkg2.words40 END \n" + \
             #"return userId, packageId, pkg2.words40 limit 1 "
     await awsleep(0)
-    print("neo4j_statement:", neo4j_statement)
+    #print("neo4j_statement:", neo4j_statement)
     
     nodes, log = neo4j_exec(session, userId,
                     log_description="post_user_words4 -level_40_ \n packageId: " + pkgname,
@@ -1495,73 +1248,6 @@ async def post_user_words4(datas:ForNewPackage
     return result
 
 
-#@router.post("/pst_/user_words5/")
-async def post_user_words5_borrar(datas:ForNewPackage
-                    , Authorization: Optional[str] = Header(None)):
-    """
-    Function to create the word list for level 5 (lvl_50_01) \n    
-    
-    {\n
-        idScat:int,  \n
-        package:str=None,  \n
-        capacity:int=24    // 8, 16, 24, 32, 40 \n
-    }
-    """
-    print("========== starting post_user_words5 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
-    global appNeo, session, log
-    
-    idSCat = datas.idScat
-    pkgname = datas.package
-    capacity = datas.capacity    
-    
-    token=funcs.validating_token(Authorization) 
-    userId = token['userId']
-
-    level = 'lvl_50_01'
-
-    dtexec = funcs._getdatime_T()
-    if idSCat == 1:
-        wSCat = 'words'
-    else:
-        wSCat = 'w_SC_' + str(idSCat)
-
-    neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
-            "'" + wSCat + "' as wSCat, \n" + \
-            "'" + userId + "' as user_id, \n" + \
-            str(capacity) + " as capacity \n" + \
-            "match (u:User {userId:user_id}) \n" + \
-            "with u.userId as userId, COALESCE(u[wSCat],['.']) as uwords, packageId, wSCat, capacity \n" + \
-            "unwind uwords as words \n" + \
-            "with userId, words, packageId, wSCat, capacity order by rand() \n" + \
-            "with userId, collect(words) as words, packageId, wSCat, capacity \n" + \
-            "with userId, words[0..capacity] as lwords, packageId, wSCat, capacity \n" + \
-            "match (u)-[rp:PACKAGED]-(pkg:Package {packageId:packageId}) \n" + \
-            "set pkg.words50=(pkg.words + lwords)[0..capacity], \n" + \
-                "pkg.status='open', \n" + \
-                "pkg.ctUpdate = datetime('" + dtexec + "') \n" + \
-            "create (pkgS:PackageStudy {level:'" + level + "'})-[rs:STUDY]->(pkg) \n" + \
-            "set pkgS.studying_dt = datetime('" + dtexec + "'), \n" + \
-                "pkgS.grade = [0,capacity] \n" + \
-            "with userId, packageId, pkg \n" + \
-            "match (u2:User {userId:userId}) \n" + \
-            "where u2.words is null \n" + \
-            "match (pkg2:Package {packageId:packageId})-[]-(u2) \n" + \
-            "set pkg2.words50 = pkg.words50[0..-1] \n" + \
-            "return userId, packageId limit 1 "
-    
-    nodes, log = neo4j_exec(session, userId,
-                    log_description="post_user_words5 -level_50_ \n packageId: " + pkgname, 
-                    statement=neo4j_statement, 
-                    filename=__name__, 
-                    function_name=myfunctionname())
-    await awsleep(0)
-        
-    # now, getting the package using the same endpoint function to return words package
-    result = get_user_words4(userId, pkgname, "words50")
-    print("        ->   ========== ending post_user_words5 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
-    return result
-
-
 @router.get("/get_/user_word_pronunciation/")
 async def get_user_word_pronunciation(word:str, idWord:int):
     #                , Authorization: Optional[str] = Header(None)):    
@@ -1573,7 +1259,7 @@ async def get_user_word_pronunciation(word:str, idWord:int):
         idNode: int
     """
     userId = '__publicPron__' #token['userId']
-    print("========== starting get_user_word_pronunciation id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting get_user_word_pronunciation id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log
 
     #token=funcs.validating_token(Authorization) 
@@ -1614,7 +1300,7 @@ def get_user_word_pron2(word:str, idWord:int
     
     token=funcs.validating_token(Authorization) 
     userId = token['userId']
-    print("========== starting  get_user_word_pron2 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    #print("========== starting  get_user_word_pron2 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log
 
     #

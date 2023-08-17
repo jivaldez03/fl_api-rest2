@@ -51,7 +51,7 @@ async def login_user(datas: ForLogin):
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         )
-        print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
+        #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect User or Password"
@@ -78,7 +78,7 @@ async def login_user(datas: ForLogin):
         token = funcs.return_token(data=resp_dict)
 
         #print(f"validating token: {funcs.validating_token(token.split(' ')[1], False)}")
-        print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
+        #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
         return {"token": token, 
                     "user_name": result["us.name"], 
                     "age":0, 
@@ -100,7 +100,7 @@ async def login_user(datas: ForLogin):
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         )
-        print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
+        #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,            
             detail ="Incorrect User or Password"
@@ -126,7 +126,7 @@ async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = H
                                  filename=__name__,
                                  function_name=myfunctionname())
     if len(nodes) == 0:
-        print("id: ", token['userId'], " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raiseHTTP - user / pass")
+        #print("id: ", token['userId'], " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raiseHTTP - user / pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password",

@@ -179,7 +179,7 @@ async def pst_packagearchive(package:str
 
     await awsleep(0)
     
-    print("\n\n\n","="*30, "se ejecuta cierre de package")
+    #print("\n\n\n","="*30, "se ejecuta cierre de package")
 
     res = set_archived_package(package, userId)
 

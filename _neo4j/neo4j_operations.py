@@ -106,7 +106,7 @@ def neo4_log(session, user, log_description, filename= None, function_name=None,
         function_name = 'null'
     else:
         function_name = "'" + function_name + "'"
-    print(f"lllog_description: {log_description}")
+    #print(f"lllog_description: {log_description}")
     log_description = log_description.replace('"', '')
     logofaccess = 'create (n:Log {user: "' + user + '", ' + \
                     'trx: "' + log_description + '", \n' + \
@@ -131,7 +131,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
 
     if not function_name:
         function_name = 'null'
-    print(f"execution requested by {user} - FUNTION__NAME: {function_name}")
+    #print(f"execution requested by {user} - FUNTION__NAME: {function_name}")
     # next line is the log's record for the user's execution
     if monitoring_function(function_name):
         log_description += "\n----\n" + statement
@@ -268,7 +268,7 @@ def user_change_password(session, login, old_pass, new_pass, filename=None, func
     for elem in resp:
         #print(f"elem: {type(elem)} {elem}")     
         result=dict(elem)
-    print('chagnepasswrod:', result)
+    #print('chagnepasswrod:', result)
 
     if len(result) == 0:
         trx = "Incorrect user or password"
