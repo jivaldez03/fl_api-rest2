@@ -1090,7 +1090,7 @@ async def post_user_words(datas:ForNewPackage
                 "match (n:Word:" + lgSource + ") \n" + \
                 "where not n.word in words \n" + \
                     " and exists {(n)-[tes:TRANSLATOR]->(s:Word:Spanish)}" + \
-                "with u, n.word as word order by n.wordranking \n" + \
+                "with u, n.word as word order by n.wordranking limit 20 \n" + \
                 "with u, collect(word) as ewlist \n" + \
                 "return u.userId as idUser, 'words' as subCat, \n" + \
                     "ewlist[0..8] as slSource "
@@ -1124,7 +1124,7 @@ async def post_user_words(datas:ForNewPackage
                     " and exists { (ew)-[:TRANSLATOR]->" + \
                             "(sw:ElemSubCat:" + lgTarget + ") } \n" + \
                 "with sc, u, ew, scat \n" + \
-                "order by scat.wordranking, ew.word \n" + \
+                "order by scat.wordranking, ew.word  limit 20 \n" + \
                 "with sc, u, collect(distinct ew.word) as ewlist \n" + \
                 "return u.userId as idUser, sc.name as subCat, \n" + \
                         "ewlist[0.." + str(capacity) + "] as slSource \n" 
