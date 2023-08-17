@@ -238,8 +238,9 @@ def login_validate_user_pass_trx(session, login):
         query = "create (l:Log {user:$login, ctInsert:datetime(), ctClosed: datetime(), "+ \
                         "trx:'trying login for the user', \n" + \
                         "exec_fname:'" + __name__+ "', \n"+ \
-                        "exec_fn: 'login_validate_user_pass_trx'})" + \
-                "match (us:User {userId: $login}) " +  \
+                        "exec_fn: 'login_validate_user_pass_trx'}) " + \
+                "with l.user as userId \n" + \
+                "match (us:User {userId: userId }) " +  \
                 "return us.userId, us.name, us.keypass, us.age, \n" + \
                     "us.nativeLang, us.country_birth, us.country_res limit 1"
         nodes = session.run(query, login=login)

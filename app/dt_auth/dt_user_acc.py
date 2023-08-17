@@ -37,9 +37,9 @@ async def login_user(datas: ForLogin):
 
     detailmessage = ""
     messageforuser = ""
-    
+    print("___________________datas:", datas)
     if len(result) == 0:
-        #print("no records - fname__name__and more:",__name__)
+        print("no records - fname__name__and more:",__name__)
         log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us', "userId":"",  "username": "", 
                     "age":0, 
@@ -54,7 +54,7 @@ async def login_user(datas: ForLogin):
         #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect User or Password"
+            detail="Incorrect User or Password (0)"
             #headers={"WWW-Authenticate": "Basic"},
         )
     elif datas.password == result["us.keypass"]:
@@ -103,7 +103,7 @@ async def login_user(datas: ForLogin):
         #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,            
-            detail ="Incorrect User or Password"
+            detail ="Incorrect User or Password (i)"
             #headers={"WWW-Authenticate": "Basic"},
         )
     print("id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
