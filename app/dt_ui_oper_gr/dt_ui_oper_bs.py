@@ -142,7 +142,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "return o.name, c.name as category, c.idCat as idCat, \n" + \
                                 "collect(subcategory) as subcategories, collect(idCS) as subid"
     """
-    neo4j_statement ="match (u:User {userId:'jivaldez032'})-[rt:RIGHTS_TO]->(o:Organization) \n" + \
+    neo4j_statement ="match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]->(o:Organization) \n" + \
                         "<-[:SUBJECT]-(c:Category {idCat:1})<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
                         "with o.idOrg as idOrg, o.name as oname, \n" + \
                         "c.idCat as idCat, c.name as cname, s.name as subcategory, \n" + \
@@ -151,7 +151,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "return oname, cname as category, idCat, \n" + \
                         "collect(subcategory) as subcategories, collect(idCS) as subid \n" + \
                         "union \n" + \
-                        "match (u:User {userId:'jivaldez032'})-[rt:RIGHTS_TO]->(o:Organization)\n" + \
+                        "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]->(o:Organization)\n" + \
                         "<-[:SUBJECT]-(c:Category)<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
                         "where c.idCat <> 1 and \n" + \
                         "exists {match (s)<-[:SUBCAT]-(es:ElemSubCat) \n" + \
