@@ -101,28 +101,28 @@ def execution(function_name, statement, user, log):
     return nodes
 
 def neo4_log(session, user, log_description, filename= None, function_name=None, log=[0,""]):
-    if True == False:
-        if not function_name:
-            function_name = 'null'
-        else:
-            function_name = "'" + function_name + "'"
-        print(f"lllog_description: {log_description}")
-        log_description = log_description.replace('"', '')
-        logofaccess = 'create (n:Log {user: "' + user + '", ' + \
-                        'trx: "' + log_description + '", \n' + \
-                        'exec_fname: "' + filename + '", \n' + \
-                        "exec_fn:" + function_name + ", \n" + \
-                        "ctInsert: datetime()})" + \
-                        "return id(n) as idLog, n.ctInsert as dtstamp"
-        #log = session.run(logofaccess)
-
-        log = execution(function_name, logofaccess, user, log)
-        ix = [dict(ix) for ix in log][0]
-        idlog = ix["idLog"]
-        dtstamp = ix["dtstamp"]
+    #if True == False:
+    if not function_name:
+        function_name = 'null'
     else:
-        idlog = 1 # ix["idLog"]
-        dtstamp = dt.now() # ix["dtstamp"]
+        function_name = "'" + function_name + "'"
+    print(f"lllog_description: {log_description}")
+    log_description = log_description.replace('"', '')
+    logofaccess = 'create (n:Log {user: "' + user + '", ' + \
+                    'trx: "' + log_description + '", \n' + \
+                    'exec_fname: "' + filename + '", \n' + \
+                    "exec_fn:" + function_name + ", \n" + \
+                    "ctInsert: datetime()})" + \
+                    "return id(n) as idLog, n.ctInsert as dtstamp"
+    #log = session.run(logofaccess)
+
+    log = execution(function_name, logofaccess, user, log)
+    ix = [dict(ix) for ix in log][0]
+    idlog = ix["idLog"]
+    dtstamp = ix["dtstamp"]
+    #else:
+    #    idlog = 1 # ix["idLog"]
+    #    dtstamp = dt.now() # ix["dtstamp"]
     
     return [idlog, dtstamp]
 
