@@ -1,9 +1,14 @@
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, TrustAll
 from .config import Config as cfg, Configp as cfgp, get_pass, kodb
 
 class App:
     def __init__(self, uri, user, password):
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
+        self.driver = GraphDatabase.driver(uri, auth=(user, password)
+                                           #, trusted_certificates=TrustAll()
+                                           , max_connection_lifetime = 18000  # 5 horas
+                                           , max_connection_pool_size = 96      # workers - workstation
+                                           , max_transaction_retry_time = timeout_const
+                                        )
 
     def close(self):
         # Don't forget to close the driver connection when you are finished with it
@@ -97,8 +102,9 @@ print(f"\n\n************************\nconexión a neo4j\n***********************
 user = 'admin'
 #print("\n\n========== kodb: ", kodb(), "\n\n")
 #input ("cr to continue Ctrl-c to interrupt ")
+timeout_const = 300
 
 appNeo, session, log = connectNeo4j(user, 'starting session')
-timeout_const = 300
+
 
 
