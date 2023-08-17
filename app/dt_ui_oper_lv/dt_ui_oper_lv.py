@@ -11,6 +11,9 @@ from app.model.md_params_oper import ForClosePackages
 
 from asyncio import sleep as awsleep
 
+import signal
+signal.signal(signal.SIGWINCH, signal.SIG_IGN)
+
 router = APIRouter()
 
 @router.post("/level/")

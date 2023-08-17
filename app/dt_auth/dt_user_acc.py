@@ -12,6 +12,8 @@ from datetime import datetime as dt
 #models:
 from app.model.md_params_auth import ForLogin, ForChangePass
 
+import signal
+signal.signal(signal.SIGWINCH, signal.SIG_IGN)
 
 router = APIRouter()
 #import sys

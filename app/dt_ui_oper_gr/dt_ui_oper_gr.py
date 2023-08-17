@@ -14,6 +14,9 @@ from random import shuffle as shuffle
 
 from app.model.md_params_oper import ForNamePackages, ForGames_KOW, ForGames_archive, ForLevelEval
 
+import signal
+signal.signal(signal.SIGWINCH, signal.SIG_IGN)
+
 router = APIRouter()
 
 def get_pronunciationId(words, packagename, userId):
