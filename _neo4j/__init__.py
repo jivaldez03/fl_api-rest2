@@ -6,7 +6,7 @@ class App:
         self.driver = GraphDatabase.driver(uri, auth=(user, password)
                                            #, trusted_certificates=TrustAll()
                                            , max_connection_lifetime = 18000  # 5 horas
-                                           , max_connection_pool_size = 96      # workers - workstation
+                                           , max_connection_pool_size = 32      # workers - workstation
                                            , max_transaction_retry_time = timeout_const
                                         )
 
