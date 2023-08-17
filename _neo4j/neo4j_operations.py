@@ -235,11 +235,10 @@ def get_sugcategories(session, user):
 # login de usuario
 def login_validate_user_pass_trx(session, login):
     def login_validate_user_pass(session, login):        
-        query = "create (l:Log {user:$login, ctInsert:datetime(), "+ \
+        query = "create (l:Log {user:$login, ctInsert:datetime(), ctClosed: datetime(), "+ \
                         "trx:'trying login for the user', \n" + \
                         "exec_fname:'" + __name__+ "', \n"+ \
                         "exec_fn: 'login_validate_user_pass_trx'})" + \
-                "with l.user as userId \n"+ \
                 "match (us:User {userId: $login}) " +  \
                 "return us.userId, us.name, us.keypass, us.age, \n" + \
                     "us.nativeLang, us.country_birth, us.country_res limit 1"

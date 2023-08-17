@@ -1318,3 +1318,80 @@ def get_user_word_pron2(word:str, idWord:int
         elems = dict(ele)
     print("        ->   ========== ending get_user_word_pron2 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return Response(elems['ws.binfile'])
+
+
+
+@router.get("/get_/user_words4_borrar/")
+async def get_user_words4_borrar(idScat:int, package:str, capacity:int
+                    , Authorization: Optional[str] = Header(None)):
+    """
+    Function to create the word list for level 4 (lvl_40_01) \n    
+    
+    {\n
+    {  
+        idScat:int,  \n
+        package:str=None,  \n
+        capacity:int=16    // 8, 16, 24, 32, 40 \n
+    }
+    """
+    global appNeo, session
+    
+    token=funcs.validating_token(Authorization) 
+    userId = token['userId']
+    #print("========== starting post_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    
+    idSCat = idScat
+
+    idCat = idSCat // 1000000
+    idSCat = idSCat % 1000000
+    pkgname = package
+    capacity = capacity    
+
+    level = 'lvl_40_01'
+
+    dtexec = funcs._getdatime_T()
+
+    #wSCat = get_w_SCat (userId, pkgname, idCat, idSCat)
+    #wSCat = wSCat[0]
+
+    neo4j_statement = "with '" + pkgname + "' as packageId, \n" + \
+            "'" + userId + "' as user_id, \n" + \
+            str(capacity) + " as capacity \n" + \
+            "match (u:User {userId:user_id}) \n" + \
+            "match (c:Category {idCat:" + str(idCat) + "})-[:CAT_SUBCAT]\n" + \
+            "-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
+            "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM:Archived_M)-\n" + \
+            "[rUArcM:ARCHIVED_M]->(u) \n" + \
+            "with u.userId as userId, \n" + \
+                "coalesce(arcM.words,['.']) as uwords, packageId, capacity, sc \n" + \
+            "unwind uwords as words \n" + \
+            "with sc, userId, collect(words) as words, packageId, capacity \n" + \
+            "with sc, userId, words[0..capacity] as lwords, packageId, capacity \n" + \
+            "match (u)-[rp:PACKAGED]-(pkg:Package {packageId:packageId})-[:PACK_SUBCAT]->(sc) \n" + \
+            "set pkg.words40=case when pkg.status = 'open' \n" + \
+                "then (pkg.words + lwords)[0..capacity] \n" + \
+                "else lwords[0..capacity] end, \n" + \
+                "pkg.ctUpdate = datetime('" + dtexec + "') \n" + \
+            "set pkg.words40 = case when size(pkg.words40) = 9 \n" + \
+                    "then pkg.words40[0..-1] \n" + \
+                    "else pkg.words40 \n" + \
+                "end \n" + \
+            "return userId, packageId, pkg.words40 limit 1 "
+    await awsleep(0)
+    #print("neo4j_statement:", neo4j_statement)
+    
+    nodes, log = neo4j_exec(session, userId,
+                    log_description="post_user_words4 -level_40_ \n packageId: " + pkgname,
+                    statement=neo4j_statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    
+    # now, getting the package using the same endpoint function to return words package
+    await awsleep(0)
+    
+    #result = get_user_words4(userId, pkgname, "words40")
+    result = get_words(userId, pkgname, 'words40')
+
+    print("        ->   ========== ending post_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    return result
+
