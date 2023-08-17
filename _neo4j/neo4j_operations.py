@@ -18,9 +18,10 @@ pandas_df = driver.execute_query(
 )
 """
 
-def reconect_neo4j():
+def reconect_neo4j(user):
     global appNeo, session, log
-    user = 'admin'
+    if user == None:
+        user = 'admin'
     appNeo, session, log = connectNeo4j(user, 'starting session')
 
 
@@ -56,13 +57,13 @@ def execution(function_name, statement, user, log):
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session expired X X X X X X X X X X ")
             detailmessage="Service Unavailable - Conexion Error - 01"
             messageforuser = "Service Unavailable - Conexion Error - 01"
-            reconect_neo4j()
+            reconect_neo4j(user)
             statuserror = 503
             #sleep(2)
             continue
         except SessionError as error:
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session error X X X X X X X X X X ")
-            reconect_neo4j()
+            reconect_neo4j(user)
             detailmessage="Service Unavailable - Conexion Error - 02"
             messageforuser = "Service Unavailable - Conexion Error - 02"
             #sleep(2)
@@ -71,7 +72,7 @@ def execution(function_name, statement, user, log):
         except ServiceUnavailable as error:
             print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
             sleep(2)
-            reconect_neo4j()
+            reconect_neo4j(user)
             detailmessage="Service Unavailable - Conexion Error - 03"
             messageforuser = "Service Unavailable - Conexion Error - 03"
             statuserror = 503

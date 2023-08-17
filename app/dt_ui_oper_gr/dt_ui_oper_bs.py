@@ -1090,7 +1090,8 @@ async def post_user_words(datas:ForNewPackage
                 "match (n:Word:" + lgSource + ") \n" + \
                 "where not n.word in words \n" + \
                     " and exists {(n)-[tes:TRANSLATOR]->(s:Word:Spanish)}" + \
-                "with u, collect(n.word) as ewlist \n" + \
+                "with u, n.word as word order by n.wordranking \n" + \
+                "with u, collect(word) as ewlist \n" + \
                 "return u.userId as idUser, 'words' as subCat, \n" + \
                     "ewlist[0..8] as slSource "
         
