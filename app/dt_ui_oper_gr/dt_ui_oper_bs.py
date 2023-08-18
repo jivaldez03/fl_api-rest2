@@ -359,14 +359,14 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
                         ", rep.phone as contactPhone \n" + \
                         ", rep.email as contactEmail \n" + \
                         "limit 1"
-    
+    await awsleep(0)
+
     nodes, log = neo4j_exec(session, userId,
                  log_description="getting user local configuration data ",
                  statement=neo4j_statement, 
                         filename=__name__, 
                         function_name=myfunctionname())
-    await awsleep(0)
-        
+    
     sdict={}
     msg = ""
     try:
