@@ -172,7 +172,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
 
     # >>>>>>>>>>>>>>>>>>>> SE COMENTÓ LA SIGUIENTE LINEA PARA PRUEBAS DE CONTINUIDAD 
     # POR LOS ERRORES RAROS DE CONEXIÓN
-    #log = neo4_log(session, user, log_description, filename, function_name)    
+    log = neo4_log(session, user, log_description, filename, function_name)    
 
     #print("**********", user, "-", log[0], "->           inicia ejecución en neo4_exec " , function_name)
 
@@ -310,12 +310,12 @@ def user_change_password(session, login, old_pass, new_pass, filename=None, func
     else:
         trx = "Password updated"
     
-    #log = neo4_log(session, login, "Updating password - " + trx, filename, function_name)
-    #q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + login + "'}) \n" + \
-    #            "where id(l) = " + str(log[0]) + " \n" + \
-    #            "set l.ctClosed = datetime() \n" + \
-    #            "return count(l)"
-    #)
+    log = neo4_log(session, login, "Updating password - " + trx, filename, function_name)
+    q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + login + "'}) \n" + \
+                "where id(l) = " + str(log[0]) + " \n" + \
+                "set l.ctClosed = datetime() \n" + \
+                "return count(l)"
+    )
     
     return result
 
