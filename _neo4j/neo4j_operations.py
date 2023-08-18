@@ -61,6 +61,8 @@ def execution(function_name, statement, user, log):
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
         except SessionExpired as error:
+            #except Exception as ex:
+            print("Exception:", error.message)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X session expired X X X X X X X X X X ")
             detailmessage="Service Unavailable - Conexion Error - 01"
@@ -72,6 +74,7 @@ def execution(function_name, statement, user, log):
             #sleep(2)
             continue
         except SessionError as error:
+            print("Exception:", error.message)
             print("**********", user, "-", log[0], "try:", trying,  " ->  X X X X X X X X X X X X session error X X X X X X X X X X ")
             #reconect_neo4j(user)
             appNeo, session, log = connectNeo4j(user, 'starting session')
@@ -81,6 +84,7 @@ def execution(function_name, statement, user, log):
             statuserror = 503
             continue    
         except ServiceUnavailable as error:
+            print("Exception:", error.message)
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
             sleep(2)
             #reconect_neo4j(user)
@@ -90,6 +94,7 @@ def execution(function_name, statement, user, log):
             statuserror = 503
             continue
         except ResultError as error:
+            print("Exception:", error.message)
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X result error  X X X X X X X X X X ")
             sleep(2)
             reconect_neo4j()
@@ -98,6 +103,7 @@ def execution(function_name, statement, user, log):
             messageforuser = "Service Unavailable - Conexion Error - 04"
             continue
         except Exception as error:
+            print("Exception:", error.message)
             print("**********", user, "-", log[0], "try:", trying, " -> An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
             print("exception as : ", Exception)
             detailmessage = "Service Unavailable - Conexion Error - 99"
