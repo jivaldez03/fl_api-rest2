@@ -20,10 +20,18 @@ pandas_df = driver.execute_query(
 
 def reconect_neo4j(user):
     global appNeo, session, log
-    if user == None:
-        user = 'admin'
-    appNeo, session, log = connectNeo4j(user, 'starting session')
+    
+    while True:
+        try:
+            if user == None:
+                user = 'admin'
+            appNeo, session, log = connectNeo4j(user, 'starting session')
+            break
+        except: 
+            sleep(2)
+            continue
 
+    return
 
 def q01(session, strtoexec= None):
     if strtoexec == None:
@@ -54,7 +62,7 @@ def execution(function_name, statement, user, log):
             break
         except SessionExpired as error:
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
-            print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session expired X X X X X X X X X X ")
+            print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X session expired X X X X X X X X X X ")
             detailmessage="Service Unavailable - Conexion Error - 01"
             messageforuser = "Service Unavailable - Conexion Error - 01"
             reconect_neo4j(user)
@@ -62,7 +70,7 @@ def execution(function_name, statement, user, log):
             #sleep(2)
             continue
         except SessionError as error:
-            print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X session error X X X X X X X X X X ")
+            print("**********", user, "-", log[0], "try:", trying,  " ->  X X X X X X X X X X X X session error X X X X X X X X X X ")
             reconect_neo4j(user)
             detailmessage="Service Unavailable - Conexion Error - 02"
             messageforuser = "Service Unavailable - Conexion Error - 02"
@@ -70,7 +78,7 @@ def execution(function_name, statement, user, log):
             statuserror = 503
             continue    
         except ServiceUnavailable as error:
-            print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
+            print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
             sleep(2)
             reconect_neo4j(user)
             detailmessage="Service Unavailable - Conexion Error - 03"
@@ -78,15 +86,15 @@ def execution(function_name, statement, user, log):
             statuserror = 503
             continue
         except ResultError as error:
-            print("**********", user, "-", log[0], " ->            X X X X X X X X X X X X result error  X X X X X X X X X X ")
-            #reconect_neo4j()
-            sleep(1)
+            print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X result error  X X X X X X X X X X ")
+            sleep(2)
+            reconect_neo4j()
             statuserror = 503
             detailmessage = "Service Unavailable - Conexion Error - 04"
             messageforuser = "Service Unavailable - Conexion Error - 04"
             continue
         except Exception as error:
-            print("**********", user, "-", log[0], " ->            An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
+            print("**********", user, "-", log[0], "try:", trying, " -> An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
             print("exception as : ", Exception)
             detailmessage = "Service Unavailable - Conexion Error - 99"
             messageforuser = "Service Unavailable - Conexion Error - 99"
