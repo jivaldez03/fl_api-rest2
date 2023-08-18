@@ -7,7 +7,7 @@ class App:
                                            #, trusted_certificates=TrustAll()
                                            #, max_connection_lifetime = 7200  # 5 horas
                                            #, max_connection_pool_size = 24      # workers - workstation
-                                           #, max_transaction_retry_time = timeout_const
+                                           , max_transaction_retry_time = timeout_const
                                         )
 
     def close(self):
@@ -102,7 +102,7 @@ print(f"\n\n************************\nconexión a neo4j\n***********************
 user = 'admin'
 #print("\n\n========== kodb: ", kodb(), "\n\n")
 #input ("cr to continue Ctrl-c to interrupt ")
-timeout_const = 300
+timeout_const = 120
 
 appNeo, session, log = connectNeo4j(user, 'starting session')
 
