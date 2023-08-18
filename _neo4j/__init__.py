@@ -5,9 +5,9 @@ class App:
     def __init__(self, uri, user, password):
         self.driver = GraphDatabase.driver(uri, auth=(user, password)
                                            #, trusted_certificates=TrustAll()
-                                           , max_connection_lifetime = 18000  # 5 horas
-                                           , max_connection_pool_size = 32      # workers - workstation
-                                           , max_transaction_retry_time = timeout_const
+                                           #, max_connection_lifetime = 7200  # 5 horas
+                                           #, max_connection_pool_size = 24      # workers - workstation
+                                           #, max_transaction_retry_time = timeout_const
                                         )
 
     def close(self):
