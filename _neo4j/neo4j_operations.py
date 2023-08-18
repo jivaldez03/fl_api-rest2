@@ -1,6 +1,7 @@
 from neo4j import Query #, GraphDatabase, Result, unit_of_work #neo4j._sync.work.result.Result
 from __generalFunctions import monitoring_function
-from neo4j.exceptions import SessionExpired, SessionError, ServiceUnavailable, ResultError
+from neo4j.exceptions import SessionExpired, SessionError, \
+            ServiceUnavailable, ResultError, WriteServiceUnavailable
 #Neo4j.Driver.SessionExpiredException error
 from _neo4j import appNeo, session, log, connectNeo4j, timeout_const
 from time import sleep
@@ -68,10 +69,23 @@ def execution(function_name, statement, user, log):
             detailmessage="Service Unavailable - Conexion Error - 01"
             messageforuser = "Service Unavailable - Conexion Error - 01"
             #reconect_neo4j(user)
+            sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')
 
             statuserror = 503
-            #sleep(2)
+            continue
+        except WriteServiceUnavailable as ex:
+            #except Exception as ex:
+            print("Exception:", ex.__cause__()) 
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
+            print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X WriteServiceUnavailable X X X X X X X X X X ")
+            detailmessage="Service Unavailable - Conexion Error - 01-5"
+            messageforuser = "Service Unavailable - Conexion Error - 01"
+            #reconect_neo4j(user)
+            sleep(2)
+            appNeo, session, log = connectNeo4j(user, 'starting session')
+
+            statuserror = 503
             continue
         except SessionError as error:
             print("Exception:", error.message)
