@@ -27,7 +27,7 @@ class Config:
 class Configp:
     #URI = "neo4j+s://f03ab659.databases.neo4j.io"
     URI = "neo4j+s://27fa89f2.databases.neo4j.io"
-    URI = "boltj+s://27fa89f2.databases.neo4j.io"
+    URI = "bolt+s://27fa89f2.databases.neo4j.io"
     USERNAME="neo4j"
     
 
