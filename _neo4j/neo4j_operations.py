@@ -60,9 +60,9 @@ def execution(function_name, statement, user, log):
             
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
-        except SessionExpired as error:
+        except SessionExpired as ex:
             #except Exception as ex:
-            print("Exception:", error.message)
+            print("Exception:", ex.__cause__()) 
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X session expired X X X X X X X X X X ")
             detailmessage="Service Unavailable - Conexion Error - 01"
