@@ -1,4 +1,4 @@
-from neo4j import GraphDatabase, TrustAll
+from neo4j import GraphDatabase #, TrustAll
 from .config import Config as cfg, Configp as cfgp, get_pass, kodb
 
 class App:
