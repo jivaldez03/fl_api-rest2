@@ -21,13 +21,13 @@ def read_key():
 
 class Config:    
     URI = "neo4j+s://f03ab659.databases.neo4j.io:7687"
-    URI = "bolt+s://f03ab659.databases.neo4j.io:7687"
+    #URI = "bolt+s://f03ab659.databases.neo4j.io:7687"
     USERNAME="neo4j"
 
 class Configp:
     #URI = "neo4j+s://f03ab659.databases.neo4j.io"
-    URI = "neo4j+s://27fa89f2.databases.neo4j.io"
-    URI = "bolt+s://27fa89f2.databases.neo4j.io"
+    URI = "neo4j+s://27fa89f2.databases.neo4j.io:7687"
+    #URI = "bolt+s://27fa89f2.databases.neo4j.io"
     USERNAME="neo4j"
     
 
