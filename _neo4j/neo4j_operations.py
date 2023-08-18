@@ -65,13 +65,16 @@ def execution(function_name, statement, user, log):
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X session expired X X X X X X X X X X ")
             detailmessage="Service Unavailable - Conexion Error - 01"
             messageforuser = "Service Unavailable - Conexion Error - 01"
-            reconect_neo4j(user)
+            #reconect_neo4j(user)
+            appNeo, session, log = connectNeo4j(user, 'starting session')
+
             statuserror = 503
             #sleep(2)
             continue
         except SessionError as error:
             print("**********", user, "-", log[0], "try:", trying,  " ->  X X X X X X X X X X X X session error X X X X X X X X X X ")
-            reconect_neo4j(user)
+            #reconect_neo4j(user)
+            appNeo, session, log = connectNeo4j(user, 'starting session')
             detailmessage="Service Unavailable - Conexion Error - 02"
             messageforuser = "Service Unavailable - Conexion Error - 02"
             #sleep(2)
@@ -80,7 +83,8 @@ def execution(function_name, statement, user, log):
         except ServiceUnavailable as error:
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
             sleep(2)
-            reconect_neo4j(user)
+            #reconect_neo4j(user)
+            appNeo, session, log = connectNeo4j(user, 'starting session')
             detailmessage="Service Unavailable - Conexion Error - 03"
             messageforuser = "Service Unavailable - Conexion Error - 03"
             statuserror = 503
