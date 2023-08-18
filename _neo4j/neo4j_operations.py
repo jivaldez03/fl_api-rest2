@@ -63,7 +63,7 @@ def execution(function_name, statement, user, log):
             break
         except SessionExpired as ex:
             #except Exception as ex:
-            print("Exception:", ex.__cause__()) 
+            print("Exception:", ex.__cause__) 
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X session expired X X X X X X X X X X ")
             detailmessage="Service Unavailable - Conexion Error - 01"
@@ -76,7 +76,7 @@ def execution(function_name, statement, user, log):
             continue
         except WriteServiceUnavailable as ex:
             #except Exception as ex:
-            print("Exception:", ex.__cause__()) 
+            print("Exception:", ex.__cause__) 
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X WriteServiceUnavailable X X X X X X X X X X ")
             detailmessage="Service Unavailable - Conexion Error - 01-5"
@@ -88,7 +88,7 @@ def execution(function_name, statement, user, log):
             statuserror = 503
             continue
         except SessionError as error:
-            print("Exception:", error.message)
+            print("Exception:", error.__cause__)
             print("**********", user, "-", log[0], "try:", trying,  " ->  X X X X X X X X X X X X session error X X X X X X X X X X ")
             #reconect_neo4j(user)
             appNeo, session, log = connectNeo4j(user, 'starting session')
@@ -98,7 +98,7 @@ def execution(function_name, statement, user, log):
             statuserror = 503
             continue    
         except ServiceUnavailable as error:
-            print("Exception:", error.message)
+            print("Exception:", error.__cause__)
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
             sleep(2)
             #reconect_neo4j(user)
@@ -108,7 +108,7 @@ def execution(function_name, statement, user, log):
             statuserror = 503
             continue
         except ResultError as error:
-            print("Exception:", error.message)
+            print("Exception:", error.__cause__)
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X result error  X X X X X X X X X X ")
             sleep(2)
             reconect_neo4j()
@@ -117,7 +117,7 @@ def execution(function_name, statement, user, log):
             messageforuser = "Service Unavailable - Conexion Error - 04"
             continue
         except Exception as error:
-            print("Exception:", error.message)
+            print("Exception:", error.__cause__)
             print("**********", user, "-", log[0], "try:", trying, " -> An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
             print("exception as : ", Exception)
             detailmessage = "Service Unavailable - Conexion Error - 99"
@@ -169,7 +169,10 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         log_description += "\n----\n" + statement
     #print("\n\n**********", user, "----> recording logs - the beginning" , function_name)
     log = [-1,""]
-    log = neo4_log(session, user, log_description, filename, function_name)    
+
+    # >>>>>>>>>>>>>>>>>>>> SE COMENTÓ LA SIGUIENTE LINEA PARA PRUEBAS DE CONTINUIDAD 
+    # POR LOS ERRORES RAROS DE CONEXIÓN
+    #log = neo4_log(session, user, log_description, filename, function_name)    
 
     #print("**********", user, "-", log[0], "->           inicia ejecución en neo4_exec " , function_name)
 
@@ -188,7 +191,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     
     return nodes, log
 
-
+"""
 def neo4j_exec_back_borrar(session, user, log_description, statement, filename= None, function_name=None):
     global appNeo
 
@@ -249,7 +252,7 @@ def neo4j_exec_back_borrar(session, user, log_description, statement, filename= 
             )
         
     return nodes, log
-
+"""
 def get_sugcategories(session, user):
     ne04j_statement = "match (scat:SubCategory) return scat.idCat, scat.idSCat, scat.name"    
     nodes, log = neo4j_exec(session, user,
@@ -306,12 +309,14 @@ def user_change_password(session, login, old_pass, new_pass, filename=None, func
         trx = "Incorrect user or password"
     else:
         trx = "Password updated"
-    log = neo4_log(session, login, "Updating password - " + trx, filename, function_name)
-    q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + login + "'}) \n" + \
-                "where id(l) = " + str(log[0]) + " \n" + \
-                "set l.ctClosed = datetime() \n" + \
-                "return count(l)"
-    )
+    
+    #log = neo4_log(session, login, "Updating password - " + trx, filename, function_name)
+    #q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + login + "'}) \n" + \
+    #            "where id(l) = " + str(log[0]) + " \n" + \
+    #            "set l.ctClosed = datetime() \n" + \
+    #            "return count(l)"
+    #)
+    
     return result
 
 def create_new_word_sound(tx, session, word, bfield):
