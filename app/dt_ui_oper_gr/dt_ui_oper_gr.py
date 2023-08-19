@@ -294,7 +294,7 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     await awsleep(0)
 
     nodes, log = neo4j_exec(session, userId,
-                        log_description="archiving words for games",
+                        log_description="archiving words for games - " + kogame,
                         statement=statement, 
                         filename=__name__, 
                         function_name=myfunctionname())
@@ -320,14 +320,26 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
         ulevel:str      # A1,A2,B1,B2,C1,C2
         kog: str        # "puzzlewords"
         hms: int        # how many sentences
+        words: str      # "['abc','cde','fgh']"
         avg: float      # avg result - post exercise
-        recs: int       # save or not
+        setlevel: int       # save or not
     }
     """
     global appNeo, session
     
     token=funcs.validating_token(Authorization) 
     userId = token['userId']
+
+    dtimenow = _getdatetime()
+    yearr = dtimenow.year
+    monthh = dtimenow.month
+    weekk = dtimenow.strftime("%W") # , status:'open'
+
+    kogame = datas.kog.upper()
+    if kogame in ["PUZZLEWORDS"]:
+        pass
+    else: 
+        kogame = 'G_UNKNOWN'
 
     if datas.ulevel == 'A1':
         llev = 2
@@ -341,17 +353,30 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
     elif datas.ulevel == 'B2':
         llev = 4
         ulev = 9
-    elif datas.ulevel == 'C1':
-        llev = 6
-        ulev = 11
-    elif datas.ulevel == 'C2':
-        llev = 8
+    else: #if datas.ulevel == 'C1':
+        llev = 7
         ulev = 99
+        
     rlimit = str(datas.hms)
 
-    if datas.setlevel: 
-        pass
+    if datas.org== 'DTL-01':
+        source = 'English'
+        target = 'Spanish'
+        idCat = 1
+        idSCat = 1
+    elif datas.org == 'DTL-02':
+        source = 'German'
+        target = 'Spanish'
+        idCat = 101
+        idSCat = 1
     else:
+        source = None
+        target = None
+
+    swords = str(datas.words)
+    sswords = swords.replace("[",",").replace("]",",").replace("'","").replace('"',"").replace(", ",",")
+
+    if datas.setlevel == False: 
         neo4j_statement = "with '" + datas.org + "' as org \n" + \
                     "    , '" + userId + "' as userId \n" + \
                     "    , " +  str(llev) + " as llevel \n" + \
@@ -390,19 +415,42 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                     "where llevel < size(wordstouser) < ulevel \n" + \
                     "return sentence2 as sentence, apoc.coll.shuffle(wordstouser) as wordstouser \n" + \
                     "       , eletoshow, idSCat, word, exTarget, sentence as original_sentence limit " + rlimit
-        #print("neo4_statement:", neo4j_statement)
-        await awsleep(0)
-        
-        #print(f"statement pronun: {statement}")
-        nodes, log = neo4j_exec(session, userId,
-                            log_description="getting words for puzzlewords: ",
-                            statement=neo4j_statement, 
-                            filename=__name__, 
-                            function_name=myfunctionname())
-        listEle = []
-        for ele in nodes:
-            elems = dict(ele)
-            listEle.append(elems)
+    else:        
+        neo4j_statement = "with " + "'" + datas.org + "' as org, \n" + \
+                                "'" + userId + "' as userId, \n" + \
+                                "'" + kogame + "' as kogame, \n" + \
+                                str(yearr) + " as yearr, \n" + \
+                                str(monthh) + " as monthh, \n" + \
+                                str(weekk) + " as weekk, \n" + \
+                                swords + 'as words, \n' + \
+                                '"' + sswords + '" as swords, \n' + \
+                                str(datas.avg) + " as average, \n" + \
+                                "1 as idCat, 1 as idSCat \n" + \
+                    "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})\n" + \
+                    "with u, kogame, userId, yearr, monthh, weekk, \n" + \
+                        "o.lSource as Source, o.lTarget as Target, words, swords, average \n" + \
+                    "merge (u)<-[rg:" + kogame + "]-(gm:Game \n" + \
+                        "{game:kogame, userId:userId, swords:swords, \n" + \
+                            " year:yearr, month:monthh, week:weekk}) \n" + \
+                    "set gm.lSource = Source, gm.lTarget = Target, \n" + \
+                        " gm.words = words, \n" + \
+                        " gm.average = average, \n" + \
+                        " gm.ctInsert = datetime() \n" + \
+                    "return u.userId as userId, size(gm.words) as qtywords "
+    #print("neo4_statement:", neo4j_statement)
+    await awsleep(0)
+    
+    #print(f"statement pronun: {statement}")
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="sentences for puzzlewords - setlevel = " + \
+                                'True' if datas.setlevel else 'False',
+                        statement=neo4j_statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    listEle = []
+    for ele in nodes:
+        elems = dict(ele)
+        listEle.append(elems)
 
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'userId':userId, 'sentences': listEle}

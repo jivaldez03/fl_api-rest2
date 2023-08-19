@@ -44,6 +44,7 @@ class ForGames_puzzle(BaseModel):
     ulevel:str      # A1,A2,B1,B2,C
     kog: str        # "puzzlewords"
     hms: int        # how many sentences
+    words: str      # "['abc','cde','fgh']"
     avg: float      # avg result - post exercise
     setlevel: bool       # save or not
 
