@@ -2,10 +2,8 @@ from neo4j import Query #, GraphDatabase, Result, unit_of_work #neo4j._sync.work
 from __generalFunctions import monitoring_function
 from neo4j.exceptions import SessionExpired, SessionError, \
             ServiceUnavailable, ResultError, WriteServiceUnavailable
-#Neo4j.Driver.SessionExpiredException error
 from _neo4j import appNeo, session, log, connectNeo4j, timeout_const
 from time import sleep
-from datetime import datetime as dt
 from fastapi import HTTPException, status
 """
 https://neo4j.com/docs/python-manual/current/transformers/
@@ -34,7 +32,7 @@ def reconect_neo4j(user):
 
     return
 
-def q01(session, strtoexec= None):
+def q01_borrar(session, strtoexec= None):
     if strtoexec == None:
         q01 = 'match (n:English)-->(s:Spanish) return n.word, s.word'
     else:
@@ -51,14 +49,13 @@ def execution(function_name, statement, user, log):
     statuserror = 200
     detailmessage = ""
     messageforuser = ""
-    while trying < 4:
-        trying += 1        
+    while True:
+        trying += 1
         try:
             #print("*********************** inicia ejecución en neo4_exec " , function_name)
             #nodes = session.run(statement, timeout=timeout_const)
             nodes = session.run(Query(statement, timeout=timeout_const), name='query')
-            statuserror = 200
-            
+            statuserror = 200            
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
         except SessionExpired as ex:
@@ -71,7 +68,6 @@ def execution(function_name, statement, user, log):
             #reconect_neo4j(user)
             sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')
-
             statuserror = 503
             continue
         except WriteServiceUnavailable as ex:
@@ -91,10 +87,10 @@ def execution(function_name, statement, user, log):
             print("Exception:", error.__cause__)
             print("**********", user, "-", log[0], "try:", trying,  " ->  X X X X X X X X X X X X session error X X X X X X X X X X ")
             #reconect_neo4j(user)
+            sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')
             detailmessage="Service Unavailable - Conexion Error - 02"
             messageforuser = "Service Unavailable - Conexion Error - 02"
-            #sleep(2)
             statuserror = 503
             continue    
         except ServiceUnavailable as error:
@@ -111,7 +107,7 @@ def execution(function_name, statement, user, log):
             print("Exception:", error.__cause__)
             print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X result error  X X X X X X X X X X ")
             sleep(2)
-            reconect_neo4j()
+            appNeo, session, log = connectNeo4j(user, 'starting session')
             statuserror = 503
             detailmessage = "Service Unavailable - Conexion Error - 04"
             messageforuser = "Service Unavailable - Conexion Error - 04"
@@ -120,6 +116,8 @@ def execution(function_name, statement, user, log):
             print("Exception:", error.__cause__)
             print("**********", user, "-", log[0], "try:", trying, " -> An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
             print("exception as : ", Exception)
+            sleep(2)
+            appNeo, session, log = connectNeo4j(user, 'starting session')
             detailmessage = "Service Unavailable - Conexion Error - 99"
             messageforuser = "Service Unavailable - Conexion Error - 99"
             statuserror = 503
@@ -145,7 +143,8 @@ def neo4_log(session, user, log_description, filename= None, function_name=None,
                     'exec_fname: "' + filename + '", \n' + \
                     "exec_fn:" + function_name + ", \n" + \
                     "ctInsert: datetime()})" + \
-                    "return id(n) as idLog, n.ctInsert as dtstamp"
+                    "return elementId(n) as idLog, n.ctInsert as dtstamp"
+    # "return id(n) as idLog, n.ctInsert as dtstamp"
     #log = session.run(logofaccess)
 
     log = execution(function_name, logofaccess, user, log)
@@ -158,7 +157,7 @@ def neo4_log(session, user, log_description, filename= None, function_name=None,
     
     return [idlog, dtstamp]
 
-def neo4j_exec(session, user, log_description, statement, filename= None, function_name=None):
+def neo4j_exec(session, user, log_description, statement, filename= None, function_name=None, recLog=True):
     global appNeo
 
     if not function_name:
@@ -166,13 +165,14 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     #print(f"execution requested by {user} - FUNTION__NAME: {function_name}")
     # next line is the log's record for the user's execution
     if monitoring_function(function_name):
-        log_description += "\n----\n" + statement
+        log_description += "\n----\n" + statement[0:15] + " ... " + statement[-15:] + "\n----\n"
     #print("\n\n**********", user, "----> recording logs - the beginning" , function_name)
-    log = [-1,""]
+    log = [None,""]
 
     # >>>>>>>>>>>>>>>>>>>> SE COMENTÓ LA SIGUIENTE LINEA PARA PRUEBAS DE CONTINUIDAD 
     # POR LOS ERRORES RAROS DE CONEXIÓN
-    log = neo4_log(session, user, log_description, filename, function_name)    
+    if recLog:
+        log = neo4_log(session, user, log_description, filename, function_name)    
 
     #print("**********", user, "-", log[0], "->           inicia ejecución en neo4_exec " , function_name)
 
@@ -181,9 +181,10 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     #print("**********", user, "-", log[0], "->           finaliza ejecución en neo4_exec", function_name, type(nodes))
         
     #print("**********", user, "-", log[0], "-> recording logs - the end for log's at: ", str(log[1]))
-    if log[0] > 0:
+    #print('log for log:', log, "\nstatement:", statement)
+    if log[0]:
         statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
-                    "where id(l) = " + str(log[0]) + " \n" + \
+                    "where elementId(l) = '" + log[0] + "' \n" + \
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
         execution(function_name, statement, user, log)
@@ -191,68 +192,6 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     
     return nodes, log
 
-"""
-def neo4j_exec_back_borrar(session, user, log_description, statement, filename= None, function_name=None):
-    global appNeo
-
-    if not function_name:
-        function_name = 'null'
-    
-    # next line is for the log record for the user's execution
-    if monitoring_function(function_name):
-        log_description += "\n----\n" + statement
-    
-    log = [-1,""]
-    trying = 0
-    while trying < 4:
-        trying += 1
-        # recording log - the beginning of the transaction
-        try:
-            log = neo4_log(session, user, log_description, filename, function_name)
-            #pass
-        except Exception as error:
-            print("An error occurred recording log:", log_description, "->",  type(error).__name__, " - ", error)
-            log = [-1,""]
-        # process the transaction or request
-        try:
-            print("*********************** inicia ejecución en neo4_exec " , function_name)
-            nodes = session.run(statement)
-            print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
-            break
-        except SessionExpired as error:
-            print("X X X X X X X X X X X X session expired X X X X X X X X X X ")
-            sleep(2)
-            reconect_neo4j()
-            continue
-        except SessionError as error:
-            print("X X X X X X X X X X X X session error X X X X X X X X X X ")
-            sleep(2)
-            reconect_neo4j()
-            continue    
-        except ServiceUnavailable as error:
-            print("X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
-            sleep(3)
-            reconect_neo4j()
-            continue
-        except ResultError as error:
-            print("X X X X X X X X X X X X result error  X X X X X X X X X X ")
-            #reconect_neo4j()
-            sleep(1)
-            continue
-        except Exception as error:
-            print("An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
-            print("exception as : ", Exception)        
-        # recording log - the end of the transaction
-        print("log's values: ", log)        
-        if log[0] > 0:
-            q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
-                        "where id(l) = " + str(log[0]) + " \n" + \
-                        "set l.ctClosed = datetime() \n" + \
-                        "return count(l)"
-            )
-        
-    return nodes, log
-"""
 def get_sugcategories(session, user):
     ne04j_statement = "match (scat:SubCategory) return scat.idCat, scat.idSCat, scat.name"    
     nodes, log = neo4j_exec(session, user,
@@ -268,7 +207,7 @@ def get_sugcategories(session, user):
 
 
 # login de usuario
-def login_validate_user_pass_trx(session, login):
+def login_validate_user_pass_trx_borrar(session, login):
     def login_validate_user_pass(session, login):        
         query = "create (l:Log {user:$login, ctInsert:datetime(), ctClosed: datetime(), "+ \
                         "trx:'trying login for the user', \n" + \
@@ -289,7 +228,7 @@ def login_validate_user_pass_trx(session, login):
     return result 
 
 # chage user password
-def user_change_password(session, login, old_pass, new_pass, filename=None, function_name=None):
+def user_change_password_borrar(session, login, old_pass, new_pass, filename=None, function_name=None):
     def change_pass(session, login, old_pass, new_pass):        
         query = "match (us:User {userId: $login, keypass: $oldpass}) \n" +  \
                 "set us.keypass = $newpass \n" + \

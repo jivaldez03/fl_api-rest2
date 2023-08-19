@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response, Header
 from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
-from _neo4j import appNeo, session, log, user
+from _neo4j import appNeo, session, log
 import __generalFunctions as funcs
 from datetime import datetime as dt
 from asyncio import sleep as awsleep
@@ -9,7 +9,10 @@ from asyncio import sleep as awsleep
 import signal
 signal.signal(signal.SIGWINCH, signal.SIG_IGN)
 
-from __generalFunctions import myfunctionname, myConjutationLink, get_list_element,_getdatime_T, get_list_elements
+from __generalFunctions import myfunctionname, myConjutationLink \
+                    ,_getdatime_T \
+                    , get_list_elements
+                    #, get_list_element
 
 from random import shuffle as shuffle
 
@@ -724,7 +727,7 @@ def get_words(userId, pkgname, wordslevel='words'):
                             "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
-        
+    print('statement:', neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,

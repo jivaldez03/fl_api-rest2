@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Response, Header
+from fastapi import APIRouter, Header
 from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
-from _neo4j import appNeo, session, log, user
+from _neo4j import appNeo, session, log
 import __generalFunctions as funcs
 from __generalFunctions import myfunctionname \
                             ,_getdatime_T, _getdatetime
@@ -12,7 +12,8 @@ from asyncio import sleep as awsleep
 
 from random import shuffle as shuffle
 
-from app.model.md_params_oper import ForNamePackages, ForGames_KOW, ForGames_archive, ForLevelEval
+from app.model.md_params_oper import ForNamePackages, ForGames_KOW, \
+                                    ForGames_puzzle, ForGames_archive, ForLevelEval
 
 import signal
 signal.signal(signal.SIGWINCH, signal.SIG_IGN)
@@ -305,8 +306,9 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     return listEle
 
 
-@router.get("/gamesAA_puzzlewords/")
-async def puzzlewords(org:str, ulevel:str, kog: str, hms:int, avg:float, recs:int
+@router.post("/gamesAA_puzzlewords/")
+async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:int
+                    datas:ForGames_puzzle
                     , Authorization: Optional[str] = Header(None)):
     """
     Function to create the word list for level 4 (lvl_40_01) \n    
@@ -316,7 +318,7 @@ async def puzzlewords(org:str, ulevel:str, kog: str, hms:int, avg:float, recs:in
     params :  \n
         orgId: str:"DTL-01"
         ulevel:str      # A1,A2,B1,B2,C1,C2
-        kogame: str     # "puzzlewords"
+        kog: str        # "puzzlewords"
         hms: int        # how many sentences
         avg: float      # avg result - post exercise
         recs: int       # save or not
@@ -327,77 +329,80 @@ async def puzzlewords(org:str, ulevel:str, kog: str, hms:int, avg:float, recs:in
     token=funcs.validating_token(Authorization) 
     userId = token['userId']
 
-    if ulevel == 'A1':
+    if datas.ulevel == 'A1':
         llev = 2
         ulev = 5
-    elif ulevel == 'A2':
+    elif datas.ulevel == 'A2':
         llev = 2
         ulev = 6
-    elif ulevel == 'B1':
+    elif datas.ulevel == 'B1':
         llev = 4
         ulev = 7
-    elif ulevel == 'B2':
+    elif datas.ulevel == 'B2':
         llev = 4
         ulev = 9
-    elif ulevel == 'C1':
+    elif datas.ulevel == 'C1':
         llev = 6
         ulev = 11
-    elif ulevel == 'C2':
+    elif datas.ulevel == 'C2':
         llev = 8
         ulev = 99
-    rlimit = str(hms)
+    rlimit = str(datas.hms)
 
-    neo4j_statement = "with '" + org + "' as org \n" + \
-                "    , '" + userId + "' as userId \n" + \
-                "    , " +  str(llev) + " as llevel \n" + \
-                "    , " +  str(ulev) + " as ulevel \n" + \
-                "match (o:Organization {idOrg:org})<-[rou:RIGHTS_TO]-(u:User {userId:userId}) \n" + \
-                "-[r:ARCHIVED_M]-(arcM:Archived_M)-[rs:SUBCAT_ARCHIVED_M]->(sc:SubCategory) \n" + \
-                "with u.userId as userId, sc, arcM.words as words \n" + \
-                    ", llevel, ulevel, o.lTarget as lTarget \n" + \
-                "unwind words as word \n" + \
-                "with userId, sc.idCat as idCat, sc.idSCat as idSCat, word \n" + \
-                    ", llevel, ulevel, lTarget  \n" + \
-                "order by rand() \n" + \
-                "match (wss:WordSound {word:word, idCat:idCat, idSCat:idSCat}) \n" + \
-                "where not wss.example contains '–' // ['-', '*', '–','_'] \n" + \
-                "with wss.example as sentence, elementId(wss) as eletoshow \n" + \
-                    "   , idCat * 1000000 + idSCat as idSCat \n" + \
-                    "   , word, wss[lTarget] as exTarget \n" + \
-                    ", replace( \n" + \
-                    "              replace( \n" + \
-                    "                    replace( \n" + \
-                    "                            wss.example  \n" + \
-                    "                            , '" + '"' + "' + word + " + "'" + '". ' + "' \n" + \
-                    "                                , '' \n" + \
-                    "                            )  \n" + \
-                    "                    , '“' + word + '”' \n" + \
-                    "                        , '' \n" + \
-                    "                    ) \n" + \
-                    '            , "' + "'" + '" + word + ' + '"' + "'. " + '" \n' + \
-                    "            , '' \n" + \
-                    "        )  \n" + \
-                    "        as sentence2 \n" + \
-                    ", llevel, ulevel \n" + \
-                "with sentence, sentence2, split(sentence2, ' ') as wordstouser \n" + \
-                        ", eletoshow, idSCat, word \n" + \
-                    ", llevel, ulevel, exTarget \n" + \
-                "where llevel < size(wordstouser) < ulevel \n" + \
-                "return sentence2 as sentence, apoc.coll.shuffle(wordstouser) as wordstouser \n" + \
-                "       , eletoshow, idSCat, word, exTarget, sentence as original_sentence limit " + rlimit
-    #print("neo4_statement:", neo4j_statement)
-    await awsleep(0)
-    
-    #print(f"statement pronun: {statement}")
-    nodes, log = neo4j_exec(session, userId,
-                        log_description="getting words for puzzlewords: ",
-                        statement=neo4j_statement, 
-                        filename=__name__, 
-                        function_name=myfunctionname())
-    listEle = []
-    for ele in nodes:
-        elems = dict(ele)
-        listEle.append(elems)
+    if datas.setlevel: 
+        pass
+    else:
+        neo4j_statement = "with '" + datas.org + "' as org \n" + \
+                    "    , '" + userId + "' as userId \n" + \
+                    "    , " +  str(llev) + " as llevel \n" + \
+                    "    , " +  str(ulev) + " as ulevel \n" + \
+                    "match (o:Organization {idOrg:org})<-[rou:RIGHTS_TO]-(u:User {userId:userId}) \n" + \
+                    "-[r:ARCHIVED_M]-(arcM:Archived_M)-[rs:SUBCAT_ARCHIVED_M]->(sc:SubCategory) \n" + \
+                    "with u.userId as userId, sc, arcM.words as words \n" + \
+                        ", llevel, ulevel, o.lTarget as lTarget \n" + \
+                    "unwind words as word \n" + \
+                    "with userId, sc.idCat as idCat, sc.idSCat as idSCat, word \n" + \
+                        ", llevel, ulevel, lTarget  \n" + \
+                    "order by rand() \n" + \
+                    "match (wss:WordSound {word:word, idCat:idCat, idSCat:idSCat}) \n" + \
+                    "where not wss.example contains '–' // ['-', '*', '–','_'] \n" + \
+                    "with wss.example as sentence, elementId(wss) as eletoshow \n" + \
+                        "   , idCat * 1000000 + idSCat as idSCat \n" + \
+                        "   , word, wss[lTarget] as exTarget \n" + \
+                        ", replace( \n" + \
+                        "              replace( \n" + \
+                        "                    replace( \n" + \
+                        "                            wss.example  \n" + \
+                        "                            , '" + '"' + "' + word + " + "'" + '". ' + "' \n" + \
+                        "                                , '' \n" + \
+                        "                            )  \n" + \
+                        "                    , '“' + word + '”' \n" + \
+                        "                        , '' \n" + \
+                        "                    ) \n" + \
+                        '            , "' + "'" + '" + word + ' + '"' + "'. " + '" \n' + \
+                        "            , '' \n" + \
+                        "        )  \n" + \
+                        "        as sentence2 \n" + \
+                        ", llevel, ulevel \n" + \
+                    "with sentence, sentence2, split(sentence2, ' ') as wordstouser \n" + \
+                            ", eletoshow, idSCat, word \n" + \
+                        ", llevel, ulevel, exTarget \n" + \
+                    "where llevel < size(wordstouser) < ulevel \n" + \
+                    "return sentence2 as sentence, apoc.coll.shuffle(wordstouser) as wordstouser \n" + \
+                    "       , eletoshow, idSCat, word, exTarget, sentence as original_sentence limit " + rlimit
+        #print("neo4_statement:", neo4j_statement)
+        await awsleep(0)
+        
+        #print(f"statement pronun: {statement}")
+        nodes, log = neo4j_exec(session, userId,
+                            log_description="getting words for puzzlewords: ",
+                            statement=neo4j_statement, 
+                            filename=__name__, 
+                            function_name=myfunctionname())
+        listEle = []
+        for ele in nodes:
+            elems = dict(ele)
+            listEle.append(elems)
 
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'userId':userId, 'sentences': listEle}

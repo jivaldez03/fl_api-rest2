@@ -1,1 +1,0 @@
-web: gunicorn --workers=6 --worker-class uvicorn.workers.UvicornWorker --reload "main_fapirest:_gunic_create_app()" --timeout 300

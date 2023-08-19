@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Header
 from typing import Optional
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user

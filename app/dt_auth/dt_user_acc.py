@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, status, Header #, Request, Body
 from typing import Optional #, Annotated
-from _neo4j.neo4j_operations import login_validate_user_pass_trx, \
-                    user_change_password, neo4_log, neo4j_exec, \
-                    q01
+from _neo4j.neo4j_operations import neo4j_exec 
+                    #,  login_validate_user_pass_trx, \
+                    # user_change_password, neo4_log, q01
+
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 from __generalFunctions import myfunctionname, _getdatime_T
@@ -33,34 +34,51 @@ async def login_user(datas: ForLogin):
     """
     global session
  
-    result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password) 
-
-    detailmessage = ""
-    messageforuser = ""
-    print("___________________datas:", datas)
-    if len(result) == 0:
+    neo4j_statement = "with '" + datas.userId.lower() +  "' as userId \n" + \
+                "match (us:User {userId: userId }) " +  \
+                "return us.userId, us.name, us.keypass, us.age, \n" + \
+                    "us.nativeLang, us.country_birth, us.country_res limit 1"
+    nodes, log = neo4j_exec(session, datas.userId.lower(),
+                        log_description="validate login user",
+                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+    
+    result = {}
+    for elem in nodes:
+        result=dict(elem) #print(f"elem: {type(elem)} {elem}")   
+    #result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password) 
+    
+    if len(result) == 0:  # incorrect user
         print("no records - fname__name__and more:",__name__)
-        log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
+        #log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password - us', "userId":"",  "username": "", 
                     "age":0, 
                     "country_birth": "", 
                     "country_res": ""
                 }        
-        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
-                    "where id(l) = " + str(log[0]) + " \n" + \
+        """q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
+                    "where elementId(l) = " + str(log[0]) + " \n" + \
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
-        )
+        )"""
+        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
+                    ", user:'" + datas.userId.lower() + "'}) \n" + \
+                    "where elementId(l) = '" + log[0] + "' \n" + \
+                    "set l.ctClosed = datetime(), l.additionalResult = 'invalid user or password - us' \n" + \
+                    "return count(l)"
+        
+        nodes, log = neo4j_exec(session, datas.userId.lower() ,
+                        log_description="validate login user"
+                        , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                        , recLog=False)
+        
         #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect User or Password (0)"
+            detail="Incorrect User or Password (i0)"
             #headers={"WWW-Authenticate": "Basic"},
         )
-    elif datas.password == result["us.keypass"]:
-        #print("fname__name__and more:",__name__, myfunctionname()) #, callersfunctionname(),__file__)
-        
-        log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
+    elif datas.password == result["us.keypass"]:   # success access
+        #log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
         resp_dict ={'status': 'OK', 
                     'text': 'successful access',
                     "userId":datas.userId.lower(),
@@ -70,15 +88,22 @@ async def login_user(datas: ForLogin):
                     "country_res": result["us.country_res"],
                     "native_lang" : result["us.nativeLang"]
                 }
-        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
+        """q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
                     "where id(l) = " + str(log[0]) + " \n" + \
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
-        )
-        token = funcs.return_token(data=resp_dict)
+        )"""
+        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
+                    ", user:'" + datas.userId.lower() + "'}) \n" + \
+                    "where elementId(l) = '" + log[0] + "' \n" + \
+                    "set l.ctClosed = datetime(), l.additionalResult = 'login - success access' \n" + \
+                    "return count(l)"
+        nodes, log = neo4j_exec(session, datas.userId.lower() ,
+                        log_description="validate login user"
+                        , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                        , recLog=False)
 
-        #print(f"validating token: {funcs.validating_token(token.split(' ')[1], False)}")
-        #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
+        token = funcs.return_token(data=resp_dict)
         return {"token": token, 
                     "user_name": result["us.name"], 
                     "age":0, 
@@ -86,24 +111,34 @@ async def login_user(datas: ForLogin):
                     "country_res": result["us.country_res"],
                     "native_lang" : result["us.nativeLang"]
         }
-    else:
-        # print("pass invalid")
-        log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())
+    else: # incorrect pass
+        #log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password', "username": "",  
                     "age":0, 
                     "country_birth": "", 
                     "country_res": ""
                 }
         
-        q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId.lower() + "'}) \n" + \
+        """q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId.lower() + "'}) \n" + \
                     "where id(l) = " + str(log[0]) + " \n" + \
                     "set l.ctClosed = datetime() \n" + \
                     "return count(l)"
-        )
+        )"""
+        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
+                    ", user:'" + datas.userId.lower() + "'}) \n" + \
+                    "where elementId(l) = '" + log[0] + "' \n" + \
+                    "set l.ctClosed = datetime(), l.additionalResult = 'invalid user or password - (p)' \n" + \
+                    "return count(l)"
+        
+        nodes, log = neo4j_exec(session, datas.userId.lower() ,
+                        log_description="validate login user"
+                        , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                        , recLog=False)        
+
         #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,            
-            detail ="Incorrect User or Password (i)"
+            detail ="Incorrect User or Password (ip)"
             #headers={"WWW-Authenticate": "Basic"},
         )
     print("id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
@@ -120,17 +155,42 @@ async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = H
     }
     """
     global session
-    token=funcs.validating_token(Authorization)    
+    token=funcs.validating_token(Authorization)
 
-    nodes = user_change_password(session, token['userId'].lower(), datas.oldkeypass, datas.newkeypass,
+    neo4j_statement = "match (us:User {userId:'" + token['userId'] + "', \n" + \
+                    "keypass:'" + datas.oldkeypass + "'}) \n" +  \
+                    "set us.keypass = '" + datas.newkeypass + "' \n" + \
+                    "return us.userId, us.keypass limit 1"
+
+    nodes, log = neo4j_exec(session, token['userId'],
+                        log_description="update password",
+                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+    """nodes = user_change_password(session, token['userId'].lower(), datas.oldkeypass, datas.newkeypass,
                                  filename=__name__,
-                                 function_name=myfunctionname())
-    if len(nodes) == 0:
+                                 function_name=myfunctionname())"""
+    
+    result = {}
+    for elem in nodes:
+        result=dict(elem)
+
+    if len(result) == 0:
         #print("id: ", token['userId'], " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raiseHTTP - user / pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password",
         )
+    else: # update pass was done
+        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
+                    ", user:'" + token['userId'] + "'}) \n" + \
+                    "where elementId(l) = '" + log[0] + "' \n" + \
+                    "set l.ctClosed = datetime(), l.additionalResult = 'updated password' \n" + \
+                    "return count(l)"
+        
+        nodes, log = neo4j_exec(session, token['userId'],
+                        log_description="updating password"
+                        , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                        , recLog=False)
+        
     print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': "password updated"}
 

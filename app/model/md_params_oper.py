@@ -38,6 +38,15 @@ class ForGames_archive(BaseModel):
     average: float
     kogame : str
 
+
+class ForGames_puzzle(BaseModel):
+    org: str    #"DTL-01"
+    ulevel:str      # A1,A2,B1,B2,C
+    kog: str        # "puzzlewords"
+    hms: int        # how many sentences
+    avg: float      # avg result - post exercise
+    setlevel: bool       # save or not
+
 class ForLevelEval(BaseModel):
     orgId   : str
     starton : int

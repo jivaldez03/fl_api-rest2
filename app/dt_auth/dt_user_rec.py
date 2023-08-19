@@ -1,24 +1,19 @@
-from typing import Union
+#from typing import Union
 import smtplib
 from email.message import EmailMessage
-from fastapi import FastAPI, Request
+from fastapi import Request, APIRouter # FastAPI, 
 
 from app.model.md_params_auth import ForResetPass
-from fastapi import APIRouter
 
 from _neo4j.neo4j_operations import neo4j_exec
-from _neo4j import appNeo, session, log, user
+from _neo4j import session
 
 from __generalFunctions import myfunctionname #, get_path
 
 import random
 from string import ascii_letters
 
-#from dotenv import load_dotenv
-from os import getenv
-
 router = APIRouter()
-
 
 def get_random_string(length):
     # choose from all lowercase letter
