@@ -1,10 +1,11 @@
 from neo4j import Query #, GraphDatabase, Result, unit_of_work #neo4j._sync.work.result.Result
-from __generalFunctions import monitoring_function
+from __generalFunctions import monitoring_function, email_send, _getdatime_T
 from neo4j.exceptions import SessionExpired, SessionError, \
             ServiceUnavailable, ResultError, WriteServiceUnavailable
 from _neo4j import appNeo, session, log, connectNeo4j, timeout_const
 from time import sleep
 from fastapi import HTTPException, status
+
 """
 https://neo4j.com/docs/python-manual/current/transformers/
 
@@ -53,75 +54,122 @@ def execution(function_name, statement, user, log):
         trying += 1
         try:
             #print("*********************** inicia ejecución en neo4_exec " , function_name)
-            #nodes = session.run(statement, timeout=timeout_const)
+            """
+            print("intentando por vez ", trying)
+            input  ('espere..... ')
+            if trying == 1:
+                raise SessionExpired
+            elif trying == 2:
+                raise WriteServiceUnavailable
+            elif trying == 3:
+                raise SessionError
+            elif trying == 4:
+                raise ServiceUnavailable
+            elif trying == 5:
+                raise ResultError
+            elif trying == 6:
+                raise Exception
+            """
             nodes = session.run(Query(statement, timeout=timeout_const), name='query')
             statuserror = 200            
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
-        except SessionExpired as ex:
-            #except Exception as ex:
-            print("Exception:", ex.__cause__) 
+        except SessionExpired as error:
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
-            print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X session expired X X X X X X X X X X ")
+
+            messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X session expired X X X X X X X X X X"
+            messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 01"
-            messageforuser = "Service Unavailable - Conexion Error - 01"
-            #reconect_neo4j(user)
-            sleep(2)
-            appNeo, session, log = connectNeo4j(user, 'starting session')
-            statuserror = 503
-            continue
-        except WriteServiceUnavailable as ex:
-            #except Exception as ex:
-            print("Exception:", ex.__cause__) 
-            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
-            print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X WriteServiceUnavailable X X X X X X X X X X ")
-            detailmessage="Service Unavailable - Conexion Error - 01-5"
-            messageforuser = "Service Unavailable - Conexion Error - 01"
-            #reconect_neo4j(user)
-            sleep(2)
-            appNeo, session, log = connectNeo4j(user, 'starting session')
+            messageforuser += "\n\ndetail message: " + detailmessage
 
             statuserror = 503
+            print("enviando email - ")
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
+            print("enviado email - ", rmail)
+
+            sleep(2)
+            appNeo, session, log = connectNeo4j(user, 'starting session')
+            continue
+        except WriteServiceUnavailable as error:
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
+
+            messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X WriteServiceUnavailable X X X X X X X X X"
+            messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
+            detailmessage="Service Unavailable - Conexion Error - 01-5"
+            messageforuser += "\n\ndetail message: " + detailmessage
+            
+            statuserror = 503
+            print("enviando email - ")
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
+            print("enviado email - ", rmail)
+
+            sleep(2)
+            appNeo, session, log = connectNeo4j(user, 'starting session')
             continue
         except SessionError as error:
             print("Exception:", error.__cause__)
-            print("**********", user, "-", log[0], "try:", trying,  " ->  X X X X X X X X X X X X session error X X X X X X X X X X ")
-            #reconect_neo4j(user)
-            sleep(2)
-            appNeo, session, log = connectNeo4j(user, 'starting session')
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
+            messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Session Error X X X X X X X X X X"
+            messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 02"
-            messageforuser = "Service Unavailable - Conexion Error - 02"
+            messageforuser += "\n\ndetail message: " + detailmessage
+            
             statuserror = 503
-            continue    
+            print("enviando email - ")
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
+            print("enviado email - ", rmail)
+
+            sleep(2)
+            appNeo, session, log = connectNeo4j(user, 'starting session')            
+            continue
         except ServiceUnavailable as error:
             print("Exception:", error.__cause__)
-            print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X service unavailable X X X X X X X X X X ")
-            sleep(2)
-            #reconect_neo4j(user)
-            appNeo, session, log = connectNeo4j(user, 'starting session')
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
+            messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Service Unavailable X X X X X X X X X X"
+            messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 03"
-            messageforuser = "Service Unavailable - Conexion Error - 03"
+            messageforuser += "\n\ndetail message: " + detailmessage
+            
             statuserror = 503
-            continue
+            print("enviando email - ")
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
+            print("enviado email - ", rmail)
+
+            sleep(2)
+            appNeo, session, log = connectNeo4j(user, 'starting session')            
+            continue        
         except ResultError as error:
             print("Exception:", error.__cause__)
-            print("**********", user, "-", log[0], "try:", trying, " -> X X X X X X X X X X X X result error  X X X X X X X X X X ")
-            sleep(2)
-            appNeo, session, log = connectNeo4j(user, 'starting session')
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
+            messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Result Error X X X X X X X X X X"
+            messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
+            detailmessage="Service Unavailable - Conexion Error - 04"
+            messageforuser += "\n\ndetail message: " + detailmessage
+            
             statuserror = 503
-            detailmessage = "Service Unavailable - Conexion Error - 04"
-            messageforuser = "Service Unavailable - Conexion Error - 04"
+            print("enviando email - ")
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
+            print("enviado email - ", rmail)
+
+            sleep(2)
+            appNeo, session, log = connectNeo4j(user, 'starting session')            
             continue
         except Exception as error:
             print("Exception:", error.__cause__)
-            print("**********", user, "-", log[0], "try:", trying, " -> An error occurred executing:" , statement, "\n\nerror ", type(error).__name__, " - ", error)
-            print("exception as : ", Exception)
-            sleep(2)
-            appNeo, session, log = connectNeo4j(user, 'starting session')
-            detailmessage = "Service Unavailable - Conexion Error - 99"
-            messageforuser = "Service Unavailable - Conexion Error - 99"
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
+            messageforuser = f"********** {user} try: {trying} -> X X X X X An error occurred executing X X X X"
+            messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
+            detailmessage="Service Unavailable - Conexion Error - 99"
+            messageforuser += "\n\ndetail message: " + detailmessage
+            
             statuserror = 503
-            continue 
+            print("enviando email - ")
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
+            print("enviado email - ", rmail)
+
+            sleep(2)
+            appNeo, session, log = connectNeo4j(user, 'starting session')            
+            continue
     if statuserror != 200:
         print("====> SERVICE UNAVAILABLE")
         raise HTTPException(
@@ -250,12 +298,13 @@ def user_change_password_borrar(session, login, old_pass, new_pass, filename=Non
         trx = "Password updated"
     
     log = neo4_log(session, login, "Updating password - " + trx, filename, function_name)
+    """
     q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + login + "'}) \n" + \
                 "where id(l) = " + str(log[0]) + " \n" + \
                 "set l.ctClosed = datetime() \n" + \
                 "return count(l)"
     )
-    
+    """
     return result
 
 def create_new_word_sound(tx, session, word, bfield):

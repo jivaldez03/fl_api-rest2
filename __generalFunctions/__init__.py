@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 from os import getenv
 from fastapi import HTTPException, status #, Request
 
+import smtplib
+from email.message import EmailMessage
+
 import inspect
 myfunctionname = lambda: str(inspect.stack()[1][3])
 
@@ -144,3 +147,52 @@ def _getenv_function(env_variable):
     
     """
     return getenv(env_variable)
+
+
+
+def email_send(target_userId, target_email, message, subject):
+    edom = "delthatech"
+    #email_pass = "Delthatech_2023"
+
+    email_ad = "dtl@" +  edom + "." + "com"
+    email_ps = edom.title()  + "_23"
+
+    if target_email == None:
+        target_email = 'dtl@delthatech.com'
+        
+    #print ("_____________", email_ad, email_ps)
+    ##email_ad = getenv("email_address")
+    #email_ps = getenv("email_pass")
+
+    #get_random_string(8)
+
+    # imap.secureserver.net
+    #dtl@delthatech.com - Delthatech_2023  
+    # (esta cuenta de email es del hosting de godaddy)
+
+    #print("email hosted by: ", email_ad, email_ps)
+
+    msg = EmailMessage()
+    if subject == None:
+        msg["Subject"] = "Password reset"
+    else:
+        msg["Subject"] = subject
+
+    msg["From"] = email_ad
+    msg["To"] = target_email
+    #print("tempasssss: ", message)
+    msg.set_content(message)
+
+    try:
+        outgoingsemails="smtpout.secureserver.net" # imap.secureserver.net
+        outgoingsport = 465 # 993
+        with smtplib.SMTP_SSL(host=outgoingsemails, port=outgoingsport) as smtp:
+            smtp.login(email_ad, email_ps)
+            smtp.send_message(msg)
+        msg_error = ""
+    except Exception as error:
+        print('message error: ', type(error).__name__, error)
+        msg_error = type(error).__name__ + " " + error
+    
+    return "email has been sent to " + target_userId +  msg_error
+

@@ -1,6 +1,6 @@
 #from typing import Union
-import smtplib
-from email.message import EmailMessage
+#import smtplib
+#from email.message import EmailMessage
 from fastapi import Request, APIRouter # FastAPI, 
 
 from app.model.md_params_auth import ForResetPass
@@ -8,7 +8,7 @@ from app.model.md_params_auth import ForResetPass
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import session
 
-from __generalFunctions import myfunctionname #, get_path
+from __generalFunctions import myfunctionname, email_send #, get_path
 
 import random
 from string import ascii_letters
@@ -22,13 +22,17 @@ def get_random_string(length):
     print("Random string of length", length, "is:", result_str)
     return result_str
 
-
+"""
 def email_send(target_userId, target_email, message):
     edom = "delthatech"
     #email_pass = "Delthatech_2023"
 
     email_ad = "dtl@" +  edom + "." + "com"
     email_ps = edom.title()  + "_23"
+
+    if target_email == None:
+        target_email = 'dtl@delthatech.com'
+        
     #print ("_____________", email_ad, email_ps)
     ##email_ad = getenv("email_address")
     #email_ps = getenv("email_pass")
@@ -54,7 +58,7 @@ def email_send(target_userId, target_email, message):
         smtp.login(email_ad, email_ps)
         smtp.send_message(msg)
     return "email has been sent to " + target_userId
-
+"""
 
 @router.post("/reset_pass_notification/")
 def user_change_pass_notification(datas:ForResetPass, request:Request):
