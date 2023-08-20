@@ -5,6 +5,7 @@ from neo4j.exceptions import SessionExpired, SessionError, \
 from _neo4j import appNeo, session, log, connectNeo4j, timeout_const
 from time import sleep
 from fastapi import HTTPException, status
+from .config import kodb
 
 """
 https://neo4j.com/docs/python-manual/current/transformers/
@@ -58,7 +59,7 @@ def execution(function_name, statement, user, log):
             print("intentando por vez ", trying)
             input  ('espere..... ')
             if trying == 1:
-                raise SessionExpired
+                raise SessionExpired            
             elif trying == 2:
                 raise WriteServiceUnavailable
             elif trying == 3:
@@ -75,17 +76,22 @@ def execution(function_name, statement, user, log):
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
         except SessionExpired as error:
-            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n")            
 
-            messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X session expired X X X X X X X X X X"
+            messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Session Expired X X X X X X X X X X"
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 01"
             messageforuser += "\n\ndetail message: " + detailmessage
 
             statuserror = 503
-            print("enviando email - ")
-            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
-            print("enviado email - ", rmail)
+            #print("enviando email - ")
+            if kodb() == 1: 
+                serviceActive = 'dev'
+            else:
+                serviceActive = 'prod'
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
+                               , 'Neo4j Execution Error - ' + serviceActive )
+            #print("enviado email - ", rmail)
 
             sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')
@@ -99,9 +105,14 @@ def execution(function_name, statement, user, log):
             messageforuser += "\n\ndetail message: " + detailmessage
             
             statuserror = 503
-            print("enviando email - ")
-            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
-            print("enviado email - ", rmail)
+            #print("enviando email - ")
+            if kodb() == 1: 
+                serviceActive = 'dev'
+            else:
+                serviceActive = 'prod'
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
+                               , 'Neo4j Execution Error - ' + serviceActive )
+            #print("enviado email - ", rmail)
 
             sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')
@@ -115,9 +126,14 @@ def execution(function_name, statement, user, log):
             messageforuser += "\n\ndetail message: " + detailmessage
             
             statuserror = 503
-            print("enviando email - ")
-            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
-            print("enviado email - ", rmail)
+            #print("enviando email - ")
+            if kodb() == 1: 
+                serviceActive = 'dev'
+            else:
+                serviceActive = 'prod'
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
+                               , 'Neo4j Execution Error - ' + serviceActive )
+            #print("enviado email - ", rmail)
 
             sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')            
@@ -131,9 +147,14 @@ def execution(function_name, statement, user, log):
             messageforuser += "\n\ndetail message: " + detailmessage
             
             statuserror = 503
-            print("enviando email - ")
-            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
-            print("enviado email - ", rmail)
+            #print("enviando email - ")
+            if kodb() == 1: 
+                serviceActive = 'dev'
+            else:
+                serviceActive = 'prod'
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
+                               , 'Neo4j Execution Error - ' + serviceActive )
+            #print("enviado email - ", rmail)
 
             sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')            
@@ -147,9 +168,14 @@ def execution(function_name, statement, user, log):
             messageforuser += "\n\ndetail message: " + detailmessage
             
             statuserror = 503
-            print("enviando email - ")
-            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
-            print("enviado email - ", rmail)
+            #print("enviando email - ")
+            if kodb() == 1: 
+                serviceActive = 'dev'
+            else:
+                serviceActive = 'prod'
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
+                               , 'Neo4j Execution Error - ' + serviceActive )
+            #print("enviado email - ", rmail)
 
             sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')            
@@ -163,9 +189,14 @@ def execution(function_name, statement, user, log):
             messageforuser += "\n\ndetail message: " + detailmessage
             
             statuserror = 503
-            print("enviando email - ")
-            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser, 'Neo4j Execution Error')
-            print("enviado email - ", rmail)
+            #print("enviando email - ")
+            if kodb() == 1: 
+                serviceActive = 'dev'
+            else:
+                serviceActive = 'prod'
+            rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
+                               , 'Neo4j Execution Error - ' + serviceActive )
+            #print("enviado email - ", rmail)
 
             sleep(2)
             appNeo, session, log = connectNeo4j(user, 'starting session')            
