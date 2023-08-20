@@ -75,25 +75,15 @@ def create_neo4j_app():
     global timeforneo4jdriver
     if kodb() == 1:
         SECRET_KEY = get_pass(cfg.USERNAME)
-        #print(SECRET_KEY, cfg.URI, cfg.USERNAME, SECRET_KEY)
-        #input ("cr to continue Ctrl to interrupt")
         app = App(cfg.URI, cfg.USERNAME, SECRET_KEY)
     elif kodb() == 2: 
         SECRET_KEY = get_pass(cfgp.USERNAME)
-        #print(SECRET_KEY, cfgp.URI, cfgp.USERNAME, SECRET_KEY)
-        #input ("cr to continue Ctrl to interrupt")
         app = App(cfgp.URI, cfgp.USERNAME, SECRET_KEY)
-    #print(f'creating objet Neo4j App:  {app}')
     timeforneo4jdriver = dt.now() + delta(minutes=int(_getenv_function('MINS_FOR_RECONNECT')))
-    print("new time for reconnection __init__:", timeforneo4jdriver)
-    #appNeo = app
     session = app.driver.session(database="neo4j")
     return app, session
 
 def connectNeo4j(user, description):
-    #uri = 'neo4j://localhost:7687'
-    #driver = GraphDatabase.driver(uri, auth=('neo4j', 'sistemas'))
-    #session = driver.session()
     app,session = create_neo4j_app()
     logofaccess = "create (n:Log {user: '" + user + "', trx: '" + description + "'}) " \
                             "set n.ctInsert = datetime() " \
@@ -105,12 +95,10 @@ def connectNeo4j(user, description):
 
 print(f"\n\n************************\nconexión a neo4j\n************************")
 user = 'admin'
-#print("\n\n========== kodb: ", kodb(), "\n\n")
-#input ("cr to continue Ctrl-c to interrupt ")
 timeout_const = 120
 timeforneo4jdriver = dt.now() + delta(minutes=int(_getenv_function('MINS_FOR_RECONNECT')))
 sleep(2)
-appNeo, session, log = connectNeo4j(user, 'starting session')
+appNeo, session, log = connectNeo4j(user, 'starting session with reconnect at ', timeforneo4jdriver)
 
 
 

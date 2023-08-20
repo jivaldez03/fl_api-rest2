@@ -50,15 +50,15 @@ def execution(function_name, statement, user, log_exec):
 
     print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
     if _getdatetime() > timeforneo4jdriver:
-            print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
+            #print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
             appNeo.close()
-            print("enviando email - FOR RECONNECTION")
+            #print("enviando email - FOR RECONNECTION")
             if kodb() == 1: 
                 serviceActive = 'dev'
             else:
                 serviceActive = 'prod'
             msgreconnect=_getdatime_T() + '\n\nRE-START CONNECTION\n\n'
-            print("msgreconnect", msgreconnect)
+            #print("msgreconnect", msgreconnect)
             try:
                 rmail = email_send(user, None, msgreconnect
                                 , 'Neo4j RESTART CONNECTION - ' + serviceActive )
