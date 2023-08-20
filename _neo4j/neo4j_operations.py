@@ -1,11 +1,13 @@
 from neo4j import Query #, GraphDatabase, Result, unit_of_work #neo4j._sync.work.result.Result
-from __generalFunctions import monitoring_function, email_send, _getdatime_T
+from __generalFunctions import monitoring_function, email_send, _getdatime_T, _getdatetime, _getenv_function
 from neo4j.exceptions import SessionExpired, SessionError, \
             ServiceUnavailable, ResultError, WriteServiceUnavailable
-from _neo4j import appNeo, session, log, connectNeo4j, timeout_const
+from _neo4j import appNeo, session, log, connectNeo4j, timeout_const, timeforneo4jdriver
+from datetime import timedelta as delta
 from time import sleep
 from fastapi import HTTPException, status
 from .config import kodb
+
 
 """
 https://neo4j.com/docs/python-manual/current/transformers/
@@ -43,8 +45,32 @@ def q01_borrar(session, strtoexec= None):
     return nodes
 
 #@unit_of_work(timeout=timeout_const)  # seconds
-def execution(function_name, statement, user, log):
-    global appNeo, session
+def execution(function_name, statement, user, log_exec):
+    global appNeo, session, log, timeforneo4jdriver
+
+    print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
+    if _getdatetime() > timeforneo4jdriver:
+            print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
+            appNeo.close()
+            print("enviando email - FOR RECONNECTION")
+            if kodb() == 1: 
+                serviceActive = 'dev'
+            else:
+                serviceActive = 'prod'
+            msgreconnect=_getdatime_T() + '\n\nRE-START CONNECTION\n\n'
+            print("msgreconnect", msgreconnect)
+            try:
+                rmail = email_send(user, None, msgreconnect
+                                , 'Neo4j RESTART CONNECTION - ' + serviceActive )
+
+            except Exception as error:
+                print("error enviando mensaje de reconección", type(error).__name__, error)
+            #sleep(1)
+            appNeo, session, log = connectNeo4j(user, 'starting session')
+            print("new time for reconnection after newsession:", timeforneo4jdriver)
+            if session: 
+                timeforneo4jdriver = _getdatetime() + delta(minutes=int(_getenv_function('MINS_FOR_RECONNECT')))
+
 
     # next loop exist only if we have an error about our session, it try to reconnect again
     trying = 0
@@ -76,6 +102,7 @@ def execution(function_name, statement, user, log):
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
             break
         except SessionExpired as error:
+            appNeo.close()
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")            
 
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Session Expired X X X X X X X X X X"
@@ -97,6 +124,7 @@ def execution(function_name, statement, user, log):
             appNeo, session, log = connectNeo4j(user, 'starting session')
             continue
         except WriteServiceUnavailable as error:
+            appNeo.close()
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
 
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X WriteServiceUnavailable X X X X X X X X X"
@@ -118,6 +146,7 @@ def execution(function_name, statement, user, log):
             appNeo, session, log = connectNeo4j(user, 'starting session')
             continue
         except SessionError as error:
+            appNeo.close()
             print("Exception:", error.__cause__)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Session Error X X X X X X X X X X"
@@ -139,6 +168,7 @@ def execution(function_name, statement, user, log):
             appNeo, session, log = connectNeo4j(user, 'starting session')            
             continue
         except ServiceUnavailable as error:
+            appNeo.close()
             print("Exception:", error.__cause__)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Service Unavailable X X X X X X X X X X"
@@ -160,6 +190,7 @@ def execution(function_name, statement, user, log):
             appNeo, session, log = connectNeo4j(user, 'starting session')            
             continue        
         except ResultError as error:
+            appNeo.close()
             print("Exception:", error.__cause__)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Result Error X X X X X X X X X X"
@@ -181,6 +212,7 @@ def execution(function_name, statement, user, log):
             appNeo, session, log = connectNeo4j(user, 'starting session')            
             continue
         except Exception as error:
+            appNeo.close()
             print("Exception:", error.__cause__)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             messageforuser = f"********** {user} try: {trying} -> X X X X X An error occurred executing X X X X"

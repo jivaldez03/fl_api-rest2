@@ -1,5 +1,8 @@
 from neo4j import GraphDatabase #, TrustAll
 from .config import Config as cfg, Configp as cfgp, get_pass, kodb
+from datetime import datetime as dt, timedelta as delta
+from time import sleep
+from __generalFunctions import _getenv_function
 
 class App:
     def __init__(self, uri, user, password):
@@ -69,6 +72,7 @@ class App:
  """
 
 def create_neo4j_app():
+    global timeforneo4jdriver
     if kodb() == 1:
         SECRET_KEY = get_pass(cfg.USERNAME)
         #print(SECRET_KEY, cfg.URI, cfg.USERNAME, SECRET_KEY)
@@ -80,7 +84,11 @@ def create_neo4j_app():
         #input ("cr to continue Ctrl to interrupt")
         app = App(cfgp.URI, cfgp.USERNAME, SECRET_KEY)
     #print(f'creating objet Neo4j App:  {app}')
-    return app, app.driver.session(database="neo4j")
+    timeforneo4jdriver = dt.now() + delta(minutes=int(_getenv_function('MINS_FOR_RECONNECT')))
+    print("new time for reconnection __init__:", timeforneo4jdriver)
+    #appNeo = app
+    session = app.driver.session(database="neo4j")
+    return app, session
 
 def connectNeo4j(user, description):
     #uri = 'neo4j://localhost:7687'
@@ -91,10 +99,6 @@ def connectNeo4j(user, description):
                             "set n.ctInsert = datetime() " \
                             "return n"
     log = session.run(logofaccess)
-    #input ("you can review the log record for user admin - cr to continue Ctrl to interrupt")
-    #print('type-log:', type(log))
-    #for x in log:
-    #    print('log:', x)
     return app, session, log
 
 #app = create_neo4j_app() # create_app()
@@ -104,8 +108,10 @@ user = 'admin'
 #print("\n\n========== kodb: ", kodb(), "\n\n")
 #input ("cr to continue Ctrl-c to interrupt ")
 timeout_const = 120
-
+timeforneo4jdriver = dt.now() + delta(minutes=int(_getenv_function('MINS_FOR_RECONNECT')))
+sleep(2)
 appNeo, session, log = connectNeo4j(user, 'starting session')
+
 
 
 
