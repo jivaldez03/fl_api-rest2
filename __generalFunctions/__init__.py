@@ -192,7 +192,7 @@ def email_send(target_userId, target_email, message, subject):
         msg_error = ""
     except Exception as error:
         print('message error: ', type(error).__name__, error)
-        msg_error = type(error).__name__ + " " + error
+        msg_error = f"execption error: {type(error).__name__} - {error}"
     
     return "email has been sent to " + target_userId +  msg_error
 
