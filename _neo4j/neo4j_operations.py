@@ -1,8 +1,10 @@
 from neo4j import Query #, GraphDatabase, Result, unit_of_work #neo4j._sync.work.result.Result
 from __generalFunctions import monitoring_function, email_send \
                 , _getdatime_T, _getdatetime, _getenv_function
-from neo4j.exceptions import SessionExpired, SessionError, \
-            ServiceUnavailable, ResultError, WriteServiceUnavailable
+from neo4j.exceptions import SessionExpired, SessionError \
+            , ServiceUnavailable, ResultError, WriteServiceUnavailable \
+            , CypherSyntaxError, CypherTypeError
+
 from _neo4j import appNeo, session, log, connectNeo4j, timeout_const, timeforneo4jdriver
 from datetime import timedelta as delta
 from time import sleep
@@ -111,8 +113,16 @@ def execution(function_name, statement, user, log_exec):
                 raise Exception
             """
             nodes = session.run(Query(statement, timeout=timeout_const), name='query')
+
             statuserror = 200            
             #print("*********************** finaliza ejecución en neo4_exec", function_name, type(nodes))
+            break
+        except CypherSyntaxError as error:
+            print("Exception:", type(error).__name__, error)
+            statuserror = 502
+            errorlog = neo4_log(session, user, statement, "--", function_name)
+            print(f"\nappNeo: {appNeo} \nSesion: {session}\n") 
+            nodes = []
             break
         except SessionExpired as error:
             appNeo.close()
