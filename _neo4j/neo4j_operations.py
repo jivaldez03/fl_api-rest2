@@ -1,5 +1,6 @@
 from neo4j import Query #, GraphDatabase, Result, unit_of_work #neo4j._sync.work.result.Result
-from __generalFunctions import monitoring_function, email_send, _getdatime_T, _getdatetime, _getenv_function
+from __generalFunctions import monitoring_function, email_send \
+                , _getdatime_T, _getdatetime, _getenv_function
 from neo4j.exceptions import SessionExpired, SessionError, \
             ServiceUnavailable, ResultError, WriteServiceUnavailable
 from _neo4j import appNeo, session, log, connectNeo4j, timeout_const, timeforneo4jdriver
@@ -90,7 +91,7 @@ def execution(function_name, statement, user, log_exec):
                                     , 'Neo4j RESTART CONNECTION - ' + serviceActive )
                 except Exception as error:
                     print("error enviando mensaje de reconección", type(error).__name__, error)
-                #sleep(1)
+                    sleep(1)
         try:
             #print("*********************** inicia ejecución en neo4_exec " , function_name)
             """
@@ -121,7 +122,7 @@ def execution(function_name, statement, user, log_exec):
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 01"
             messageforuser += "\n\ndetail message: " + detailmessage
-
+            sleep(2)
             timeforneo4jdriver = recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuser)
             continue
         except WriteServiceUnavailable as error:
@@ -131,8 +132,8 @@ def execution(function_name, statement, user, log_exec):
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X WriteServiceUnavailable X X X X X X X X X"
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 01-5"
-            messageforuser += "\n\ndetail message: " + detailmessage            
-
+            messageforuser += "\n\ndetail message: " + detailmessage    
+            sleep(2)
             timeforneo4jdriver = recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuser)
             continue
         except SessionError as error:
@@ -142,8 +143,8 @@ def execution(function_name, statement, user, log_exec):
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Session Error X X X X X X X X X X"
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 02"
-            messageforuser += "\n\ndetail message: " + detailmessage            
-
+            messageforuser += "\n\ndetail message: " + detailmessage   
+            sleep(2)
             timeforneo4jdriver = recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuser)          
             continue
         except ServiceUnavailable as error:
@@ -154,7 +155,7 @@ def execution(function_name, statement, user, log_exec):
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 03"
             messageforuser += "\n\ndetail message: " + detailmessage
-
+            sleep(2)
             timeforneo4jdriver = recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuser)
             continue        
         except ResultError as error:
@@ -165,7 +166,7 @@ def execution(function_name, statement, user, log_exec):
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 04"
             messageforuser += "\n\ndetail message: " + detailmessage
-
+            sleep(2)
             timeforneo4jdriver = recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuser)
             continue
         except Exception as error:
@@ -176,7 +177,7 @@ def execution(function_name, statement, user, log_exec):
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
             detailmessage="Service Unavailable - Conexion Error - 99"
             messageforuser += "\n\ndetail message: " + detailmessage
-
+            sleep(2)
             timeforneo4jdriver = recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuser)
             continue
     if statuserror != 200:
@@ -221,24 +222,18 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
         function_name = 'null'
     #print(f"execution requested by {user} - FUNTION__NAME: {function_name}")
     # next line is the log's record for the user's execution
-    if monitoring_function(function_name):
-        log_description += "\n----\n" + statement[0:15] + " ... " + statement[-15:] + "\n----\n"
+
     #print("\n\n**********", user, "----> recording logs - the beginning" , function_name)
     log = [None,""]
-
-    # >>>>>>>>>>>>>>>>>>>> SE COMENTÓ LA SIGUIENTE LINEA PARA PRUEBAS DE CONTINUIDAD 
-    # POR LOS ERRORES RAROS DE CONEXIÓN
-    if recLog:
-        log = neo4_log(session, user, log_description, filename, function_name)    
-
-    #print("**********", user, "-", log[0], "->           inicia ejecución en neo4_exec " , function_name)
+    if monitoring_function(function_name):
+        log_description += "\n----\n" + statement[0:15] + " ... " + statement[-15:] + "\n----\n"
+        if recLog:
+            log = neo4_log(session, user, log_description, filename, function_name)    
+    #print("**********", user, "-", log[0], "->           finaliza ejecución en neo4_exec", function_name, type(nodes))
 
     nodes = execution(function_name, statement, user, log)
     
-    #print("**********", user, "-", log[0], "->           finaliza ejecución en neo4_exec", function_name, type(nodes))
-        
-    #print("**********", user, "-", log[0], "-> recording logs - the end for log's at: ", str(log[1]))
-    #print('log for log:', log, "\nstatement:", statement)
+    #print("********** recording the end of transaction", user, "-", log[0] -> ", str(log[1]))
     if log[0]:
         statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + user + "'}) \n" + \
                     "where elementId(l) = '" + log[0] + "' \n" + \

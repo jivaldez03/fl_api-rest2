@@ -132,12 +132,16 @@ def monitoring_function(functiontovalidate):
     """
     
     """
-    lfunctions = (getenv("MONITORING_FUNCTIONS")).split(',\n')
-    #print('functionsvalidate: ', functiontovalidate, lfunctions, type(functiontovalidate))
-    # if lfunctions.__contains__(functiontovalidate):
+    print("log-active:", getenv('LOG_ACTIVE'), type(getenv('LOG_ACTIVE')) )
+    if getenv('LOG_ACTIVE') == 'True':
+        lfunctions = (getenv("MONITORING_FUNCTIONS")).split(',\n')    
+        #print('functionsvalidate: ', functiontovalidate, lfunctions, type(functiontovalidate))
+        # if lfunctions.__contains__(functiontovalidate):
 
-    if functiontovalidate in lfunctions:
-        return True
+        if functiontovalidate in lfunctions:
+            return True
+        else:
+            return False
     else:
         return False
 
