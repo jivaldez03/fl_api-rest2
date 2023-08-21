@@ -376,6 +376,8 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
     swords = str(datas.words)
     sswords = swords.replace("[",",").replace("]",",").replace("'","").replace('"',"").replace(", ",",")
 
+    print('puzzle datas:', datas)
+
     if datas.setlevel == False: 
         neo4j_statement = "with '" + datas.org + "' as org \n" + \
                     "    , '" + userId + "' as userId \n" + \
@@ -437,7 +439,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                         " gm.average = average, \n" + \
                         " gm.ctInsert = datetime() \n" + \
                     "return u.userId as userId, size(gm.words) as qtywords "
-    #print("neo4_statement:", neo4j_statement)
+    print("puzzle - neo4_statement:", neo4j_statement)
     await awsleep(0)
     
     #print(f"statement pronun: {statement}")

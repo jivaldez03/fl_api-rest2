@@ -67,7 +67,7 @@ def execution(function_name, statement, user, log_exec):
     statuserror = 200
     detailmessage = ""
     messageforuser = ""
-    while trying < 10:
+    while trying < 5:
         trying += 1
 
         print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
@@ -116,6 +116,7 @@ def execution(function_name, statement, user, log_exec):
             break
         except SessionExpired as error:
             appNeo.close()
+            print("Exception:", type(error).__name__, error)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")            
 
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Session Expired X X X X X X X X X X"
@@ -127,6 +128,7 @@ def execution(function_name, statement, user, log_exec):
             continue
         except WriteServiceUnavailable as error:
             appNeo.close()
+            print("Exception:", type(error).__name__, error)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
 
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X WriteServiceUnavailable X X X X X X X X X"
@@ -138,7 +140,7 @@ def execution(function_name, statement, user, log_exec):
             continue
         except SessionError as error:
             appNeo.close()
-            print("Exception:", error.__cause__)
+            print("Exception:", type(error).__name__, error)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Session Error X X X X X X X X X X"
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
@@ -149,7 +151,7 @@ def execution(function_name, statement, user, log_exec):
             continue
         except ServiceUnavailable as error:
             appNeo.close()
-            print("Exception:", error.__cause__)
+            print("Exception:", type(error).__name__, error)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Service Unavailable X X X X X X X X X X"
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
@@ -160,7 +162,7 @@ def execution(function_name, statement, user, log_exec):
             continue        
         except ResultError as error:
             appNeo.close()
-            print("Exception:", error.__cause__)
+            print("Exception:", type(error).__name__, error)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             messageforuser = f"********** {user} try: {trying} -> X X X X X X X X X X X X Result Error X X X X X X X X X X"
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
@@ -171,7 +173,7 @@ def execution(function_name, statement, user, log_exec):
             continue
         except Exception as error:
             appNeo.close()
-            print("Exception:", error.__cause__)
+            print("Exception:", type(error).__name__, error)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n")
             messageforuser = f"********** {user} try: {trying} -> X X X X X An error occurred executing X X X X"
             messageforuser = type(error).__name__ + "\n\n" + str(type(error)) + "\n\n" + messageforuser
