@@ -65,7 +65,7 @@ def recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuse
     
     #print("enviado email - ", rmail)
     #appNeo, session, log = connectNeo4j(user, 'starting session')
-    return _getdatetime()
+    return _getdatetime() - delta(seconds=1)
     
 #@unit_of_work(timeout=timeout_const)  # seconds
 def execution(function_name, statement, user, log_exec):
@@ -88,12 +88,13 @@ def execution(function_name, statement, user, log_exec):
                     serviceActive = 'dev'
                 else:
                     serviceActive = 'prod'
-                msgreconnect=_getdatime_T() + '\n\nRE-STARTING CONNECTION\n\n'
+                msgreconnect=_getdatime_T() + '\n\nRE-STARTING CONNECTION by ' + user 
                 appNeo, session, log = connectNeo4j(user, 'starting session')                
 
                 if session: 
                     timeforneo4jdriver = _getdatetime() + delta(minutes=int(_getenv_function('MINS_FOR_RECONNECT')))
-
+                    msgreconnect = msgreconnect + " IT WAS OK \n\nReconecction at " + str(timeforneo4jdriver)
+                    
                 print(msgreconnect, "\nNEW TIME FOR RECONNECTION ->", timeforneo4jdriver)
 
                 #print("msgreconnect", msgreconnect)

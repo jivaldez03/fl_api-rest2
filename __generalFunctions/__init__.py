@@ -162,7 +162,7 @@ def email_send(target_userId, target_email, message, subject):
     email_ps = edom.title()  + "_2023"
 
     if target_email == None:
-        target_email = 'dtl@delthatech.com'
+        target_email =  'dtl@delthatech.com'
         
     #print ("_____________", email_ad, email_ps)
     ##email_ad = getenv("email_address")
