@@ -49,7 +49,8 @@ def q01_borrar(session, strtoexec= None):
 
 def recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuser):
     global timeforneo4jdriver
-
+    
+    # MENSAJE POR EXCEPTION OCURRIDA - SE NOTIFICA AL ADMINISTRADOR
     if kodb() == 1: 
         serviceActive = 'dev'
     else:
@@ -61,8 +62,7 @@ def recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuse
             errorlog = neo4_log(session, user, "smtplib.SMTP_SSL.smtp.send_message"
                                 , "ERROR: " + rmail, 'email_send')
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n") 
-            nodes = []
-
+    
     #print("enviado email - ", rmail)
     #appNeo, session, log = connectNeo4j(user, 'starting session')
     return _getdatetime()
@@ -88,7 +88,7 @@ def execution(function_name, statement, user, log_exec):
                     serviceActive = 'dev'
                 else:
                     serviceActive = 'prod'
-                msgreconnect=_getdatime_T() + '\n\nRE-START CONNECTION\n\n'
+                msgreconnect=_getdatime_T() + '\n\nRE-STARTING CONNECTION\n\n'
                 appNeo, session, log = connectNeo4j(user, 'starting session')                
 
                 if session: 
@@ -99,7 +99,12 @@ def execution(function_name, statement, user, log_exec):
                 #print("msgreconnect", msgreconnect)
                 try:
                     rmail = email_send(user, None, msgreconnect
-                                    , 'Neo4j RESTART CONNECTION - ' + serviceActive )
+                                    , 'Neo4j RESTART CONNECTION - ' + serviceActive )                    
+                    if rmail == "False":
+                            print("Exception:", rmail)
+                            errorlog = neo4_log(session, user, "smtplib.SMTP_SSL.smtp.send_message"
+                                                , "ERROR: " + rmail, 'email_send')
+                            print(f"\nappNeo: {appNeo} \nSesion: {session}\n") 
                 except Exception as error:
                     print("error enviando mensaje de reconección", type(error).__name__, error)
                     sleep(1)

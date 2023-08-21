@@ -132,7 +132,7 @@ def monitoring_function(functiontovalidate):
     """
     
     """
-    print("log-active:", getenv('LOG_ACTIVE'), type(getenv('LOG_ACTIVE')) )
+    #print("log-active:", getenv('LOG_ACTIVE'), type(getenv('LOG_ACTIVE')) )
     if getenv('LOG_ACTIVE') == 'True':
         lfunctions = (getenv("MONITORING_FUNCTIONS")).split(',\n')    
         #print('functionsvalidate: ', functiontovalidate, lfunctions, type(functiontovalidate))
@@ -159,7 +159,7 @@ def email_send(target_userId, target_email, message, subject):
     #email_pass = "Delthatech_2023"
 
     email_ad = "dtl@" +  edom + "." + "com"
-    email_ps = edom.title()  + "_23"
+    email_ps = edom.title()  + "_2023"
 
     if target_email == None:
         target_email = 'dtl@delthatech.com'
@@ -195,7 +195,7 @@ def email_send(target_userId, target_email, message, subject):
             smtp.login(email_ad, email_ps)
             smtp.send_message(msg)
     except Exception as error:
-        print('message error: ', type(error).__name__, error)
+        print('message error sending smtp mail: ', type(error).__name__, error)
         msg_error = f"execption error: {type(error).__name__} - {error}"
         return "False"    
     #"""    

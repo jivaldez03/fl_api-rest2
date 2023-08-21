@@ -100,6 +100,3 @@ timeforneo4jdriver = dt.now() + delta(minutes=int(_getenv_function('MINS_FOR_REC
 sleep(2)
 appNeo, session, log = connectNeo4j(user, 'starting session with reconnect at ' + str(timeforneo4jdriver) )
 
-
-
-
