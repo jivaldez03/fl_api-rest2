@@ -14,8 +14,6 @@ from fastapi import HTTPException, status #, Request
 import smtplib
 from email.message import EmailMessage
 
-from _neo4j.neo4j_operations import neo4_log 
-
 import inspect
 myfunctionname = lambda: str(inspect.stack()[1][3])
 
