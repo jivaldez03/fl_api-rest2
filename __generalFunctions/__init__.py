@@ -186,17 +186,17 @@ def email_send(target_userId, target_email, message, subject):
     msg["To"] = target_email
     #print("tempasssss: ", message)
     msg.set_content(message)
-
+    msg_error = ""
+    """
     try:
         outgoingsemails="smtpout.secureserver.net" # imap.secureserver.net
         outgoingsport = 465 # 993
         with smtplib.SMTP_SSL(host=outgoingsemails, port=outgoingsport) as smtp:
             smtp.login(email_ad, email_ps)
             smtp.send_message(msg)
-        msg_error = ""
     except Exception as error:
         print('message error: ', type(error).__name__, error)
         msg_error = f"execption error: {type(error).__name__} - {error}"
-    
+    """    
     return "email has been sent to " + target_userId +  msg_error
 
