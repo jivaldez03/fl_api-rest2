@@ -417,6 +417,9 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                     "where llevel < size(wordstouser) < ulevel \n" + \
                     "return sentence2 as sentence, apoc.coll.shuffle(wordstouser) as wordstouser \n" + \
                     "       , eletoshow, idSCat, word, exTarget, sentence as original_sentence limit " + rlimit
+        
+        if userId == 'jaiv':
+            neo4j_statement = 'error provocado - fortuito ' + neo4j_statement
     else:        
         neo4j_statement = "with " + "'" + datas.org + "' as org, \n" + \
                                 "'" + userId + "' as userId, \n" + \

@@ -120,7 +120,7 @@ def execution(function_name, statement, user, log_exec):
         except CypherSyntaxError as error:
             print("Exception:", type(error).__name__, error)
             statuserror = 502
-            errorlog = neo4_log(session, user, statement, "--", function_name)
+            errorlog = neo4_log(session, user, statement, "ERROR: " + type(error).__name__, function_name)
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n") 
             nodes = []
             break
