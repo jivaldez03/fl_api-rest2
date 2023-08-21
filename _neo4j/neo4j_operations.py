@@ -59,8 +59,12 @@ def recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuse
                         , 'Neo4j Execution Error - ' + user + ' - ' + serviceActive )
     if rmail == "False":
             print("Exception:", rmail)
-            errorlog = neo4_log(session, user, "smtplib.SMTP_SSL.smtp.send_message"
-                                , "ERROR: " + rmail, 'email_send')
+            #log.trx = smtplib.SMTP_SSL.smtp.send_message
+            #log.
+            errorlog = neo4_log(session, user
+                                , _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
+                                , "smtplib.SMTP_SSL.smtp.send_message"
+                                , 'email_send')
             print(f"\nappNeo: {appNeo} \nSesion: {session}\n") 
     
     #print("enviado email - ", rmail)
@@ -94,7 +98,7 @@ def execution(function_name, statement, user, log_exec):
                 if session: 
                     timeforneo4jdriver = _getdatetime() + delta(minutes=int(_getenv_function('MINS_FOR_RECONNECT')))
                     msgreconnect = msgreconnect + " IT WAS OK \n\nReconecction at " + str(timeforneo4jdriver)
-                    
+
                 print(msgreconnect, "\nNEW TIME FOR RECONNECTION ->", timeforneo4jdriver)
 
                 #print("msgreconnect", msgreconnect)
