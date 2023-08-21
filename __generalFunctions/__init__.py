@@ -190,7 +190,6 @@ def email_send(target_userId, target_email, message, subject):
     """
     try:
         outgoingsemails="smtpout.secureserver.net" # imap.secureserver.net
-        outgoingsport = 465 # 993
         with smtplib.SMTP_SSL(host=outgoingsemails, port=outgoingsport) as smtp:
             smtp.login(email_ad, email_ps)
             smtp.send_message(msg)
