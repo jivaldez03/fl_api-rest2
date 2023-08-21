@@ -6,6 +6,10 @@ import __generalFunctions as funcs
 from datetime import datetime as dt
 from asyncio import sleep as awsleep
 
+# https://github.com/AUTOMATIC1111/stable-diffusion-webui/issues/11855
+# dieron el tip de instalar pip install gradio_client==0.2.7
+# para el error de Exception in ASGI application
+
 import signal
 signal.signal(signal.SIGWINCH, signal.SIG_IGN)
 
