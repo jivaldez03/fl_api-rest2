@@ -67,7 +67,7 @@ def execution(function_name, statement, user, log_exec):
     statuserror = 200
     detailmessage = ""
     messageforuser = ""
-    while True:
+    while trying < 10:
         trying += 1
 
         print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
