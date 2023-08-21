@@ -14,6 +14,8 @@ from fastapi import HTTPException, status #, Request
 import smtplib
 from email.message import EmailMessage
 
+from _neo4j.neo4j_operations import neo4_log 
+
 import inspect
 myfunctionname = lambda: str(inspect.stack()[1][3])
 
@@ -197,6 +199,7 @@ def email_send(target_userId, target_email, message, subject):
     except Exception as error:
         print('message error: ', type(error).__name__, error)
         msg_error = f"execption error: {type(error).__name__} - {error}"
+        return "False"    
     #"""    
     return "email has been sent to " + target_userId +  msg_error
 
