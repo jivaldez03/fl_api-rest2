@@ -59,8 +59,9 @@ def recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuse
                         , 'Neo4j Execution Error - ' + user + ' - ' + serviceActive )
     if rmail == "False":
             print("Exception:", rmail)
-            #log.trx = smtplib.SMTP_SSL.smtp.send_message
-            #log.
+            # log.trx = datetime on error + exception
+            #log.exec_fname = smtplib.SMTP_SSL.smtp.send_message
+            #log.exec_fn = email_send
             errorlog = neo4_log(session, user
                                 , _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
                                 , "smtplib.SMTP_SSL.smtp.send_message"
