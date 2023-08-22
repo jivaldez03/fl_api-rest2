@@ -4,8 +4,8 @@ from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs # import reg_exp as rexp #  as funcs^(lev([0-9][0-9])(_)([09][0-9]))$
 from __generalFunctions import myfunctionname, _getdatime_T, _getdatetime
-#from dt_ui_oper_gr.dt_ui_oper_bs import get_w_SCat
-from ..dt_ui_oper_gr.dt_ui_oper_bs import get_w_SCat
+
+#from ..dt_ui_oper_gr.dt_ui_oper_bs import get_w_SCat
 
 from app.model.md_params_oper import ForClosePackages
 
@@ -15,6 +15,32 @@ import signal
 signal.signal(signal.SIGWINCH, signal.SIG_IGN)
 
 router = APIRouter()
+
+
+def get_w_SCat(userId, pkgname):
+    #print("========== starting get_w_SCat id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    neo4j_statement = "match (pkg:Package {userId:'" + userId + "', packageId:'" + pkgname + "'})\n" + \
+            "return pkg.source as pkgsource, pkg.target as pkgtarget, \n" + \
+                "pkg.idSCat as idSCat, pkg.idCat as idCat"    
+
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting new words (step 1) for new package",
+                        statement=neo4j_statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    
+    pkgsource, pkgtarget, idCat, idSCat = "","","",""
+    for node in nodes:
+        print("leyendo nodes")
+        sdict = dict(node)
+        pkgsource = sdict["pkgsource"]
+        pkgtarget = sdict["pkgtarget"]
+        idCat = sdict["idCat"]
+        idSCat = sdict["idSCat"]    
+    #print("\n\n\n","="*50,"wsCat =", wSCat, idCat, idSCat)
+    #print("        ->   ========== ending get_w_SCat id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+
+    return [pkgsource, pkgtarget, idCat, idSCat]
 
 @router.post("/level/")
 async def post_level(datas:ForClosePackages, Authorization: Optional[str] = Header(None)):
@@ -82,13 +108,13 @@ async def post_level(datas:ForClosePackages, Authorization: Optional[str] = Head
     return {'message': listcat}
 
 
-async def set_archived_package(packagename, userId):
+def set_archived_package(packagename, userId):
     """
     Function to closed and add package words to the user's learned words
     """
     # getting the internal code for subcat 
     wSCat = get_w_SCat (userId, packagename)
-    wSCat, source, target = wSCat  # subcategoria w_SC_10000053, source, target del paquete
+    source, target = wSCat[0], wSCat[1]  # [source, target, idCat, idSCat] del paquete
     #source = wSCat[1]
 
     dtimenow = _getdatetime()
@@ -141,8 +167,7 @@ async def set_archived_package(packagename, userId):
                         "return p.packageId as packageId , p.label as slabel, p.status as status " 
     # filter (x in n.A where x<>"newValue")
     # "ArcM.words = ArcM.words + p.words \n" + \
-    #print('archiving: ", neo4j_statement')
-    await awsleep(0)
+    print('archiving:', neo4j_statement)
 
     nodes, log = neo4j_exec(session, userId,
                         log_description="archive package" + packagename,
