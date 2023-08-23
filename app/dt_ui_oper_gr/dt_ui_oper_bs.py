@@ -487,7 +487,8 @@ async def get_user_packagehistorylist(idSCat:int, ipage:int=1, ishow:int=10, sse
                 "-[rt:RIGHTS_TO]->(o:Organization)<-[:SUBJECT]\n" + \
                 "-(c:Category {idCat:" + str(idCat) + "})\n" + \
                 "<-[:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "})\n" + \
-                "<-[:PACK_SUBCAT]-(pkg:Package {userId: u.userId, status:'closed'})-[]->(u) \n" + \
+                "<-[:PACK_SUBCAT]-(pkg:Package {userId: u.userId, status:'closed'})-\n" + \
+                    "[:PACKAGED]->(u) \n" + \
                 "where (pkg.label contains slabel or slabel = '') \n" + \
                     "and (sword in pkg.words or sword = '') \n" + \
                 "with u, o, c, collect(pkg) as pkgs, count(pkg) as qtypkg \n" + \
@@ -564,7 +565,7 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
     userId = token['userId']
     #print("========== starting get_user_package_st id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     
-    statement = "match (u:User {userId:'" + userId + "'})-[]-\n" + \
+    statement = "match (u:User {userId:'" + userId + "'})<-[:PACKAGED]-\n" + \
                 "(pkg:Package {packageId: '" + packageId + "'}) \n" + \
                 "-[:PACK_SUBCAT]-(sc:SubCategory)\n" + \
                 "-[:CAT_SUBCAT]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
