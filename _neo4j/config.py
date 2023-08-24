@@ -2,7 +2,7 @@ from cryptography.fernet import Fernet
 
 """
 class Config:
-    SECRET_KEY = "clavE sEGURa"
+    SECRET_KEY = "3ajiclavEaji sEGURaaji"
 
 NEO4J_URI=neo4j+s://f03zb879.databases.neo4j.io
 """
