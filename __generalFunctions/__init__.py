@@ -159,7 +159,7 @@ def email_send(target_userId, target_email, message, subject):
     #email_pass = "Delthatech_2023"
 
     email_ad = "dtl@" +  edom + "." + "com"
-    email_ps = edom.title()  + "_2023"
+    email_ps = edom + edom + "_year2023_"
 
     if target_email == None:
         target_email =  'dtl@delthatech.com'
