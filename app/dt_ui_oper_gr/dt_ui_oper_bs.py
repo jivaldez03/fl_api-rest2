@@ -308,7 +308,8 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
     #print("==========  starting get_config_uid id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     global appNeo, session, log 
 
-    neo4j_statement = "match (us:User {userId:'" + userId + "'})-[r:FIRSTCONTACT]->(rep:FirstContact) \n" + \
+    neo4j_statement = "match (us:User {userId:'" + userId + "'}) \n" + \
+                        "optional match (us)-[r:FIRSTCONTACT]->(rep:FirstContact) \n" + \
                     "return us.userId as userId \n" + \
                         ", us.name as name \n" + \
                         ", us.birth_year as birth_year, us.month_year as month_year \n" + \

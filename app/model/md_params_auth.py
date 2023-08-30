@@ -15,6 +15,7 @@ class ForResetPass(BaseModel):
 
 class ForUserReg(BaseModel):
     userId:str
+    orgId: str
     email:str
     name: str
     native_lang:str
