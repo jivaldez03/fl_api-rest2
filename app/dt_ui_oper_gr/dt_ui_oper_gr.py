@@ -535,7 +535,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     return listEle
 
 
-@router.post("/reclinks/")
+@router.get("/reclinks/")
 async def recslinks(Authorization: Optional[str] = Header(None)):
     """    
 
