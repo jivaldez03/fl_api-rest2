@@ -260,7 +260,7 @@ def login_validate_user_pass_trx(session, login):
                 "with l.user as userId \n" + \
                 "match (us:User {userId: userId }) " +  \
                 "return us.userId, us.name, us.keypass, us.age, \n" + \
-                    "us.nativeLang, us.country_birth, us.country_res limit 1"
+                    "us.native_lang, us.country_birth, us.country_res limit 1"
         nodes = session.run(query, login=login)
         return nodes
 

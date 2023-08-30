@@ -1,2 +1,2 @@
 class Config:
-    SECRET_KEY = "clavE sEGURa"
+    SECRET_KEY = "jiclavE sEGURaJI"

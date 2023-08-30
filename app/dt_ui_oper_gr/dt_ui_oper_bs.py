@@ -313,7 +313,8 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
                         ", us.name as name \n" + \
                         ", us.birth_year as birth_year, us.month_year as month_year \n" + \
                         ", us.country_birth as country_birth, us.country_res as country_res \n" + \
-                        ", us.nativeLang as native_lang \n" + \
+                        ", us.native_lang as native_lang \n" + \
+                        ", us.selected_lang as selected_lang \n" + \
                         ", toString(us.ctInsert) as us_ctInsert \n" + \
                         ", us.email as usemail, us.defaultCap as capacity \n" + \
                         ", rep.contactId as contactId \n" + \

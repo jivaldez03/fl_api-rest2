@@ -11,7 +11,7 @@ from __generalFunctions import myfunctionname, _getdatime_T
 from datetime import datetime as dt
 
 #models:
-from app.model.md_params_auth import ForLogin, ForChangePass
+from app.model.md_params_auth import ForLogin, ForChangePass, ForUserReg
 
 import signal
 signal.signal(signal.SIGWINCH, signal.SIG_IGN)
@@ -37,7 +37,7 @@ async def login_user(datas: ForLogin):
     neo4j_statement = "with '" + datas.userId.lower() +  "' as userId \n" + \
                 "match (us:User {userId: userId }) " +  \
                 "return us.userId, us.name, us.keypass, us.age, \n" + \
-                    "us.nativeLang, us.country_birth, us.country_res limit 1"
+                    "us.native_lang, us.selected_lang, us.country_birth, us.country_res limit 1"
     nodes, log = neo4j_exec(session, datas.userId.lower(),
                         log_description="validate login user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -56,8 +56,10 @@ async def login_user(datas: ForLogin):
                     "age":0, 
                     "country_birth": result["us.country_birth"], 
                     "country_res": result["us.country_res"],
-                    "native_lang" : result["us.nativeLang"]
+                    "native_lang" : result["us.native_lang"],
+                    "selected_lang" : result["us.selected_lang"]
                 }
+        print("resp_dict:", resp_dict)
         """q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + datas.userId + "'}) \n" + \
                     "where id(l) = " + str(log[0]) + " \n" + \
                     "set l.ctClosed = datetime() \n" + \
@@ -79,7 +81,8 @@ async def login_user(datas: ForLogin):
                     "age":0, 
                     "country_birth": result["us.country_birth"], 
                     "country_res": result["us.country_res"],
-                    "native_lang" : result["us.nativeLang"]
+                    "native_lang" : result["us.native_lang"],
+                    "selected_lang" : result["us.selected_lang"]
         }
     elif len(result) == 0:  # incorrect user
         print("no records - fname__name__and more:",__name__)
@@ -193,6 +196,68 @@ async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = H
         
     print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': "password updated"}
+
+
+@router.post("/userreg/")
+async def user_change_pass(datas:ForUserReg, Authorization: Optional[str] = Header(None)):
+    """
+    Function for change the user password \n
+    {
+    userId:str
+    email:str
+    name: str
+    native_lang:str
+    selected_lang:str
+    country_birth: str
+    country_res: str
+    }
+    """
+    global session
+    token=funcs.validating_token(Authorization)
+
+    neo4j_statement = "match (us:User {userId:'" + token['userId'] + "') \n" + \
+                    "set us.keypass = '" + datas.newkeypass + "', \n" + \
+                    "  us.name = '" + datas.name + "', \n" + \
+                    "  us.native_lang = '" + datas.native_lang + "', \n" + \
+                    "  us.selected_lang = '" + datas.selected_lang + "', \n" + \
+                    "  us.country_birth = '" + datas.country_birth + "', \n" + \
+                    "  us.country_res = '" + datas.country_res + "', \n" + \
+                    "return us.userId, us.keypass limit 1"
+
+    nodes, log = neo4j_exec(session, token['userId'],
+                        log_description="update password",
+                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+    """nodes = user_change_password(session, token['userId'].lower(), datas.oldkeypass, datas.newkeypass,
+                                 filename=__name__,
+                                 function_name=myfunctionname())"""
+    
+    result = {}
+    for elem in nodes:
+        result=dict(elem)
+
+    if len(result) == 0:
+        #print("id: ", token['userId'], " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raiseHTTP - user / pass")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect user or password",
+        )
+    else: # update pass was done
+        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
+                    ", user:'" + token['userId'] + "'}) \n" + \
+                    "where elementId(l) = '" + log[0] + "' \n" + \
+                    "set l.ctClosed = datetime(), l.additionalResult = 'updated password' \n" + \
+                    "return count(l)"
+        
+        nodes, log = neo4j_exec(session, token['userId'],
+                        log_description="updating password"
+                        , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                        , recLog=False)
+        
+    print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    return {'message': "password updated"}
+
+
+
 
 @router.get("/org/")
 async def get_org(Authorization: Optional[str] = Header(None)):

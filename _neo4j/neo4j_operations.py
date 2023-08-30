@@ -290,58 +290,6 @@ def get_sugcategories(session, user):
     return scatdic
 
 
-# login de usuario
-def login_validate_user_pass_trx_borrar(session, login):
-    def login_validate_user_pass(session, login):        
-        query = "create (l:Log {user:$login, ctInsert:datetime(), ctClosed: datetime(), "+ \
-                        "trx:'trying login for the user', \n" + \
-                        "exec_fname:'" + __name__+ "', \n"+ \
-                        "exec_fn: 'login_validate_user_pass_trx'}) " + \
-                "with l.user as userId \n" + \
-                "match (us:User {userId: userId }) " +  \
-                "return us.userId, us.name, us.keypass, us.age, \n" + \
-                    "us.nativeLang, us.country_birth, us.country_res limit 1"
-        nodes = session.run(query, login=login)
-        return nodes
-
-    resp = login_validate_user_pass(session, login)
-    #print(f"resp: {type(resp)} {resp}")
-    result = {}
-    for elem in resp:
-        result=dict(elem) #print(f"elem: {type(elem)} {elem}")        
-    return result 
-
-# chage user password
-def user_change_password_borrar(session, login, old_pass, new_pass, filename=None, function_name=None):
-    def change_pass(session, login, old_pass, new_pass):        
-        query = "match (us:User {userId: $login, keypass: $oldpass}) \n" +  \
-                "set us.keypass = $newpass \n" + \
-                "return us.userId, us.keypass limit 1"
-        
-        nodes = session.run(query, login=login, oldpass = old_pass, newpass = new_pass)
-        return nodes
-
-    resp = change_pass(session, login, old_pass, new_pass)
-    result = {}
-    for elem in resp:
-        #print(f"elem: {type(elem)} {elem}")     
-        result=dict(elem)
-    #print('chagnepasswrod:', result)
-
-    if len(result) == 0:
-        trx = "Incorrect user or password"
-    else:
-        trx = "Password updated"
-    
-    log = neo4_log(session, login, "Updating password - " + trx, filename, function_name)
-    """
-    q01(session, "match (l:Log {ctInsert:datetime('" + str(log[1]) + "'), user:'" + login + "'}) \n" + \
-                "where id(l) = " + str(log[0]) + " \n" + \
-                "set l.ctClosed = datetime() \n" + \
-                "return count(l)"
-    )
-    """
-    return result
 
 def create_new_word_sound(tx, session, word, bfield):
     #print(f"\nsession: {session} \n")

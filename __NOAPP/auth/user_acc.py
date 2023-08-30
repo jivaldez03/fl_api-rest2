@@ -34,7 +34,7 @@ def login_user(user, keypass):
                     "age":0, 
                     "country_birth": result["us.country_birth"], 
                     "country_res": result["us.country_res"],
-                    "native_lang" : result["us.nativeLang"]
+                    "native_lang" : result["us.native_lang"]
                 }
     else:
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password', "username": "",  
@@ -118,7 +118,7 @@ def login_user_NOUSAR(user, keypass, User_Agent: Annotated[str, Header()]=None, 
                     "age":0, 
                     "country_birth": result["us.country_birth"], 
                     "country_res": result["us.country_res"],
-                    "native_lang" : result["us.nativeLang"]
+                    "native_lang" : result["us.native_lang"]
                 }
     else:
         resp_dict ={'status': 'ERROR', 'text': 'invalid user or password', "username": "",  
