@@ -549,7 +549,8 @@ async def recslinks(Authorization: Optional[str] = Header(None)):
                 "match (u:User {userId:userId})-[ro:RIGHTS_TO]->(o:Organization) \n" + \
                     "<-[r:ORG_RECLINK]-(rl:RecLinks) \n" + \
                 "return rl.image as logo,  rl.name as name, rl.link as link, \n" + \
-                    "coalesce(rl[u.selected_lang],rl['Spanish']) as texttoshow \n" + \
+                    "coalesce(rl[u.selected_lang],rl['Spanish']) as texttoshow, \n" + \
+                    "rl.imagelink as imagelink \n" + \
                 "order by rl.sorted"      
     #print(f"statement pronun: {statement}")
 
