@@ -178,7 +178,7 @@ def email_send(target_userId, target_email, message, subject):
 
     msg = EmailMessage()
     if subject == None:
-        msg["Subject"] = "Password reset"
+        msg["Subject"] = "DTone - Private Message"
     else:
         msg["Subject"] = subject
 

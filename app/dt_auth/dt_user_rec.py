@@ -75,13 +75,13 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
         #encoding = 'utf-8'
         serverlnk = ""
         for elehead in request.scope['headers']:
-            print('eeeelehead:', elehead, type(elehead))
+            #print('eeeelehead:', elehead, type(elehead))
             val=str(elehead[0],'utf-8')
             if val == 'host':
                 serverlnk = str(elehead[1], 'utf-8')
         #print(str(request.scope['headers'])) # , 'utf-8')
 
-        print('eeeelehead severlink:', serverlnk)
+        #print('eeeelehead severlink:', serverlnk)
         #serverlnk = str(request.scope['headers'][0][1], 'utf-8')        
         return met, path, serverlnk
     
@@ -101,7 +101,7 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
     neo4j_statement = "match (u:User {email:'" + useremail + "'}) \n" + \
                     "set u.temp_access = '" + temppass + "', \n" + \
                     "u.temp_access_dt = datetime() \n" + \
-                    "return u.userId, u.email limit 1"
+                    "return u.userId, u.email, u.selected_lang as selected_lang limit 1"
     
     #print("nneo4j: ", neo4j_statement)
 
@@ -118,15 +118,23 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
     userIdtoChange = sdict.get("u.userId", "")
     #print("\n\nnneo4j despude de ejecución: - solo FALTA ENVIAR MAIL")
 
-
     if datas.user_email == emailuser:
-        msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTL, " + \
-            "al dar click al siguiente link su password seŕa renovado, y " + \
-            "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n" + \
-            lnk_toanswer + temppass +  " \n\n" + \
-            "Esta notificación no requiere respuesta."
-        
-        sentmail = email_send(userId, datas.user_email, msg)
+        if sdict["selected_lang"] == 'Es':
+            msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTone, " + \
+                "al dar click al siguiente link su password seŕa renovado, y " + \
+                "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n" + \
+                lnk_toanswer + temppass +  " \n\n" + \
+                "Esta notificación no requiere respuesta."
+            subj = "DTone - Notificación de Solicitud de Cambio de Password"
+        else:
+            msg = "This message (valid for 10 minutes) was at the express request of the user in DTOne, " + \
+                "by clicking the following link your password will be renewed, and " + \
+                "you will receive a new email with access instructions \n\n" + \
+                lnk_toanswer + temppass +  " \n\n" + \
+                "This notification does not require a response."          
+            subj = "DTone - Notification of Renewed Password Request"
+
+        sentmail = email_send(userId, datas.user_email, msg, subj)
     else:
         sentmail = "email has been sent to " + userId
 
@@ -145,8 +153,9 @@ def user_change_pass(code:str):
 
     neo4j_statement = "match (u:User {temp_access:'" + code + "'}) \n" + \
                     "where (u.temp_access_dt + duration({minutes: 10})) >=  datetime() \n" + \
-                    "set u.keypass = '" + temppass + "', u.ctUpdate = datetime() \n" + \
-                    "return u.userId, u.email"
+                    "set u.keypass = '" + temppass + "', \n" + \
+                        "u.ctUpdate = datetime() \n" + \
+                    "return u.userId, u.email, u.selected_land as selected_lang"
     
     nodes, log = neo4j_exec(session, 'admin', 
                         log_description="reset password notification",
@@ -161,8 +170,13 @@ def user_change_pass(code:str):
     emailuser = sdict.get("u.email", "")
     
     if emailuser != "":
-        msg = "Su password ha sido renovado, nuevo password: "+ temppass
-        sentmail = email_send(userId, emailuser, msg)
+        if sdict["selected_lang"] == 'Es':
+            msg = "Su password ha sido renovado, su nuevo password es:" + temppass
+            subj = "DTone - Notificación de Modificación de Password"
+        else:
+            msg = "Password has been updated, your new password is:" + temppass
+            subj = "DTone - Notification of Password Updated"        
+        sentmail = email_send(userId, emailuser, msg, subj)
     else:
         sentmail = "something was wrong"
     #print("ssssssentmail to user", userId, emailuser, sentmail)
