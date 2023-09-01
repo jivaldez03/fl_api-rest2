@@ -205,26 +205,31 @@ async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(
     {
     userId:str
     orgId:str
-    email:str
     name: str
+    email:str
+    email_alt:str
     native_lang:str
     selected_lang:str
     country_birth: str
     country_res: str
+    koflic
     }
     """
     global session
     token=funcs.validating_token(Authorization)
     orgId = "DTL-01"
 
-    neo4j_statement = "merge (us:User {userId:'" + datas.userId + "'}) \n" + \
-                    " on match set us.ctUpdate = datetime()  \n" + \
-                    " on create set us.ctInsert = datetime(), us.keypass = '.' \n" + \
+    neo4j_statement = "match (us:User {userId:'" + datas.userId + "'}) \n" + \
+                    " //on match set us.ctUpdate = datetime()  \n" + \
+                    " //on create set us.ctInsert = datetime(), us.keypass = '.' \n" + \
                     "set us.name = '" + datas.name + "', \n" + \
+                    "  us.email = '" + datas.email + "', \n" + \
+                    "  us.email_alt = '" + datas.email_alt + "', \n" + \
                     "  us.native_lang = '" + datas.native_lang + "', \n" + \
                     "  us.selected_lang = '" + datas.selected_lang + "', \n" + \
                     "  us.country_birth = '" + datas.country_birth + "', \n" + \
-                    "  us.country_res = '" + datas.country_res + "' \n" + \
+                    "  us.country_res = '" + datas.country_res + "', \n" + \
+                    "  us.kol = '" + datas.kolic + "', us.ctUpdate = datetime() \n" + \
                     "with us \n" + \
                     "match (o:Organization {idOrg:'" + orgId + "'})" + \
                     "merge (o)<-[rou:RIGHTS_TO]-(us) \n" + \

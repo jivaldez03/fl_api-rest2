@@ -16,12 +16,14 @@ class ForResetPass(BaseModel):
 class ForUserReg(BaseModel):
     userId:str
     orgId: str
-    email:str
     name: str
+    email:str
+    email_alt:str
     native_lang:str
     selected_lang:str
     country_birth: str
     country_res: str
+    kolic : str
     
 
 

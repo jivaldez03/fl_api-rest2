@@ -317,7 +317,9 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
                         ", us.native_lang as native_lang \n" + \
                         ", us.selected_lang as selected_lang \n" + \
                         ", toString(us.ctInsert) as us_ctInsert \n" + \
-                        ", us.email as usemail, us.defaultCap as capacity \n" + \
+                        ", us.email as usemail, us.email_alt as usemail_alt \n" + \
+                        ", us.kol as koflic \n" + \
+                        ", us.defaultCap as capacity \n" + \
                         ", rep.contactId as contactId \n" + \
                         ", rep.name as contactName \n" + \
                         ", rep.phone as contactPhone \n" + \
@@ -1360,4 +1362,5 @@ async def get_user_words4_borrar(idScat:int, package:str, capacity:int
 
     print("        ->   ========== ending post_user_words4 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return result
+
 
