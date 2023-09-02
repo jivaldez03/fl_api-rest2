@@ -172,13 +172,13 @@ def user_change_pass(code:str):
     
     if emailuser != "":
         if sdict["selected_lang"] == 'Es':
-            msg = "Su password ha sido renovado, su nuevo password es:" + temppass
+            msg = "Su password ha sido renovado, su nuevo password es: " + temppass
             subj = "DTone - Notificación de Modificación de Password"
         else:
-            msg = "Password has been updated, your new password is:" + temppass
+            msg = "Password has been updated, your new password is: " + temppass
             subj = "DTone - Notification of Password Updated"        
         sentmail = email_send(userId, emailuser, msg, subj)
     else:
-        sentmail = "something was wrong"
-    #print("ssssssentmail to user", userId, emailuser, sentmail)
+        sentmail = "Something was wrong, review your email."
+    
     return sentmail
