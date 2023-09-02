@@ -154,8 +154,9 @@ def user_change_pass(code:str):
     neo4j_statement = "match (u:User {temp_access:'" + code + "'}) \n" + \
                     "where (u.temp_access_dt + duration({minutes: 10})) >=  datetime() \n" + \
                     "set u.keypass = '" + temppass + "', \n" + \
+                        "u.temp_access = reverse(u.temp_access), \n" + \
                         "u.ctUpdate = datetime() \n" + \
-                    "return u.userId, u.email, u.selected_land as selected_lang"
+                    "return u.userId, u.email, u.selected_lang as selected_lang"
     
     nodes, log = neo4j_exec(session, 'admin', 
                         log_description="reset password notification",
