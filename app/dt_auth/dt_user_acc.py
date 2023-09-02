@@ -280,7 +280,7 @@ async def get_org(Authorization: Optional[str] = Header(None)):
 
 
 @router.get("/countries/")
-async def get_org(Authorization: Optional[str] = Header(None)):
+async def get_countries(Authorization: Optional[str] = Header(None)):
     """
     Function to get all countries
 
@@ -318,7 +318,7 @@ async def get_org(Authorization: Optional[str] = Header(None)):
     listcat.append({'country':'El Salvador'})
     listcat.append({'country':'Belice'})
     listcat.append({'country':'Chile'})
-    
+
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listcat
 
