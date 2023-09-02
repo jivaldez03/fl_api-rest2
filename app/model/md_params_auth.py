@@ -18,12 +18,12 @@ class ForUserReg(BaseModel):
     orgId: str
     name: str
     email:str
-    email_alt:str
-    native_lang:str
-    selected_lang:str
-    country_birth: str
-    country_res: str
-    kolic : str
+    email_alt:str=None
+    native_lang:str=None
+    selected_lang:str=None
+    country_birth: str=None
+    country_res: str=None
+    kolic : str=None
     
 
 

@@ -312,7 +312,6 @@ async def get_config_uid(Authorization: Optional[str] = Header(None)):
                         "optional match (us)-[r:FIRSTCONTACT]->(rep:FirstContact) \n" + \
                     "return us.userId as userId \n" + \
                         ", us.name as name \n" + \
-                        ", us.birth_year as birth_year, us.month_year as month_year \n" + \
                         ", us.country_birth as country_birth, us.country_res as country_res \n" + \
                         ", us.native_lang as native_lang \n" + \
                         ", us.selected_lang as selected_lang \n" + \

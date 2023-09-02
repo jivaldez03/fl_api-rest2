@@ -209,24 +209,35 @@ async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(
     token=funcs.validating_token(Authorization)
     orgId = "DTL-01"
 
+    dname = datas.name if not isinstance(datas.name, type(None)) else datas.userId
+    demail = datas.email if not isinstance(datas.email, type(None)) else '__'
+    demail_alt = datas.email_alt if not isinstance(datas.email_alt, type(None)) else 'null'
+    dnative_lang = datas.native_lang if not isinstance(datas.native_lang, type(None)) else 'Español'
+    dselected_lang = datas.selected_lang if not isinstance(datas.selected_lang, type(None)) else 'Sp'
+    dcountry_birth = datas.country_birth if not isinstance(datas.country_birth, type(None)) else 'null'
+    dcountry_res = datas.country_res if not isinstance(datas.country_res, type(None)) else 'null'
+    dkol = datas.kolic if not isinstance(datas.kolic, type(None)) else 'UNIVERSAL'
+
     neo4j_statement = "merge (us:User {userId:'" + datas.userId + "'}) \n" + \
                     " on match set us.ctUpdate = datetime()  \n" + \
-                    " on create set us.ctInsert = datetime(), us.keypass='"+datas.userId+"' \n" + \
-                    "set us.name = '" + datas.name + "', \n" + \
-                    "  us.email = '" + datas.email + "', \n" + \
-                    "  us.email_alt = '" + datas.email_alt + "', \n" + \
-                    "  us.native_lang = '" + datas.native_lang + "', \n" + \
-                    "  us.selected_lang = '" + datas.selected_lang + "', \n" + \
-                    "  us.country_birth = '" + datas.country_birth + "', \n" + \
-                    "  us.country_res = '" + datas.country_res + "', \n" + \
-                    "  us.kol = '" + datas.kolic + "', us.ctUpdate = datetime() \n" + \
+                    " on create set us.ctInsert = datetime(), us.keypass='"+ datas.userId+"' \n" + \
+                    "set us.name = '" + dname + "', \n" + \
+                    "  us.email = '" + demail + "', \n" + \
+                    "  us.email_alt = '" + demail_alt + "', \n" + \
+                    "  us.native_lang = '" + dnative_lang + "', \n" + \
+                    "  us.selected_lang = '" + dselected_lang + "', \n" + \
+                    "  us.country_birth = '" + dcountry_birth + "', \n" + \
+                    "  us.country_res = '" + dcountry_res + "', \n" + \
+                    "  us.kol = '" + dkol + "', \n" + \
+                    "  us.ctUpdate = datetime() \n" + \
                     "with us \n" + \
                     "match (o:Organization {idOrg:'" + orgId + "'})" + \
                     "merge (o)<-[rou:RIGHTS_TO]-(us) \n" + \
                     " on match set rou.ctUpdate = datetime()  \n" + \
                     " on create set rou.ctInsert = datetime() \n" + \
-                    "return us.userId, us.name, us.native_lang, us.selected_lang limit 1"
+                    "return us.userId, us.name, us.native_lang, us.selected_lang, us.kol limit 1"
 
+    #print("neo4j:", neo4j_statement)
     nodes, log = neo4j_exec(session, token['userId'],
                         log_description="update user configure id",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
