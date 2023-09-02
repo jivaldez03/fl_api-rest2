@@ -122,14 +122,14 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
         if sdict["selected_lang"] == 'Es':
             msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTone, " + \
                 "al dar click al siguiente link su password seŕa renovado, y " + \
-                "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n" + \
+                "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n " + \
                 lnk_toanswer + temppass +  " \n\n" + \
                 "Esta notificación no requiere respuesta."
             subj = "DTone - Notificación de Solicitud de Cambio de Password"
         else:
             msg = "This message (valid for 10 minutes) was at the express request of the user in DTOne, " + \
                 "by clicking the following link your password will be renewed, and " + \
-                "you will receive a new email with access instructions \n\n" + \
+                "you will receive a new email with access instructions \n\n " + \
                 lnk_toanswer + temppass +  " \n\n" + \
                 "This notification does not require a response."          
             subj = "DTone - Notification of Renewed Password Request"
