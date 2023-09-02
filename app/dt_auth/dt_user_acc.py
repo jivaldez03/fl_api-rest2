@@ -278,3 +278,47 @@ async def get_org(Authorization: Optional[str] = Header(None)):
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listcat
 
+
+@router.get("/countries/")
+async def get_org(Authorization: Optional[str] = Header(None)):
+    """
+    Function to get all countries
+
+    """
+    global appNeo, session, log 
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+        
+    neo4j_statement = "with '" + userId + "' as userId " + \
+                        "match (u:User {userId:userId})-[:RIGHTS_TO]->(o:Organization) \n" + \
+                        "return o.idOrg as idOrg, o.name as name, o.lSource as Source, o.lTarget as Target"
+    
+    #print('cats-subcats:', neo4j_statement)
+    """
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting organization for the user",
+                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+    listcat = []
+    for node in nodes:
+        sdict = dict(node)
+        ndic = {'orgId': sdict["idOrg"], 'OrgName': sdict["name"]
+                , 'source' : sdict["Source"], 'target': sdict["Target"]}
+        listcat.append(ndic)
+    """
+    listcat = []
+    sdict = {'country':'México'}
+    sdict2 = {'country':'Costa Rica'}
+    sdict3 = {'country':'United States'}
+    listcat = [sdict, sdict2, sdict3]
+    listcat.append({'country':'Guatemala'})
+    listcat.append({'country':'Puerto Rico'})
+    listcat.append({'country':'Germany'})
+    listcat.append({'country':'Hungry'})
+    listcat.append({'country':'El Salvador'})
+    listcat.append({'country':'Belice'})
+    listcat.append({'country':'Chile'})
+    
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listcat
+

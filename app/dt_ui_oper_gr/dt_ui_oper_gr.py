@@ -568,3 +568,37 @@ async def recslinks(Authorization: Optional[str] = Header(None)):
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
 
+
+@router.get("/reclinks/")
+async def recslinks(Authorization: Optional[str] = Header(None)):
+    """    
+
+    """
+    global appNeo, session, log
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+
+    statement = "with " + "'" + userId + "' as userId \n" + \
+                "match (u:User {userId:userId})-[ro:RIGHTS_TO]->(o:Organization) \n" + \
+                    "<-[r:ORG_RECLINK]-(rl:RecLinks) \n" + \
+                "return rl.image as logo,  rl.name as name, rl.link as link, \n" + \
+                    "coalesce(rl[u.selected_lang],rl['Spanish']) as texttoshow, \n" + \
+                    "rl.imagelink as imagelink \n" + \
+                "order by rl.sorted"      
+    #print(f"statement pronun: {statement}")
+
+    await awsleep(0)
+
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting recommended links",
+                        statement=statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    listEle = []
+    for ele in nodes:
+        elems = dict(ele)
+        listEle.append(elems)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listEle
+
