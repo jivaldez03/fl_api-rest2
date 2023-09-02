@@ -280,7 +280,7 @@ async def get_org(Authorization: Optional[str] = Header(None)):
 
 
 @router.get("/countries/")
-async def get_countries(Authorization: Optional[str] = Header(None)):
+async def countries(Authorization: Optional[str] = Header(None)):
     """
     Function to get all countries
 
@@ -318,6 +318,56 @@ async def get_countries(Authorization: Optional[str] = Header(None)):
     listcat.append({'country':'El Salvador'})
     listcat.append({'country':'Belice'})
     listcat.append({'country':'Chile'})
+
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listcat
+
+
+@router.get("/get_countries/")
+async def get_countries(Authorization: Optional[str] = Header(None)):
+    """
+    Function to get all countries
+
+    """
+    global appNeo, session, log 
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+        
+    neo4j_statement = "match (cou:Country) \n" + \
+                      "return distinct cou.name as name order by cou.name"
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting organization for the user",
+                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+    listcat = []
+    for node in nodes:
+        sdict = dict(node)        
+        listcat.append({'country': sdict['name']})
+
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listcat
+
+
+@router.get("/get_langs/")
+async def get_langs(Authorization: Optional[str] = Header(None)):
+    """
+    Function to get all languages
+
+    """
+    global appNeo, session, log 
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+        
+    neo4j_statement = "match (cou:Country) \n" + \
+                      "return distinct cou.language as langname order by langname"
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting organization for the user",
+                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+    listcat = []
+    for node in nodes:
+        sdict = dict(node)        
+        listcat.append({'language': sdict['langname']})
 
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listcat
