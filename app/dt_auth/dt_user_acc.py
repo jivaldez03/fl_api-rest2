@@ -85,7 +85,7 @@ async def login_user(datas: ForLogin):
                     "native_lang" : result["us.native_lang"],
                     "selected_lang" : result["us.selected_lang"]
                 }
-        print("resp_dict:", resp_dict)
+        #print("resp_dict:", resp_dict)
         
         neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
                     ", user:'" + datas.userId.lower() + "'}) \n" + \

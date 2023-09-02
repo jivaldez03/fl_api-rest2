@@ -128,11 +128,13 @@ def validating_exist_level(level):
         )
     return levelSeqPosition
 
-def monitoring_function(functiontovalidate):
+def monitoring_function(functiontovalidate, appcontrol):
     """
     
     """
     #print("log-active:", getenv('LOG_ACTIVE'), type(getenv('LOG_ACTIVE')) )
+    #print("applogs", appcontrol.logs_rec, appcontrol.email_cfg)
+    """
     if getenv('LOG_ACTIVE') == 'True':
         lfunctions = (getenv("MONITORING_FUNCTIONS")).split(',\n')    
         #print('functionsvalidate: ', functiontovalidate, lfunctions, type(functiontovalidate))
@@ -144,7 +146,11 @@ def monitoring_function(functiontovalidate):
             return False
     else:
         return False
-
+    """
+    if functiontovalidate in appcontrol.logs_rec:
+        return True
+    else:
+        return False
 
 def _getenv_function(env_variable):
     """
@@ -154,12 +160,11 @@ def _getenv_function(env_variable):
 
 
 
-def email_send(target_userId, target_email, message, subject):
-    edom = "delthatech"
-    #email_pass = "Delthatech_2023"
-
-    email_ad = "dtl@" +  edom + "." + "com"
-    email_ps = edom.title() + "_2023"
+def email_send(target_userId, target_email, message, subject, appcontrol):
+    #edom = "delthatech"
+    email_ad = appcontrol.email_cfg.get("email_account", "xx@hotmail.com")
+    email_ps = appcontrol.email_cfg.get("email_pass", "12345")
+    email_ps = email_ps.replace("$","").replace("___dtl","")
 
     if target_email == None:
         target_email =  'dtl@delthatech.com'
@@ -171,7 +176,7 @@ def email_send(target_userId, target_email, message, subject):
     #get_random_string(8)
 
     # imap.secureserver.net
-    #dtl@delthatech.com - Delthatech_2023  
+    #dtl@delthatech.com - Delthatechji_2023  
     # (esta cuenta de email es del hosting de godaddy)
 
     #print("email hosted by: ", email_ad, email_ps)
@@ -189,8 +194,9 @@ def email_send(target_userId, target_email, message, subject):
     msg_error = ""
     #"""
     try:
-        outgoingsemails="smtpout.secureserver.net" # imap.secureserver.net
-        outgoingsport = 465
+        outgoingsemails=appcontrol.email_cfg.get("smtpout.secureserver.net", "smtpout.secureserver.net") # imap.secureserver.net
+        outgoingsport = int(appcontrol.email_cfg.get("outgoingsport", 990))  #465
+
         with smtplib.SMTP_SSL(host=outgoingsemails, port=outgoingsport) as smtp:
             smtp.login(email_ad, email_ps)
             smtp.send_message(msg)

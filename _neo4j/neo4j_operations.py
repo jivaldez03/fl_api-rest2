@@ -48,7 +48,7 @@ def q01_borrar(session, strtoexec= None):
     return nodes
 
 def recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuser):
-    global timeforneo4jdriver
+    global timeforneo4jdriver, appNeo
     
     # MENSAJE POR EXCEPTION OCURRIDA - SE NOTIFICA AL ADMINISTRADOR
     if kodb() == 1: 
@@ -56,7 +56,7 @@ def recovery_from_neo4jexception(user, statuserror, detailmessage, messageforuse
     else:
         serviceActive = 'prod'
     rmail = email_send(user, None, _getdatime_T() + "\n\n" + detailmessage + "\n\n" + messageforuser
-                        , 'Neo4j Execution Error - ' + user + ' - ' + serviceActive )
+                        , 'Neo4j Execution Error - ' + user + ' - ' + serviceActive, appNeo )
     if rmail == "False":
             print("Exception:", rmail)
             # log.trx = datetime on error + exception
@@ -105,7 +105,7 @@ def execution(function_name, statement, user, log_exec):
                 #print("msgreconnect", msgreconnect)
                 try:
                     rmail = email_send(user, None, msgreconnect
-                                    , 'Neo4j RESTART CONNECTION - ' + serviceActive )                    
+                                    , 'Neo4j RESTART CONNECTION - ' + serviceActive, appNeo)                    
                     if rmail == "False":
                             print("Exception:", rmail)
                             errorlog = neo4_log(session, user, "smtplib.SMTP_SSL.smtp.send_message"
@@ -257,7 +257,7 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
 
     #print("\n\n**********", user, "----> recording logs - the beginning" , function_name)
     log = [None,""]
-    if monitoring_function(function_name):
+    if monitoring_function(function_name, appNeo):
         log_description += "\n----\n" + statement[0:15] + " ... " + statement[-15:] + "\n----\n"
         if recLog:
             log = neo4_log(session, user, log_description, filename, function_name)    

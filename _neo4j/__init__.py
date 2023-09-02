@@ -17,6 +17,24 @@ class App:
     def close(self):
         # Don't forget to close the driver connection when you are finished with it
         self.driver.close()
+
+    def config_env(self, dynamic_cfg):
+        cfgtype = dynamic_cfg.get('cfgtype', [])
+        varname = dynamic_cfg.get('varname', [])
+        varvalue = dynamic_cfg.get('varvalue', [])
+        logs_rec = []
+        email_cfg = {}
+        for gia in range(len(cfgtype)):
+            if cfgtype[gia] == 'LOGS_REC':
+                logs_rec.append(varname[gia])
+            elif cfgtype[gia] == 'EMAIL_CONFIG':
+                email_cfg[varname[gia]] = varvalue[gia]
+            else: 
+                print('INCORRECT SOME CONFIGURATIONS RECORDS')
+        self.logs_rec = logs_rec
+        self.email_cfg = email_cfg
+        return
+    
     """
     def create_friendship(self, person1_name, person2_name):
         print('create friendship')
@@ -86,9 +104,19 @@ def create_neo4j_app():
 def connectNeo4j(user, description):
     app,session = create_neo4j_app()
     logofaccess = "create (n:Log {user: '" + user + "', trx: '" + description + "'}) " \
-                            "set n.ctInsert = datetime() " \
-                            "return n"
+                    "  set n.ctInsert = datetime() " \
+                    "with n " + \
+                    "match (cfg:ConfigVars {actived:true}) " + \
+                    "return n.user, \n" + \
+                            "collect(coalesce(cfg.cfg_type, 'null')) as cfgtype, \n" + \
+                            "collect(coalesce(cfg.var_name, 'null')) as varname, \n" + \
+                            "collect(coalesce(cfg.var_value, 'null')) as varvalue "
     log = session.run(logofaccess)
+    sdict = {}
+    for node in log:
+        sdict = dict(node)
+    app.config_env(sdict)
+    #print('config vars values:', sdict, "\napp.logs:", app.logs_rec, "\napp.email:", app.email_cfg)
     return app, session, log
 
 #app = create_neo4j_app() # create_app()

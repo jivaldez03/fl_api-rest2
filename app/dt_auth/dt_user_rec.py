@@ -6,7 +6,7 @@ from fastapi import Request, APIRouter # FastAPI,
 from app.model.md_params_auth import ForResetPass
 
 from _neo4j.neo4j_operations import neo4j_exec
-from _neo4j import session
+from _neo4j import appNeo, session
 
 from __generalFunctions import myfunctionname, email_send #, get_path
 
@@ -62,6 +62,7 @@ def email_send(target_userId, target_email, message):
 
 @router.post("/reset_pass_notification/")
 def user_change_pass_notification(datas:ForResetPass, request:Request):
+    global appNeo
     """
     Function for reset the user password \n
     {
@@ -134,7 +135,7 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
                 "This notification does not require a response."          
             subj = "DTone - Notification of Renewed Password Request"
 
-        sentmail = email_send(userId, datas.user_email, msg, subj)
+        sentmail = email_send(userId, datas.user_email, msg, subj, appNeo)
     else:
         sentmail = "email has been sent to " + userId
 
@@ -143,6 +144,7 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
 
 @router.get("/reset_pass/{code}")
 def user_change_pass(code:str):
+    global appNeo
     """
     Function for reset the user password \n
     {
@@ -177,7 +179,7 @@ def user_change_pass(code:str):
         else:
             msg = "Password has been updated, your new password is: " + temppass
             subj = "DTone - Notification of Password Updated"        
-        sentmail = email_send(userId, emailuser, msg, subj)
+        sentmail = email_send(userId, emailuser, msg, subj, appNeo)
     else:
         sentmail = "Something was wrong, review your email."
     
