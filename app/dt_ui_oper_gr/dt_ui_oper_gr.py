@@ -631,7 +631,6 @@ async def asksupport(datas:ForAskSupport, Authorization: Optional[str] = Header(
     dtexec = _getdatime_T()
     subj = datas.subject.replace("'",'"')
     ldesc = datas.longdescription.replace("'",'"')
-    print(token, type(userId), userId)
 
     suppId = get_random_string(20)
 
