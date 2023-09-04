@@ -19,8 +19,8 @@ myfunctionname = lambda: str(inspect.stack()[1][3])
 
 load_dotenv()
 
-myConjutationLink = lambda verb, lang: (getenv("CONJUGATION_VERBS_LINK")) + verb if lang == 'English' else 'https://www.ingles.com/verbos/' + verb
-
+myConjutationLink = lambda verb, lang: (getenv("CONJUGATION_VERBS_LINK")) + verb \
+                            if lang == 'English' else (getenv("CONJUGATION_SPANISH_VERBS_LINK")) + verb
 
 def _getdatetime():
     return dt.now()

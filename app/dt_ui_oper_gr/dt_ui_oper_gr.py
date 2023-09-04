@@ -232,6 +232,13 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
     listEle = []
     for ele in nodes:
         elems = dict(ele)
+        en_let = list(elems["worde"])
+        if len(en_let) < 3 :
+            en_let.reverse()
+        else:
+            shuffle(en_let)
+        elems["wordstouser"] = en_let
+        print("----------------------------> ", en_let, elems['worde'])
         listEle.append(elems)
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
@@ -260,10 +267,10 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     weekk = dtimenow.strftime("%W") # , status:'open'
 
     kogame = datas.kogame.upper()
-    if kogame in ["GUESS_TW", "TRY_TW"]:
-        pass
-    else: 
-        kogame = 'G_UNKNOWN'
+    #if kogame in ["GUESS_TW", "TRY_TW","PUT_TOGETHER_WORD"] :kogame' = "PUT_TOGETHER_WORD"
+    #    pass
+    #else: 
+    #    kogame = 'G_UNKNOWN'
     swords = str(datas.words)
     sswords = swords.replace("[",",").replace("]",",").replace("'","").replace('"',"").replace(", ",",")
     #print("\n\n", datas, type(swords), type(datas.words), "\n\n")
