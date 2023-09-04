@@ -54,3 +54,9 @@ class ForLevelEval(BaseModel):
     limit   : int
     word    : str
     setlevel: bool
+
+
+class ForAskSupport(BaseModel):
+    classification  : str
+    subject         : str
+    longdescription : str

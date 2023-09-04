@@ -8,14 +8,14 @@ from app.model.md_params_auth import ForResetPass
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session
 
-from __generalFunctions import myfunctionname, email_send #, get_path
+from __generalFunctions import myfunctionname, get_random_string, email_send #, get_path
 
 import random
 from string import ascii_letters
 
 router = APIRouter()
 
-def get_random_string(length):
+def get_random_string_borrar(length):
     # choose from all lowercase letter
     letters = ascii_letters # string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))

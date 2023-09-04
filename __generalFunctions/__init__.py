@@ -1,7 +1,9 @@
 from datetime import datetime as dt, timedelta
 from time import sleep as sleep
-from random import randint
+from random import randint, choice
 from re import compile, match
+
+from string import ascii_letters
 
 from jwt import encode, decode
 #import jwt
@@ -29,6 +31,13 @@ def _getdatetime():
 def _getdatime_T():
     return str(dt.now()).replace(' ','T')
 
+
+def get_random_string(length):
+    # choose from all lowercase letter
+    letters = ascii_letters # string.ascii_lowercase
+    result_str = ''.join(choice(letters) for i in range(length))
+    print("Random string of length", length, "is:", result_str)
+    return result_str
 
 def _sleep(secs, init_range=0, end_range=10):
     if secs:
@@ -160,7 +169,7 @@ def _getenv_function(env_variable):
 
 
 
-def email_send(target_userId, target_email, message, subject, appcontrol):
+def email_send(target_userId, target_email, message, subject, appcontrol, cc=None):
     #edom = "delthatech"
     email_ad = appcontrol.email_cfg.get("email_account", "xx@hotmail.com")
     email_ps = appcontrol.email_cfg.get("email_pass", "12345")
@@ -189,6 +198,11 @@ def email_send(target_userId, target_email, message, subject, appcontrol):
 
     msg["From"] = email_ad
     msg["To"] = target_email
+    if cc == None:
+        pass
+    else:
+        msg["Cc"] = cc
+    msg["Bcc"] = email_ad
     #print("tempasssss: ", message)
     msg.set_content(message)
     msg_error = ""

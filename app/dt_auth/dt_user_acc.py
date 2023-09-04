@@ -36,7 +36,7 @@ async def login_user(datas: ForLogin):
  
     neo4j_statement = "with '" + datas.userId.lower() +  "' as userId \n" + \
                 "match (us:User {userId: userId }) " +  \
-                "return us.userId, us.name, us.keypass, us.age, \n" + \
+                "return us.userId, us.name, us.keypass, us.age, us.email, us.email_alt, \n" + \
                     "us.native_lang, us.selected_lang, us.country_birth, us.country_res limit 1"
     nodes, log = neo4j_exec(session, datas.userId.lower(),
                         log_description="validate login user",
@@ -79,6 +79,8 @@ async def login_user(datas: ForLogin):
                     'text': 'successful access',
                     "userId":datas.userId.lower(),
                     "username": result["us.name"], 
+                    "useremail": result["us.email"],
+                    "useremail_alt": result["us.email_alt"],
                     "age":0, 
                     "country_birth": result["us.country_birth"], 
                     "country_res": result["us.country_res"],

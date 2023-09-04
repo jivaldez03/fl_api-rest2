@@ -4,7 +4,8 @@ from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session, log
 import __generalFunctions as funcs
 from __generalFunctions import myfunctionname \
-                            ,_getdatime_T, _getdatetime
+                            ,_getdatime_T, _getdatetime, email_send \
+                            , get_random_string
 
 from asyncio import sleep as awsleep
 
@@ -13,7 +14,8 @@ from asyncio import sleep as awsleep
 from random import shuffle as shuffle
 
 from app.model.md_params_oper import ForNamePackages, ForGames_KOW, \
-                                    ForGames_puzzle, ForGames_archive, ForLevelEval
+                                    ForGames_puzzle, ForGames_archive, ForLevelEval, \
+                                    ForAskSupport
 
 import signal
 signal.signal(signal.SIGWINCH, signal.SIG_IGN)
@@ -238,7 +240,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
         else:
             shuffle(en_let)
         elems["wordstouser"] = en_let
-        print("----------------------------> ", en_let, elems['worde'])
+        #print("----------------------------> ", en_let, elems['worde'])
         listEle.append(elems)
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
@@ -606,6 +608,71 @@ async def recslinks(Authorization: Optional[str] = Header(None)):
     for ele in nodes:
         elems = dict(ele)
         listEle.append(elems)
+    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
+    return listEle
+
+
+ 
+@router.post("/askforsupportoth/")
+async def asksupport(datas:ForAskSupport, Authorization: Optional[str] = Header(None)):
+    """
+    classification: str
+    subject : str
+    longdescription : str    
+    """
+    global appNeo, session, log
+
+    token=funcs.validating_token(Authorization)
+    userId = token['userId']
+    useremail = token['useremail']
+    useremail_alt = token['useremail_alt']
+    if useremail_alt and useremail_alt.strip() == "":
+        useremail_alt = None
+    dtexec = _getdatime_T()
+    subj = datas.subject.replace("'",'"')
+    ldesc = datas.longdescription.replace("'",'"')
+    print(token, type(userId), userId)
+
+    suppId = get_random_string(20)
+
+    statement = "with '" + userId + "' as userId, \n" + \
+                    "'" + suppId + "' as supportId, \n" + \
+                    "'" + datas.classification + "' as sclassification, \n" + \
+                    "'" + subj + "' as ssubject, \n" + \
+                    "'" + ldesc + "' as slongdescription \n" + \
+                "match (u:User {userId:userId}) \n" + \
+                "create (supp:Support {userId:userId, supportId:supportId, \n" + \
+                        "subject:ssubject, classification:sclassification}) \n" + \
+                " set supp.ctInsert = datetime(), supp.user_time = datetime('" + \
+                            dtexec + "'), \n " + \
+                "     supp.subject = ssubject, \n" + \
+                "     supp.long_description = slongdescription, \n" + \
+                "     supp.email = u.email, \n" + \
+                "     supp.email_alt = u.email_alt \n" + \
+                "merge (u)<-[r:USER_SUPPORT]-(supp) \n" + \
+                " set r.ctInsert = datetime() \n" + \
+                "return u.userId, u.email, u.email_alt limit 1"        
+    
+    #print("statement:\n",  statement)
+    await awsleep(0)
+    
+    #print(f"statement pronun: {statement}")
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="recording ask support",
+                        statement=statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    listEle = []
+    for ele in nodes:
+        elems = dict(ele)
+        listEle.append(elems)
+
+    email_send(userId, useremail, # + ',' + useremail_alt, \
+               "Code Id: " + suppId + "\n\n" + 
+                datas.longdescription + "\n\n\nuserId: " + userId,  \
+                'DTone - ' + datas.classification  + " (" + userId + "): " + datas.subject, \
+                appNeo, useremail_alt)
+
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
 
