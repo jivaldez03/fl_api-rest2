@@ -37,7 +37,8 @@ async def login_user(datas: ForLogin):
     neo4j_statement = "with '" + datas.userId.lower() +  "' as userId \n" + \
                 "match (us:User {userId: userId }) " +  \
                 "return us.userId, us.name, us.keypass, us.age, us.email, us.email_alt, \n" + \
-                    "us.native_lang, us.selected_lang, us.country_birth, us.country_res limit 1"
+                    "us.native_lang, coalesce(us.selected_lang,'es') as selected_lang, \n" + \
+                    "us.country_birth, us.country_res limit 1"
     nodes, log = neo4j_exec(session, datas.userId.lower(),
                         log_description="validate login user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -85,7 +86,7 @@ async def login_user(datas: ForLogin):
                     "country_birth": result["us.country_birth"], 
                     "country_res": result["us.country_res"],
                     "native_lang" : result["us.native_lang"],
-                    "selected_lang" : result["us.selected_lang"]
+                    "selected_lang" : result["selected_lang"]
                 }
         #print("resp_dict:", resp_dict)
         
@@ -106,7 +107,7 @@ async def login_user(datas: ForLogin):
                     "country_birth": result["us.country_birth"], 
                     "country_res": result["us.country_res"],
                     "native_lang" : result["us.native_lang"],
-                    "selected_lang" : result["us.selected_lang"]
+                    "selected_lang" : result["selected_lang"]
         }
     else: # incorrect pass
         #log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())
