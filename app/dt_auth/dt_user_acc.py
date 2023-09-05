@@ -203,11 +203,18 @@ async def token_data(Authorization: Optional[str] = Header(None)):
     userId = token["userId"]
     name = token["username"]
     selected_lang = token["selected_lang"]
+
+    if selected_lang == 'Es':
+        koh = ['Soporte','Comentario', 'Licencias', 'Queja', 'Métodos de Pago', 'Otro']
+    else:
+        koh = ['Support','Comments', 'Licenses', 'Claim', 'Payment Methods', 'Other']
         
     print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {"user":userId, 
             "name": name, 
-            "selected_lang": selected_lang}
+            "selected_lang": selected_lang,
+            "koh" : koh
+    }
 
 
 @router.post("/userreg/")
