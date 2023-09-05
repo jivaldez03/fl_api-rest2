@@ -205,21 +205,21 @@ async def token_data(Authorization: Optional[str] = Header(None)):
     name = token["username"]
     selected_lang = token["selected_lang"]
 
-    koh_k = ['supp','comm', 'lics', 'clam', 'meth', 'othr']
+    kok = ['supp','comm', 'lics', 'clam', 'meth', 'othr']
     if selected_lang == 'es':
-        koh = { "text": ['Soporte','Comentario', 'Licencias', 'Queja', 'Métodos de Pago', 'Otro'],
-                "value": koh_k
-        }
+        koh = ['Soporte','Comentario', 'Licencias', 'Queja', 'Métodos de Pago', 'Otro']
     else:
-        koh = {"text":['Support','Comments', 'Licenses', 'Claim', 'Payment Methods', 'Other'],
-                "value": koh_k
-        }
+        koh = ['Support','Comments', 'Licenses', 'Claim', 'Payment Methods', 'Other']
+
+    koh_k = []
+    for gia, ele in enumerate(koh):
+        koh_k.append({"text": ele, "value": kok[gia]})
         
     print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {"user":userId, 
             "name": name, 
             "selected_lang": selected_lang,
-            "koh" : koh
+            "koh" : koh_k
     }
 
 
