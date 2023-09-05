@@ -136,6 +136,8 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
             subj = "DTone - Notification of Renewed Password Request"
 
         sentmail = email_send(userId, datas.user_email, msg, subj, appNeo)
+        refmail = datas.user_email.split('@')
+        sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
     else:
         sentmail = "email has been sent to " + userId
 
@@ -180,6 +182,8 @@ def user_change_pass(code:str):
             msg = "Password has been updated, your new password is: " + temppass
             subj = "DTone - Notification of Password Updated"        
         sentmail = email_send(userId, emailuser, msg, subj, appNeo)
+        refmail = emailuser.split('@')
+        sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
     else:
         sentmail = "Something was wrong, review your email."
     

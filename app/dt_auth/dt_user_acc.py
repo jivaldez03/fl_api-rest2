@@ -190,6 +190,26 @@ async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = H
     return {'message': "password updated"}
 
 
+@router.get("/tdt/")
+async def token_data(datas:ForChangePass, Authorization: Optional[str] = Header(None)):
+    """
+    Function for get tdt\n
+    {
+    }
+    """
+    global session
+    token=funcs.validating_token(Authorization)
+    
+    userId = token["userId"]
+    name = token["username"]
+    selected_lang = token["selected_lang"]
+        
+    print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    return {"user":userId, 
+            "name": name, 
+            "selected_lang": selected_lang}
+
+
 @router.post("/userreg/")
 async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(None)):
     """
