@@ -191,7 +191,7 @@ async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = H
 
 
 @router.get("/tdt/")
-async def token_data(datas:ForChangePass, Authorization: Optional[str] = Header(None)):
+async def token_data(Authorization: Optional[str] = Header(None)):
     """
     Function for get tdt\n
     {
