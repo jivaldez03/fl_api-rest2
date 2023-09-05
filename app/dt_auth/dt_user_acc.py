@@ -110,7 +110,7 @@ async def login_user(datas: ForLogin):
         }
     else: # incorrect pass
         #log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())
-        if result["us.selected_lang"] == 'Es':
+        if result["us.selected_lang"] == 'es':
             merror = "Usuario-Password Incorrecto"
         else:
             merror = "Invalid User-Password"
@@ -204,10 +204,15 @@ async def token_data(Authorization: Optional[str] = Header(None)):
     name = token["username"]
     selected_lang = token["selected_lang"]
 
-    if selected_lang == 'Es':
-        koh = ['Soporte','Comentario', 'Licencias', 'Queja', 'Métodos de Pago', 'Otro']
+    koh_k = ['supp','comm', 'lics', 'clam', 'meth', 'othr']
+    if selected_lang == 'es':
+        koh = { "text": ['Soporte','Comentario', 'Licencias', 'Queja', 'Métodos de Pago', 'Otro'],
+                "value": koh_k
+        }
     else:
-        koh = ['Support','Comments', 'Licenses', 'Claim', 'Payment Methods', 'Other']
+        koh = {"text":['Support','Comments', 'Licenses', 'Claim', 'Payment Methods', 'Other'],
+                "value": koh_k
+        }
         
     print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {"user":userId, 

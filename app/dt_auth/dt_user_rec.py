@@ -120,7 +120,7 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
     #print("\n\nnneo4j despude de ejecución: - solo FALTA ENVIAR MAIL")
 
     if datas.user_email == emailuser:
-        if sdict["selected_lang"] == 'Es':
+        if sdict["selected_lang"] == 'es':
             msg = "Este mensaje (es válido por 10 minutos) fue a solicitud expresa del usuario en DTone, " + \
                 "al dar click al siguiente link su password seŕa renovado, y " + \
                 "recibirá un nuevo correo electrónico con instrucciones de acceso \n\n " + \
@@ -175,7 +175,7 @@ def user_change_pass(code:str):
     emailuser = sdict.get("u.email", "")
     
     if emailuser != "":
-        if sdict["selected_lang"] == 'Es':
+        if sdict["selected_lang"] == 'es':
             msg = "Su password ha sido renovado, su nuevo password es: " + temppass
             subj = "DTone - Notificación de Modificación de Password"
         else:
