@@ -612,7 +612,6 @@ async def recslinks(Authorization: Optional[str] = Header(None)):
     return listEle
 
 
- 
 @router.post("/askforsupportoth/")
 async def asksupport(datas:ForAskSupport, Authorization: Optional[str] = Header(None)):
     """
@@ -621,6 +620,8 @@ async def asksupport(datas:ForAskSupport, Authorization: Optional[str] = Header(
     longdescription : str    
     """
     global appNeo, session, log
+
+    dtexec = _getdatime_T()
 
     token=funcs.validating_token(Authorization)
     userId = token['userId']
@@ -632,7 +633,7 @@ async def asksupport(datas:ForAskSupport, Authorization: Optional[str] = Header(
     subj = datas.subject.replace("'",'"')
     ldesc = datas.longdescription.replace("'",'"')
 
-    suppId = get_random_string(20)
+    suppId = get_random_string(10)
 
     statement = "with '" + userId + "' as userId, \n" + \
                     "'" + suppId + "' as supportId, \n" + \
@@ -667,7 +668,8 @@ async def asksupport(datas:ForAskSupport, Authorization: Optional[str] = Header(
         listEle.append(elems)
 
     email_send(userId, useremail, # + ',' + useremail_alt, \
-               "Code Id: " + suppId + "\n\n" + 
+               "Code Id: " + dtexec.replace("-","").replace(":","") + "_" + \
+                            suppId + "\n\n" + 
                 datas.longdescription + "\n\n\nuserId: " + userId,  \
                 'DTone - ' + datas.classification  + " (" + userId + "): " + datas.subject, \
                 appNeo, useremail_alt)
