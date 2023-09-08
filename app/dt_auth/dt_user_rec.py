@@ -93,9 +93,9 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
 
     method, pathcomplete, serverlnk = get_path()    
 
-    print("mmmethod:", method)
-    print("pathcomplete:", pathcomplete)
-    print("serverlnk:", serverlnk)
+    #print("mmmethod:", method)
+    #print("pathcomplete:", pathcomplete)
+    #print("serverlnk:", serverlnk)
 
     lnk_toanswer = "http://" + serverlnk + "/dt/auth/reset_pass/"
     

@@ -176,7 +176,7 @@ def email_send(target_userId, target_email, message, subject, appcontrol, cc=Non
     email_ps = email_ps.replace("$","").replace("___dtl","")
 
     if target_email == None:
-        target_email =  'dtl@delthatech.com'
+        target_email =  email_ad
         
     #print ("_____________", email_ad, email_ps)
     ##email_ad = getenv("email_address")

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, status, Header #, Request, Body
+from fastapi import APIRouter, HTTPException, status, Header, Request #, Body
+
 from typing import Optional #, Annotated
 from _neo4j.neo4j_operations import neo4j_exec 
                     #,  login_validate_user_pass_trx, \
@@ -6,12 +7,12 @@ from _neo4j.neo4j_operations import neo4j_exec
 
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
-from __generalFunctions import myfunctionname, _getdatime_T
+from __generalFunctions import myfunctionname, _getdatime_T, get_random_string, email_send
 
 from datetime import datetime as dt
 
 #models:
-from app.model.md_params_auth import ForLogin, ForChangePass, ForUserReg
+from app.model.md_params_auth import ForSignUp, ForLogin, ForChangePass, ForUserReg
 
 import signal
 signal.signal(signal.SIGWINCH, signal.SIG_IGN)
@@ -25,6 +26,193 @@ router = APIRouter()
 
 #def login_user(user, keypass, User_Agent: Annotated[str | None, Header()] = None, userId: Annotated[str | None, Header()] = None):
 #def login_user(datas: Annotated[forlogin, Body(embed=True)]):
+
+
+
+
+@router.get("/signupval/{code}")
+def signup_complete(code:str):
+    global appNeo
+    """
+    Function for reset the user password \n
+    {
+    "code":str
+    }
+    """
+    neo4j_statement = "match (u:User {signup_key:'" + code + "'}) \n" + \
+                    "where (u.ctInsert + duration({minutes: 60})) >=  datetime() and \n" + \
+                    " u.singup_val is null \n" + \
+                    "set u.signup_key = reverse(u.signup_key), \n" + \
+                        "u.signup_val = datetime(), \n" + \
+                        "u.ctUpdate = datetime() \n" + \
+                    "return u.userId, u.email, u.selected_lang as selected_lang"
+    #print('statement:', neo4j_statement)
+    nodes, log = neo4j_exec(session, 'admin', 
+                        log_description="reset password notification",
+                        statement=neo4j_statement,
+                        filename=__name__,
+                        function_name=myfunctionname())
+    sdict = {}
+    for node in nodes:
+        sdict = dict(node)    
+    
+    userId = sdict.get("u.userId", "")
+    emailuser = sdict.get("u.email", "")
+    
+    if emailuser != "":
+        if sdict["selected_lang"] == 'es':
+            msg = "Su registro en DTone ha concluído. No olvide notificar cualquier duda o comentario (en Menu/Config/Soporte)."
+            subj = "DTone - Notificación de registro - " + userId
+        else:
+            msg = "Registration in DTone has been completed. Don't forget to access Menu/Config/Support for any doubt or comment."
+            subj = "DTone - Registration notice - " + userId
+        sentmail = email_send(userId, emailuser, msg, subj, appNeo)
+        refmail = emailuser.split('@')
+        sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
+    else:
+        sentmail = "Something was wrong, review your email."
+    
+    return sentmail
+
+@router.post("/signup/")   # {user} {keypass}
+async def login_signup(datas: ForSignUp, request:Request):
+    """
+    Function to create a possible user \n
+
+    userId  : str
+    password: str
+    name    : str
+    email   : str
+    lang    : str
+    
+    """
+    global session
+
+    uuserId = datas.userId.lower()
+    uname = datas.name
+    ukeyp = datas.password
+    uemail = datas.email.lower()
+    ulang = datas.lang.lower()
+
+    koerror = 0
+    msg = ""
+    # if any data is None --- error = -2
+    if not uuserId or not uname or not ukeyp or not uemail or not ulang:
+        koerror = -2
+        msg = "Datos incompletos / Incomplete data"
+    else:
+        neo4j_statement = "with '" + uuserId +  "' as userId, \n" + \
+                            "'" + uemail +  "' as usemail \n" + \
+                    "optional match (us:User {userId: userId}) " +  \
+                    "optional match (usmail:User {email: usemail}) " +  \
+                    "return us.userId as uuserId, us.name as uname, \n" + \
+                            "usmail.userId as ususerId, usmail.email as usemail limit 1"
+        nodes, log = neo4j_exec(session, datas.userId.lower(),
+                            log_description="validate user and email",
+                            statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+        #print("statement neo4j:", neo4j_statement)
+        result = {}
+        for elem in nodes:
+            result=dict(elem) #
+        if len(result) > 0:  # incorrect user
+            msg = ""
+            koerror = 0
+            if result["uuserId"] != None: 
+                msg = "Usuario no permitido / Invalid user Id" 
+                koerror = -1
+            if result["usemail"] != None: 
+                msg = msg + (" -- " if msg != "" else "") + \
+                        "Cuenta de correo no permitida / Invalid email account"
+                koerror = -1
+            
+    #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
+        
+    if koerror < 0:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=msg
+            #headers={"WWW-Authenticate": "Basic"},
+        )
+    else:
+
+        def get_path():
+            met  =  request.scope['method'] 
+            path =  request.scope['root_path'] + request.scope['route'].path
+            #encoding = 'utf-8'
+            serverlnk = ""
+            for elehead in request.scope['headers']:
+                #print('eeeelehead:', elehead, type(elehead))
+                val=str(elehead[0],'utf-8')
+                if val == 'host':
+                    serverlnk = str(elehead[1], 'utf-8')
+            #print(str(request.scope['headers'])) # , 'utf-8')
+
+            #print('eeeelehead severlink:', serverlnk)
+            #serverlnk = str(request.scope['headers'][0][1], 'utf-8')        
+            return met, path, serverlnk    
+        
+        temppass = get_random_string(50)
+
+        method, pathcomplete, serverlnk = get_path()
+
+        #print("mmmethod:", method)
+        #print("pathcomplete:", pathcomplete)
+        #print("serverlnk:", serverlnk)
+
+        lnk_toanswer = "http://" + serverlnk + "/dt/auth/signupval/"    
+    
+        if ulang == 'es':
+            msg = "Bienvenido a DTone.\n\nEste mensaje corresponde a su registro en DTone, " + \
+                "al dar click al siguiente link su registro estará completo.\n\n " + \
+                lnk_toanswer + temppass +  " \n\n" + \
+                "Esta notificación no requiere respuesta."
+            subj = "DTone - Notificación de Solicitud de Registro - " + uuserId
+        else:
+            msg = "Welcome to DTone.\n\nThis message is about your Sign Up process in DTOne, " + \
+                "by clicking the following link the sign up process will be complete.\n\n " + \
+                lnk_toanswer + temppass +  " \n\n" + \
+                "This notification does not require a response."          
+            subj = "DTone - Sign Up Notification - " + uuserId
+
+        sentmail = email_send(uuserId, uemail, msg, subj, appNeo)
+
+        if sentmail != "False":   # email_send return an string 
+            neo4j_statement = "with '" + uuserId +  "' as userId, \n" + \
+                                    "'" + uemail +  "' as uemail, \n" + \
+                                    "'" + ukeyp +  "' as ukeyp, \n" + \
+                                    "'" + uname +  "' as uname, \n" + \
+                                    "'" + ulang +  "' as ulang, \n" + \
+                                    "'DTL-01' as idOrg \n" + \
+                        "merge (u:User {userId:userId})  \n" + \
+                        "set u.keypass = ukeyp, \n" + \
+                            " u.name = uname, u.email = uemail, \n" + \
+                            " u.selected_lang = ulang, \n" + \
+                            " u.signup_key = '" + temppass + "', \n" + \
+                            " u.ctInsert = datetime() \n" + \
+                        "with u, idOrg \n" + \
+                        "match (o:Organization {idOrg:idOrg})  \n" + \
+                        "merge (u)-[r:RIGHTS_TO]->(o) \n" + \
+                        " set r.ctInsert = datetime() \n" + \
+                        "return u.userId, u.name, u.email, u.selected_lang "
+            #print("statement neo4j:", neo4j_statement)
+
+            nodes, log = neo4j_exec(session, datas.userId.lower(),
+                                    log_description="insert user sign up",
+                                    statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+                
+            result = {}
+            for elem in nodes:
+                result=dict(elem) #
+
+            refmail = uemail.split('@')
+            sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
+            result["user_signup"] = "OK"
+        else:
+            result["user_signup"] = "Fail"
+    print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    return result
+
+
 @router.post("/login/")   # {user} {keypass}
 async def login_user(datas: ForLogin):
     """
@@ -314,7 +502,7 @@ async def get_org(Authorization: Optional[str] = Header(None)):
     return listcat
 
 
-@router.get("/countries/")
+@router.get("/countries_borrar/")
 async def countries(Authorization: Optional[str] = Header(None)):
     """
     Function to get all countries
