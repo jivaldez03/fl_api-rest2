@@ -81,7 +81,9 @@ async def post_level(datas:ForClosePackages, Authorization: Optional[str] = Head
                         "pkgS.grade = [" + str(clicksQty) + "," + str(cardsQty) + "], \n" + \
                         "pkgS.ptgerror = " + str(gradeval) + ", \n" + \
                         "pkgS.ctInsert = datetime() \n" + \
-                    "set pkg.ctUpdate = datetime() \n" + \
+                    "set pkg.ctUpdate = datetime(), \n" + \
+                    " pkg.level = case when pkgS.level > coalesce(pkg.level,'lvl_00_00') and pkgS.ptgerror < 15.0 \n" + \
+                                        "then pkgS.level else pkg.level end \n " + \
                     "return pkg.packageId as packageId, pkgS.studing_dt, \n" + \
                          "pkgS.level as level, pkgS.grade as grade, pkgS.ptgerror as ptgerror"
     

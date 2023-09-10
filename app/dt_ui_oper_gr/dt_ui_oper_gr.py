@@ -519,11 +519,11 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "with og, sc,  u, collect(we.word) as words \n" + \
                     "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
                     "    source:og.lSource, target:og.lTarget, \n" + \
-                    "    reference:'Initial_Level'}) \n" + \
+                    "    idCat:c.idCat, idSCat:sc.idSCat, reference:'Initial_Level'}) \n" + \
                     "on create set arcM.ctInsert = datetime() \n" + \
                     "on match set arcM.ctUpdate = datetime(),  \n" + \
                         "arcM.wordsBack=[toString(datetime())] + arcM.words \n" + \
-                    "set arcM.words = words \n" + \
+                    "set arcM.words = words, arcM.month_qty = size(words) \n" + \
                     "merge (u)<-[rua:ARCHIVED_M]-(arcM)-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
                     "return arcM.words, arcM.wordsBack  \n"
     
