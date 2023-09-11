@@ -180,15 +180,21 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
         "with u, o, c, sc, yearr, monthh, weekk, \n" + \
             "qtyweek, sum(rofM.month_qty) as qtymonth \n" + \
+        "// get all words learned \n"  + \
+        "optional match (u)<-[:ARCHIVED_M]-(rofMt:Archived_M " + \
+            "{userId:u.userId, \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, \n" + \
+            "qtyweek, qtymonth, sum(rofMt.month_qty) as qtytotal \n" + \
         "match (es:Word)-[:TRANSLATOR]->(ess:Word) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ess) \n" + \
-        "with u, o, c, sc, count(distinct es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth \n" + \
+        "with u, o, c, sc, count(distinct es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth,qtytotal \n" + \
         "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
                 "sum(qtymonth) as learned, \n" + \
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "c.idCat as idCat, \n" + \
                 "sc.idSCat as idCS, \n" + \
-                "qtyweek as qtyweek, qtymonth as qtymonth \n" + \
+                "qtyweek as qtyweek, qtymonth as qtymonth, qtytotal as qtytotal \n" + \
         "union \n" + \
         "/* SECTION TO GET cat = 1 and idSCat <> 1 */ \n" + \
         "with " + str(yearr) + " as yearr, \n" + \
@@ -207,9 +213,15 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
         "with u, o, c, sc, yearr, monthh, weekk, \n" + \
             "qtyweek, sum(rofM.month_qty) as qtymonth \n" + \
+        "// get all words learned \n"  + \
+        "optional match (u)<-[:ARCHIVED_M]-(rofMt:Archived_M " + \
+            "{userId:u.userId, \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, \n" + \
+            "qtyweek, qtymonth,  sum(rofMt.month_qty) as qtytotal \n" + \
         "match (sc)<-[esr:SUBCAT]-(es:ElemSubCat)-[tr:TRANSLATOR]->(ws:ElemSubCat) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
-        "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth \n" + \
+        "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth,qtytotal \n" + \
         "order by sc.idCat, sc.idSCat, c.name, sc.name \n" + \
         "return c.name as CatName, \n" + \
                 "sc.name as SCatName, \n" + \
@@ -218,7 +230,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "c.idCat as idCat, \n" + \
                 "sc.idSCat as idCS, \n" + \
-                "qtyweek as qtyweek, qtymonth as qtymonth \n" + \
+                "qtyweek as qtyweek, qtymonth as qtymonth, qtytotal \n" + \
         "union \n" + \
         "/* SECTION TO GET CATEGORIIES DISTINCT TO 1 */ \n" + \
         "with " + str(yearr) + " as yearr, \n" + \
@@ -238,9 +250,15 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
         "with u, o, c, sc, yearr, monthh, weekk, \n" + \
             "qtyweek, sum(rofM.month_qty) as qtymonth \n" + \
+        "// get all words learned \n"  + \
+        "optional match (u)<-[:ARCHIVED_M]-(rofMt:Archived_M " + \
+            "{userId:u.userId, \n" + \
+            "source:o.lSource, target:o.lTarget})-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+        "with u, o, c, sc, yearr, monthh, weekk, \n" + \
+            "qtyweek, qtymonth, sum(rofMt.month_qty) as qtytotal \n" + \
         "match (sc)<-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]->(ws:ElemSubCat) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
-        "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth \n" + \
+        "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth,qtytotal \n" + \
         "order by sc.idCat, sc.idSCat, c.name, sc.name \n" + \
         "return c.name as CatName, \n" + \
                 "sc.name as SCatName, \n" + \
@@ -249,7 +267,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "c.idCat as idCat, \n" + \
                 "sc.idSCat as idCS, \n" + \
-                "qtyweek as qtyweek, qtymonth as qtymonth "
+                "qtyweek as qtyweek, qtymonth as qtymonth, qtytotal as qtytotal "
     
     
     beforeNeo4 =  _getdatime_T()
@@ -274,9 +292,9 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             qtyweek = str(sdict["qtyweek"]) if sdict["qtyweek"] else "0"
             twq = sdict["totalwords"] - sdict["learned"]
             if twq >= 120:
-                tw = "m: " + qtymonth + " / 120" + "  |  t: " + str(sdict["learned"]) + " / " + str(sdict["totalwords"])
+                tw = "m: " + qtymonth + " / 120" + "  |  t: " + str(sdict["qtytotal"]) + " / " + str(sdict["totalwords"])
             else:
-                tw = "m: " + qtymonth + " / " + str(twq) + " |  t: " + str(sdict["learned"]) + " / " +  str(sdict["totalwords"])
+                tw = "m: " + qtymonth + " / " + str(twq) + " |  t: " + str(sdict["qtytotal"]) + " / " +  str(sdict["totalwords"])
             if twq >= 40:
                 tw = "w: " + qtyweek + " / 40" + "  |  " + tw
             else:
