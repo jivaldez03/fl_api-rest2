@@ -512,14 +512,25 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "(og:Organization {idOrg:org}) \n" + \
                     "<-[rc:SUBJECT]-(c:Category {idCat:"+ str(idCat) + "}) \n" + \
                     "<-[rcs:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
+                    "with og, c.idCat as idCat, sc, u \n" + \
+                    "match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM2:Archived_M:" + source + ":" + target + ")-\n" + \
+                        "[:ARCHIVED_M]->(u) \n" + \
+                    "where arcM2.reference is null " + \
+                    "with og, idCat, sc, u, arcM2.words as words \n" + \
+                    "unwind words as word \n" + \
+                    "with og, idCat, sc, u, collect(word) as wordsarcM \n" + \
                     "match (we:Word:" + source + ") \n" + \
-                    "where exists {(we)-[r:TRANSLATOR]-(ws:Word:" + target + ")} \n" + \
-                    "with og, sc, u, we order by we.wordranking, we.word \n" + \
-                        " limit " + str(datas.starton) + " \n" + \
-                    "with og, sc,  u, collect(we.word) as words \n" + \
+                    "with og, idCat, sc, u, wordsarcM, we \n" + \
+                    "order by we.wordranking, we.word \n" + \
+                    " limit " + str(datas.starton) + " \n" + \
+                    "with og, idCat, sc, u, wordsarcM, we \n" + \
+                    "match (we) \n" + \
+                    "where not we.word in wordsarcM \n" + \
+                        " and exists {(we)-[r:TRANSLATOR]-(ws:Word:" + target + ")} \n" + \
+                    "with og, idCat, sc, u, collect(we.word) as words \n"  + \
                     "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
                     "    source:og.lSource, target:og.lTarget, \n" + \
-                    "    idCat:c.idCat, idSCat:sc.idSCat, reference:'Initial_Level'}) \n" + \
+                    "    idCat:idCat, idSCat:sc.idSCat, reference:'Initial_Level'}) \n" + \
                     "on create set arcM.ctInsert = datetime() \n" + \
                     "on match set arcM.ctUpdate = datetime(),  \n" + \
                         "arcM.wordsBack=[toString(datetime())] + arcM.words \n" + \
@@ -529,7 +540,8 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     
     await awsleep(0)
     
-    #print(f"statement pronun: {statement}")
+    print(f"statement pronun: {statement}")
+
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for evaluation: ",
                         statement=statement, 

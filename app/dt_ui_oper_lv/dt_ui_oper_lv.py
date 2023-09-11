@@ -133,6 +133,7 @@ def set_archived_package(packagename, userId):
                         "match (sc:SubCategory)<-[:PACK_SUBCAT]-\n" + \
                         "(p:Package {packageId:pkgname, userId:userId, status:'open'}) \n" + \
                         "-[:PACKAGED]->(u:User {userId:userId}) \n" + \
+                        "where p.level >= 'lvl_40_01' \n" + \
                         "set p.status = 'closed', p.ctUpdate = datetime(), \n" + \
                         "  p.ctArchived = datetime(), \n" + \
                         "  p.ctArchivedYear = yearr, \n" + \
