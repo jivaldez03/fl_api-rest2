@@ -188,23 +188,38 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                             str(datas.pt_verb) + " as ptense, \n" + \
                             str(datas.noun) + " as noun, \n" + \
                             str(datas.adv) + " as adv, \n" + \
-                            str(datas.prep) + " as prep, \n" + \
+                            " True as prep, True as conj,  \n" + \
                             "'" + datas.orgId + "' as org, \n" + \
                             "'" + userId + "' as userId, \n" + \
                             "1 as idCat, 1 as idSCat \n" + \
                 "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-\n" + \
                 "[rc:SUBJECT]-(c:Category {idCat:idCat})-[rsc:CAT_SUBCAT]-(sc:SubCategory {idSCat:idSCat}) \n" + \
-                "with u,o.lSource as Source, o.lTarget as Target, o, sc \n" + \
-                "    , adj, verb, noun, adv, prep, ptense \n" + \
+                "with u,o.lSource as Source, o.lTarget as Target, o, sc, \n" + \
+                "    adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "// *** SE LOCALIZAN LAS PALABRAS QUE YA SE HAN EJERCITADO \n" + \
+                "optional match (u)<-[]-(gm:Game) \n" + \
+                "with u, Source, Target, o, sc, coalesce(gm.words,['']) as wordsgame, \n" + \
+                "    adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "unwind wordsgame as word \n" + \
+                "with u, Source, Target, o, sc, collect(word) as wordsgame, \n" + \
+                "    adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "with u, Source, Target, o, sc, wordsgame, apoc.coll.shuffle(wordsgame) as wordsgameSh, \n" + \
+                "    adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "// SE LOCALIZAN LAS PALABRAS ARCHIVADAS \n" + \
                 "match (u)<-[r:ARCHIVED_M]-(rM:Archived_M)-[rsm:SUBCAT_ARCHIVED_M]->(sc) \n" + \
                 "where o.lSource in labels(rM) and o.lTarget in labels(rM) \n" + \
-                "with u, o, rM.words as words \n" + \
-                "    , adj, verb, noun, adv, prep, ptense \n" + \
+                "// Y SE ELIMINAN LAS QUE FUERON LLEVADAS A JUEGOS \n" + \
+                "with u, o, apoc.coll.subtract(rM.words, wordsgame) as words, wordsgame, \n" + \
+                "  adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
                 "unwind words as sword \n" + \
-                "with u, o, sword, adj, verb, noun, adv, prep, ptense \n" + \
+                "with u, o, collect(sword) as swords, adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
+                "with u, o, (swords + wordsgameSh)[0.." + str(datas.limit) + "] as swords, \n" + \
+                    " adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "unwind swords as sword \n" + \
+                "with u, o, sword, adj, verb, noun, adv, prep, ptense, conj \n" + \
                 "match (we:Word {word:sword}) \n" + \
                 "where o.lSource in labels(we) \n" + \
-                "with u, o, we, adj, verb, noun, adv, prep, ptense, \n" + \
+                "with u, o, we, adj, verb, noun, adv, prep, ptense, conj, \n" + \
                         "REDUCE(mergedString = ',', \n" + \
                             "kow IN we.ckowb_complete | mergedString+kow +',') as ckowlist \n" + \
                 "where  (ptense and ckowlist contains 'past – verb')  \n" + \
@@ -215,13 +230,15 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "        or adv and ckowlist contains 'adv' \n" + \
                 "        or prep and ckowlist contains 'prep' \n" + \
                 "        or noun and ckowlist contains 'noun' \n" + \
+                "        or conj and ckowlist contains 'conj' \n" + \
                 "match (we)-[rt:TRANSLATOR]-(ws:Word)  \n" + \
                 "where o.lTarget in labels(ws) \n" + \
                 "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words  \n" + \
                 "order by worde, rt.sorted \n" + \
                 "with u, worde, ckow, collect(words) as words \n" + \
-                "order by rand() \n" + \
-                "return worde, words, ckow  limit "  + str(datas.limit) 
+                "  limit "  + str(datas.limit) + \
+                "// order by rand() \n" + \
+                "return worde, words, ckow  order by rand() //  limit "  + str(datas.limit) 
     #print(f"statement pronun: {statement}")
 
     await awsleep(0)
@@ -540,7 +557,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     
     await awsleep(0)
     
-    print(f"statement pronun: {statement}")
+    #print(f"statement pronun: {statement}")
 
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for evaluation: ",
