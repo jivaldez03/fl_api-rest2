@@ -209,6 +209,9 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "with u, Source, Target, o, sc, coalesce(gm.words,['']) as wordsgame, \n" + \
                 "    adj, verb, noun, adv, prep, ptense, conj \n" + \
                 "unwind wordsgame as word \n" + \
+                "with u, Source, Target, o, sc,  word, \n" + \
+                "adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "order by word \n" + \
                 "with u, Source, Target, o, sc, collect(word) as wordsgame, \n" + \
                 "    adj, verb, noun, adv, prep, ptense, conj \n" + \
                 "with u, Source, Target, o, sc, wordsgame, apoc.coll.shuffle(wordsgame) as wordsgameSh, \n" + \
@@ -221,13 +224,13 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "  adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
                 "unwind words as sword \n" + \
                 "with u, o, collect(sword) as swords, adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
-                "with u, o, swords + wordsgameSh[0.." + str(datas.limit * 2) + "] as swords, \n" + \
-                    " adj, verb, noun, adv, prep, ptense, conj \n" + \
-                "unwind swords as sword \n" + \
-                "with u, o, sword, adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "with u, o, swords + wordsgameSh[0.." + str(datas.limit * 2) + "] as swordsC, \n" + \
+                    " adj, verb, noun, adv, prep, ptense, conj, swords \n" + \
+                "unwind swordsC as sword \n" + \
+                "with u, o, sword, adj, verb, noun, adv, prep, ptense, conj, swords \n" + \
                 "match (we:Word {word:sword}) \n" + \
                 "where o.lSource in labels(we) \n" + \
-                "with distinct u, o, we, adj, verb, noun, adv, prep, ptense, conj, \n" + \
+                "with distinct u, o, we, adj, verb, noun, adv, prep, ptense, conj, swords, \n" + \
                         "REDUCE(mergedString = ',', \n" + \
                             "kow IN we.ckowb_complete | mergedString+kow +',') as ckowlist \n" + \
                 "where  (ptense and ckowlist contains 'past – verb')  \n" + \
@@ -242,7 +245,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "match (we)-[rt:TRANSLATOR]-(ws:Word)  \n" + \
                 "where o.lTarget in labels(ws) \n" + \
                 "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words  \n" + \
-                "order by worde, rt.sorted \n" + \
+                "order by worde in swords desc, worde, rt.sorted \n" + \
                 "with u, worde, ckow, collect(words) as words \n" + \
                 " limit "  + str(datas.limit) + \
                 "// order by rand() \n" + \
