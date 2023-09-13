@@ -242,6 +242,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "        or prep and ckowlist contains 'prep' \n" + \
                 "        or noun and ckowlist contains 'noun' \n" + \
                 "        or conj and ckowlist contains 'conj' \n" + \
+                "        or ckowlist contains 'modal' \n" + \
                 "match (we)-[rt:TRANSLATOR]-(ws:Word)  \n" + \
                 "where o.lTarget in labels(ws) \n" + \
                 "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words  \n" + \
