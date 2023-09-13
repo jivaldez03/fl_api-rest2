@@ -84,7 +84,7 @@ def execution(function_name, statement, user, log_exec):
     while trying < 5:
         trying += 1
 
-        print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
+        #print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
         if _getdatetime() > timeforneo4jdriver:
                 #print('temporal variables:' , _getdatetime(), timeforneo4jdriver)
                 appNeo.close()

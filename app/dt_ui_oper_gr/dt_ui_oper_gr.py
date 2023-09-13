@@ -212,7 +212,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "with u, Source, Target, o, sc,  word, \n" + \
                 "adj, verb, noun, adv, prep, ptense, conj \n" + \
                 "order by word \n" + \
-                "with u, Source, Target, o, sc, collect(word) as wordsgame, \n" + \
+                "with u, Source, Target, o, sc, collect(distinct word) as wordsgame, \n" + \
                 "    adj, verb, noun, adv, prep, ptense, conj \n" + \
                 "with u, Source, Target, o, sc, wordsgame, apoc.coll.shuffle(wordsgame) as wordsgameSh, \n" + \
                 "    adj, verb, noun, adv, prep, ptense, conj \n" + \
@@ -248,9 +248,9 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words  \n" + \
                 "order by worde in swords desc, worde, rt.sorted \n" + \
                 "with u, worde, ckow, collect(words) as words \n" + \
-                " limit "  + str(datas.limit) + \
-                "// order by rand() \n" + \
-                "return worde, words, ckow  order by rand() //  limit "  + str(datas.limit) 
+                " //limit "  + str(datas.limit) + \
+                "\n" + \
+                "return worde, words, ckow order by rand() limit "  + str(datas.limit) 
     #print(f"statement pronun: {statement}")
 
     await awsleep(0)
