@@ -303,8 +303,9 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     #else: 
     #    kogame = 'G_UNKNOWN'
     swords = str(datas.words)
+
     sswords = swords.replace("[",",").replace("]",",").replace("'","").replace('"',"").replace(", ",",")
-    #print("\n\n", datas, type(swords), type(datas.words), "\n\n")
+    print("\n\n ************************ ", datas.kogame, datas.words, swords, "\n\n")
 
     statement = "with " + "'" + datas.orgId + "' as org, \n" + \
                             "'" + userId + "' as userId, \n" + \
