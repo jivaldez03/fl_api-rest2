@@ -210,7 +210,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "    adj, verb, noun, adv, prep, ptense, conj \n" + \
                 "unwind wordsgame as word \n" + \
                 "with u, Source, Target, o, sc,  word, \n" + \
-                "adj, verb, noun, adv, prep, ptense, conj \n" + \
+                    "adj, verb, noun, adv, prep, ptense, conj \n" + \
                 "order by word \n" + \
                 "with u, Source, Target, o, sc, collect(distinct word) as wordsgame, \n" + \
                 "    adj, verb, noun, adv, prep, ptense, conj \n" + \
@@ -220,7 +220,9 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "match (u)<-[r:ARCHIVED_M]-(rM:Archived_M)-[rsm:SUBCAT_ARCHIVED_M]->(sc) \n" + \
                 "where o.lSource in labels(rM) and o.lTarget in labels(rM) \n" + \
                 "// Y SE ELIMINAN LAS QUE FUERON LLEVADAS A JUEGOS \n" + \
-                "with u, o, apoc.coll.subtract(rM.words, wordsgame) as words, wordsgame, \n" + \
+                "with u, o, apoc.coll.subtract(rM.words, wordsgame) as words, wordsgame, rM.words as rmwords, \n" + \
+                "  adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
+                "with u, o, (case when words = [] then rmwords else words end) as words, wordsgame,  \n" + \
                 "  adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
                 "unwind words as sword \n" + \
                 "with u, o, collect(sword) as swords, adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
@@ -251,7 +253,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 " //limit "  + str(datas.limit) + \
                 "\n" + \
                 "return worde, words, ckow order by rand() limit "  + str(datas.limit) 
-    #print(f"statement pronun: {statement}")
+    print(f"statement pronun: {statement}")
 
     await awsleep(0)
 
@@ -305,7 +307,7 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     swords = str(datas.words)
 
     sswords = swords.replace("[",",").replace("]",",").replace("'","").replace('"',"").replace(", ",",")
-    print("\n\n ************************ ", datas.kogame, datas.words, swords, "\n\n")
+    #print("\n\n ************************ ", datas.kogame, datas.words, swords, "\n\n")
 
     statement = "with " + "'" + datas.orgId + "' as org, \n" + \
                             "'" + userId + "' as userId, \n" + \
