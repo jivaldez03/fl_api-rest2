@@ -253,7 +253,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 " //limit "  + str(datas.limit) + \
                 "\n" + \
                 "return worde, words, ckow order by rand() limit "  + str(datas.limit) 
-    print(f"statement pronun: {statement}")
+    #print(f"statement pronun: {statement}")
 
     await awsleep(0)
 
