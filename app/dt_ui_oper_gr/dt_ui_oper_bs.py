@@ -292,13 +292,17 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             qtyweek = str(sdict["qtyweek"]) if sdict["qtyweek"] else "0"
             twq = sdict["totalwords"] - sdict["learned"]
             if twq >= 120:
-                tw = "m: " + qtymonth + " / 120" + "  |  t: " + str(sdict["qtytotal"]) + " / " + str(sdict["totalwords"])
+                #tw = "m: " + qtymonth + " / 120" + "  |  t: " + str(sdict["qtytotal"]) + " / " + str(sdict["totalwords"])
+                tw = "m: " + qtymonth + "  |  t: " + str(sdict["qtytotal"]) + " / " + str(sdict["totalwords"])
             else:
-                tw = "m: " + qtymonth + " / " + str(twq) + " |  t: " + str(sdict["qtytotal"]) + " / " +  str(sdict["totalwords"])
+                #tw = "m: " + qtymonth + " / " + str(twq) + " |  t: " + str(sdict["qtytotal"]) + " / " +  str(sdict["totalwords"])
+                tw = "m: " + qtymonth + " |  t: " + str(sdict["qtytotal"]) + " / " +  str(sdict["totalwords"])
             if twq >= 40:
-                tw = "w: " + qtyweek + " / 40" + "  |  " + tw
+                #tw = "w: " + qtyweek + " / 40" + "  |  " + tw
+                tw = "w: " + qtyweek + "  |  " + tw                
             else:
-                tw = "w: " + qtyweek + " / " + str(twq) + "  |  " + tw
+                #tw = "w: " + qtyweek + " / " + str(twq) + "  |  " + tw
+                tw = "w: " + qtyweek + "  |  " + tw
 
             sdict["totalwords"] = tw
             if sdict['idCat'] == 52:
@@ -675,7 +679,7 @@ def get_words(userId, pkgname, wordslevel='words'):
                             "swlist as swlist \n" + \
                         "optional match (pkgS:PackageStudy)-[]-(pkg) \n" + \
                             "where pkgS.ptgerror <= maxerrs \n" + \
-                        "return 'words' as subCat, pkg.idSCat as idSCat, pkglabel as label, " + \
+                        "return 'words' as subCat, pkg.idSCat as idSCat, pkg.idCat as idCat, pkglabel as label, " + \
                             "COALESCE(max(pkgS.level), '" + level + "') as maxlevel, '' as linktitles, '' as links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget  \n" + \
@@ -704,26 +708,26 @@ def get_words(userId, pkgname, wordslevel='words'):
                         "optional match (pkg)-[rps:STUDY]-(pkgS:PackageStudy) where pkgS.ptgerror <= org.ptgmaxerrs \n" + \
                         "with pkg, s, ewlist, swlist, kow, kowc, wordref, \n" + \
                         "COALESCE(max(pkgS.level), '" + level + "') as level, linktitles, links, wr_wordref, wr_kow \n" + \
-                        "return s.name as subCat, s.idSCat as idSCat, pkg.label as label, " + \
+                        "return s.name as subCat, s.idSCat as idSCat, s.idCat as idCat, pkg.label as label, \n" + \
                             "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
-    #print('statement:', neo4j_statement)
+    print('statement:', neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
                         filename=__name__, 
                         function_name=myfunctionname())      
-    
+    print("YA EJECUTÓ")
     pkgdescriptor = {}
     words = []
     npackage = []
     kow, kowc, wrkowc = [], [], [] 
     wr_wordref, langs, langt = [], [], []
-
+    idCat= ""
     for gia, node in enumerate(nodes):
         sdict = dict(node)        
-        #npackage = []
+        idCat= sdict["idCat"]
         pkgdescriptor = {"packageId": pkgname
                           , "label": sdict["label"]
                           , "maxlevel":sdict["maxlevel"]
@@ -883,7 +887,8 @@ def get_words(userId, pkgname, wordslevel='words'):
         #element.append([s_kow, s_object])
         #result.append(element)
         result2.append(new_element)
-    shuffle(result2)
+    if idCat not in [52,102]:
+        shuffle(result2)  # this shuffle is to execute an random sort with words
     pkgdescriptor["message"] = result2   
 
     print("        ->   ========== ending get words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
