@@ -269,6 +269,8 @@ async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(
     dcountry_res = datas.country_res if not isinstance(datas.country_res, type(None)) else 'null'
     dkol = datas.kolic if not isinstance(datas.kolic, type(None)) else 'UNIVERSAL'
 
+    dselected_lang = dselected_lang.title()
+
     neo4j_statement = "merge (us:User {userId:'" + datas.userId + "'}) \n" + \
                     " on match set us.ctUpdate = datetime()  \n" + \
                     " on create set us.ctInsert = datetime(), us.keypass='"+ datas.userId+"' \n" + \
@@ -279,7 +281,7 @@ async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(
                     "  us.selected_lang = '" + dselected_lang + "', \n" + \
                     "  us.country_birth = '" + dcountry_birth + "', \n" + \
                     "  us.country_res = '" + dcountry_res + "', \n" + \
-                    "  us.kol = '" + dkol + "', \n" + \
+                    "  //us.kol = '" + dkol + "', \n" + \
                     "  us.ctUpdate = datetime() \n" + \
                     "with us \n" + \
                     "match (o:Organization {idOrg:'" + orgId + "'})" + \
