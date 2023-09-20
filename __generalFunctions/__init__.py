@@ -219,5 +219,5 @@ def email_send(target_userId, target_email, message, subject, appcontrol, cc=Non
         msg_error = f"execption error: {type(error).__name__} - {error}"
         return "False"    
     #"""    
-    return "email has been sent to " + target_userId +  msg_error
+    return "An email has been sent to " + target_userId +  msg_error
 

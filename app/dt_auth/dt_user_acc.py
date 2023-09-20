@@ -7,7 +7,7 @@ from _neo4j.neo4j_operations import neo4j_exec
 
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
-from __generalFunctions import myfunctionname, _getdatime_T, get_random_string, email_send
+from __generalFunctions import myfunctionname, _getdatime_T, get_random_string, email_send, _getdatetime
 
 from datetime import datetime as dt
 
@@ -37,10 +37,11 @@ async def login_user(datas: ForLogin):
     global session
  
     neo4j_statement = "with '" + datas.userId.lower() +  "' as userId \n" + \
-                "match (us:User {userId: userId }) " +  \
+                "match (us:User {userId: userId }) \n" +  \
+                "optional match (us)<-[l:LICENSE]-(kol:KoL {active:true}) \n" + \
                 "return us.userId, us.name, us.keypass, us.age, us.email, us.email_alt, \n" + \
                     "us.native_lang, coalesce(us.selected_lang,'es') as selected_lang, \n" + \
-                    "us.country_birth, us.country_res limit 1"
+                    "us.country_birth, us.country_res, us.kol as kol, us.kol_lim_date as kol_lim_date limit 1"
     nodes, log = neo4j_exec(session, datas.userId.lower(),
                         log_description="validate login user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -48,7 +49,11 @@ async def login_user(datas: ForLogin):
     result = {}
     for elem in nodes:
         result=dict(elem) #print(f"elem: {type(elem)} {elem}")   
-    #result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password) 
+    #result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password)
+    # FIN DE VIGENCIA DE LICENCIA
+    kol_lim_date = str(result["kol_lim_date"])
+    kol_lim_date = dt.strptime(kol_lim_date.split('.')[0], '%Y-%m-%dT%H:%M:%S')
+    print('fechas to compare:', kol_lim_date, _getdatetime())
     if len(result) == 0:  # incorrect user
         print("no records - fname__name__and more:",__name__)
         #log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
@@ -76,8 +81,18 @@ async def login_user(datas: ForLogin):
             detail=merror
             #headers={"WWW-Authenticate": "Basic"},
         )
+    elif kol_lim_date < _getdatetime():
+        print("\n\nKOL:", datas.userId.lower(), result["kol"], type(result["kol_lim_date"]), result["kol_lim_date"],"\n\n")
+        merror = "License Permission Error"
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=merror
+        )
     elif datas.password == result["us.keypass"]:   # success access
         #log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
+        print("\n\nKOL:", datas.userId.lower(), result["kol"], result["kol_lim_date"],"\n\n")
+        
+        #print(kol_lim_date, str(kol_lim_date), type(kol_lim_date))
         resp_dict ={'status': 'OK', 
                     'text': 'successful access',
                     "userId":datas.userId.lower(),
@@ -88,7 +103,9 @@ async def login_user(datas: ForLogin):
                     "country_birth": result["us.country_birth"], 
                     "country_res": result["us.country_res"],
                     "native_lang" : result["us.native_lang"],
-                    "selected_lang" : result["selected_lang"]
+                    "selected_lang" : result["selected_lang"],
+                    "kol" : result["kol"],
+                    "kol_lim_date" : str(kol_lim_date)
                 }
         #print("resp_dict:", resp_dict)
         
@@ -112,11 +129,8 @@ async def login_user(datas: ForLogin):
                     "selected_lang" : result["selected_lang"]
         }
     else: # incorrect pass
-        #log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())
-        if result["us.selected_lang"] == 'es':
-            merror = "Usuario-Password Incorrecto"
-        else:
-            merror = "Invalid User-Password"
+        #log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())        
+        merror = "Usuario-Password Incorrecto - Invalid User-Password"
         resp_dict ={'status': 'ERROR', 'text': merror, "username": "",  
                     "age":0, 
                     "country_birth": "", 
@@ -297,7 +311,7 @@ def signup_complete(code:str):
     }
     """
     neo4j_statement = "match (u:User {signup_key:'" + code + "'}) \n" + \
-                    "where //(u.ctInsert + duration({minutes: 60})) >=  datetime() and \n" + \
+                    "where //(u.ctInsert + duration({minutes: 20})) >=  datetime() and \n" + \
                     " u.singup_val is null \n" + \
                     "set u.ctUpdate = datetime() \n" + \
                     "return u.userId, u.email, u.selected_lang as selected_lang"
@@ -330,14 +344,19 @@ def signup_complete(code:str):
         
         sentmail = email_send(userId, emailuser, msg, subj, appNeo)
         refmail = emailuser.split('@')
+
+
         sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
+        #sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
 
         neo4j_statement = "match (u:User {signup_key:'" + code + "'}) \n" + \
                         "where //(u.ctInsert + duration({minutes: 60})) >=  datetime() and \n" + \
                         " u.singup_val is null \n" + \
                         "set u.signup_key = reverse(u.signup_key), \n" + \
                             "u.signup_val = datetime(), \n" + \
-                            "u.ctUpdate = datetime() \n" + \
+                            "u.ctUpdate = datetime(), \n" + \
+                            "u.kol = '7-FREEPERIOD', \n" + \
+                            "u.kol_lim_date = (datetime() + duration({hours:1})) \n" + \
                         "return u.userId, u.email, u.selected_lang as selected_lang"
         #print('statement:', neo4j_statement)
         nodes, log = neo4j_exec(session, 'admin', 
@@ -347,7 +366,8 @@ def signup_complete(code:str):
                             function_name=myfunctionname())
         
     else:
-        sentmail = "Something was wrong, review your email."
+        sentmail = "DTone has tried to send you an email. " + \
+                    "Something was wrong, review your email."
     
     return sentmail
 
@@ -386,9 +406,15 @@ async def login_signup(datas: ForSignUp, request:Request):
         where (u.ctInsert + duration({minutes: 60})) <  datetime() 
                 and not u.signup_key is null and  u.signup_val is null 
                 and not exists {(u)<-[:PACKAGED]-(pkg:Package)}
-        return u.userId, u.name, u.email, u.ctInsert, u.signup_key, u.signup_val
+        detach delete u
+        //return u.userId, u.name, u.email, u.ctInsert, u.signup_key, u.signup_val
         """
-        neo4j_statement = "with '" + uuserId +  "' as userId, \n" + \
+        neo4j_statement = "match (u:User) \n" + \
+                    "where (u.ctInsert + duration({minutes: 3})) <  datetime() \n" + \
+                    "        and not u.signup_key is null and  u.signup_val is null \n" + \
+                    "        and not exists {(u)<-[:PACKAGED]-(pkg:Package)} \n" + \
+                    " detach delete u \n" + \
+                    "with '" + uuserId +  "' as userId, \n" + \
                             "'" + uemail +  "' as usemail \n" + \
                     "optional match (us:User {userId: userId}) " +  \
                     "optional match (usmail:User {email: usemail}) " +  \
@@ -397,7 +423,7 @@ async def login_signup(datas: ForSignUp, request:Request):
         nodes, log = neo4j_exec(session, datas.userId.lower(),
                             log_description="validate user and email",
                             statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
-        #print("statement neo4j:", neo4j_statement)
+        print("statement neo4j:", neo4j_statement)
         result = {}
         for elem in nodes:
             result=dict(elem) #
@@ -492,7 +518,8 @@ async def login_signup(datas: ForSignUp, request:Request):
                 result=dict(elem) #
 
             refmail = uemail.split('@')
-            sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
+            sentmail = "<h1>DTone has tried to send you an email</h1><strong>" + \
+                sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ") </strong>"
             result["user_signup"] = "OK"
         else:
             result["user_signup"] = "Fail"
