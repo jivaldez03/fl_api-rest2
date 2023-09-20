@@ -24,15 +24,19 @@ class App:
         varvalue = dynamic_cfg.get('varvalue', [])
         logs_rec = []
         email_cfg = {}
+        app_access_cfg = {}
         for gia in range(len(cfgtype)):
             if cfgtype[gia] == 'LOGS_REC':
                 logs_rec.append(varname[gia])
             elif cfgtype[gia] == 'EMAIL_CONFIG':
                 email_cfg[varname[gia]] = varvalue[gia]
+            elif cfgtype[gia] == 'APP_ACCESS':
+                app_access_cfg[varname[gia]] = varvalue[gia]
             else: 
                 print('INCORRECT SOME CONFIGURATIONS RECORDS')
         self.logs_rec = logs_rec
         self.email_cfg = email_cfg
+        self.app_access_cfg = app_access_cfg
         return
     
     """

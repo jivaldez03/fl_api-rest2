@@ -299,9 +299,7 @@ def signup_complete(code:str):
     neo4j_statement = "match (u:User {signup_key:'" + code + "'}) \n" + \
                     "where //(u.ctInsert + duration({minutes: 60})) >=  datetime() and \n" + \
                     " u.singup_val is null \n" + \
-                    "set u.signup_key = reverse(u.signup_key), \n" + \
-                        "u.signup_val = datetime(), \n" + \
-                        "u.ctUpdate = datetime() \n" + \
+                    "set u.ctUpdate = datetime() \n" + \
                     "return u.userId, u.email, u.selected_lang as selected_lang"
     #print('statement:', neo4j_statement)
     nodes, log = neo4j_exec(session, 'admin', 
@@ -317,15 +315,37 @@ def signup_complete(code:str):
     emailuser = sdict.get("u.email", "")
     
     if emailuser != "":
-        if sdict["selected_lang"] == 'es':
+        if sdict["selected_lang"] == 'Sp':
             msg = "Su registro en DTone ha concluído. No olvide notificar cualquier duda o comentario (en Menu/Config/Soporte)."
-            subj = "DTone - Notificación de registro - " + userId
+            msg = msg + "\n\nSu acceso a la plataforma de DTone está listo: " + \
+                    appNeo.app_access_cfg.get("app_link", "https://dt-one-b7bbdf083efc.herokuapp.com/")
+
+            subj = "DTone - Notificación de Registro - " + userId
         else:
             msg = "Registration in DTone has been completed. Don't forget to access Menu/Config/Support for any doubt or comment."
-            subj = "DTone - Registration notice - " + userId
+            msg = msg + "\n\nYour access to DTone platform is ready: " + \
+                    appNeo.app_access_cfg.get("app_link", "https://dt-one-b7bbdf083efc.herokuapp.com/")
+            
+            subj = "DTone - Registration Notice - " + userId        
+        
         sentmail = email_send(userId, emailuser, msg, subj, appNeo)
         refmail = emailuser.split('@')
         sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
+
+        neo4j_statement = "match (u:User {signup_key:'" + code + "'}) \n" + \
+                        "where //(u.ctInsert + duration({minutes: 60})) >=  datetime() and \n" + \
+                        " u.singup_val is null \n" + \
+                        "set u.signup_key = reverse(u.signup_key), \n" + \
+                            "u.signup_val = datetime(), \n" + \
+                            "u.ctUpdate = datetime() \n" + \
+                        "return u.userId, u.email, u.selected_lang as selected_lang"
+        #print('statement:', neo4j_statement)
+        nodes, log = neo4j_exec(session, 'admin', 
+                            log_description="reset password notification",
+                            statement=neo4j_statement,
+                            filename=__name__,
+                            function_name=myfunctionname())
+        
     else:
         sentmail = "Something was wrong, review your email."
     
@@ -349,8 +369,11 @@ async def login_signup(datas: ForSignUp, request:Request):
     uname = datas.name
     ukeyp = datas.password
     uemail = datas.email.lower()
-    ulang = datas.lang.lower()
-
+    if datas.lang == 'En':
+        ulang = datas.lang
+    else:
+        ulang = 'Sp'
+    
     koerror = 0
     msg = ""
     # if any data is None --- error = -2
@@ -358,6 +381,13 @@ async def login_signup(datas: ForSignUp, request:Request):
         koerror = -2
         msg = "Datos incompletos / Incomplete data"
     else:
+        """
+        match (u:User) 
+        where (u.ctInsert + duration({minutes: 60})) <  datetime() 
+                and not u.signup_key is null and  u.signup_val is null 
+                and not exists {(u)<-[:PACKAGED]-(pkg:Package)}
+        return u.userId, u.name, u.email, u.ctInsert, u.signup_key, u.signup_val
+        """
         neo4j_statement = "with '" + uuserId +  "' as userId, \n" + \
                             "'" + uemail +  "' as usemail \n" + \
                     "optional match (us:User {userId: userId}) " +  \
@@ -418,14 +448,14 @@ async def login_signup(datas: ForSignUp, request:Request):
 
         lnk_toanswer = "http://" + serverlnk + "/dt/auth/signupval/"    
     
-        if ulang == 'es':
+        if ulang == 'Sp':
             msg = "Bienvenido a DTone.\n\nEste mensaje corresponde a su registro en DTone, " + \
                 "al dar click al siguiente link su registro estará completo.\n\n " + \
                 lnk_toanswer + temppass +  " \n\n" + \
                 "Esta notificación no requiere respuesta."
             subj = "DTone - Notificación de Solicitud de Registro - " + uuserId
         else:
-            msg = "Welcome to DTone.\n\nThis message is about your Sign Up process in DTOne, " + \
+            msg = "Welcome to DTone.\n\nThis message is about your Sign Up process in DTone, " + \
                 "by clicking the following link the sign up process will be complete.\n\n " + \
                 lnk_toanswer + temppass +  " \n\n" + \
                 "This notification does not require a response."          
