@@ -53,7 +53,7 @@ async def login_user(datas: ForLogin):
     # FIN DE VIGENCIA DE LICENCIA
     kol_lim_date = str(result["kol_lim_date"])
     kol_lim_date = dt.strptime(kol_lim_date.split('.')[0], '%Y-%m-%dT%H:%M:%S')
-    print('fechas to compare:', kol_lim_date, _getdatetime())
+    #print('fechas to compare:', kol_lim_date, _getdatetime())
     if len(result) == 0:  # incorrect user
         print("no records - fname__name__and more:",__name__)
         #log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
@@ -410,7 +410,7 @@ async def login_signup(datas: ForSignUp, request:Request):
         //return u.userId, u.name, u.email, u.ctInsert, u.signup_key, u.signup_val
         """
         neo4j_statement = "match (u:User) \n" + \
-                    "where (u.ctInsert + duration({minutes: 3})) <  datetime() \n" + \
+                    "where (u.ctInsert + duration({minutes: 10})) <  datetime() \n" + \
                     "        and not u.signup_key is null and  u.signup_val is null \n" + \
                     "        and not exists {(u)<-[:PACKAGED]-(pkg:Package)} \n" + \
                     " detach delete u \n" + \
@@ -423,7 +423,7 @@ async def login_signup(datas: ForSignUp, request:Request):
         nodes, log = neo4j_exec(session, datas.userId.lower(),
                             log_description="validate user and email",
                             statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
-        print("statement neo4j:", neo4j_statement)
+        #print("statement neo4j:", neo4j_statement)
         result = {}
         for elem in nodes:
             result=dict(elem) #
