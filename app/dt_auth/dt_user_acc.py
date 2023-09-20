@@ -264,7 +264,7 @@ async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(
     demail = datas.email if not isinstance(datas.email, type(None)) else '__'
     demail_alt = datas.email_alt if not isinstance(datas.email_alt, type(None)) else 'null'
     dnative_lang = datas.native_lang if not isinstance(datas.native_lang, type(None)) else 'Español'
-    dselected_lang = datas.selected_lang if not isinstance(datas.selected_lang, type(None)) else 'Sp'
+    dselected_lang = datas.selected_lang if not isinstance(datas.selected_lang, type(None)) else 'es'
     dcountry_birth = datas.country_birth if not isinstance(datas.country_birth, type(None)) else 'null'
     dcountry_res = datas.country_res if not isinstance(datas.country_res, type(None)) else 'null'
     dkol = datas.kolic if not isinstance(datas.kolic, type(None)) else 'UNIVERSAL'
@@ -331,7 +331,7 @@ def signup_complete(code:str):
     emailuser = sdict.get("u.email", "")
     
     if emailuser != "":
-        if sdict["selected_lang"] == 'Sp':
+        if sdict["selected_lang"] == 'es':
             msg = "Su registro en DTone ha concluído. No olvide notificar cualquier duda o comentario (en Menu/Config/Soporte)."
             msg = msg + "\n\nSu acceso a la plataforma de DTone está listo: " + \
                     appNeo.app_access_cfg.get("app_link", "https://dt-one-b7bbdf083efc.herokuapp.com/")
@@ -391,10 +391,10 @@ async def login_signup(datas: ForSignUp, request:Request):
     uname = datas.name
     ukeyp = datas.password
     uemail = datas.email.lower()
-    if datas.lang == 'En':
+    if datas.lang == 'en':
         ulang = datas.lang
     else:
-        ulang = 'Sp'
+        ulang = 'es'
     
     koerror = 0
     msg = ""
@@ -476,7 +476,7 @@ async def login_signup(datas: ForSignUp, request:Request):
 
         lnk_toanswer = "http://" + serverlnk + "/dt/auth/signupval/"    
     
-        if ulang == 'Sp':
+        if ulang == 'es':
             msg = "Bienvenido a DTone.\n\nEste mensaje corresponde a su registro en DTone, " + \
                 "al dar click al siguiente link su registro estará completo.\n\n " + \
                 lnk_toanswer + temppass +  " \n\n" + \
