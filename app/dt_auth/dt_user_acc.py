@@ -333,12 +333,20 @@ def signup_complete(code:str):
             msg = "Su registro en DTone ha concluído. No olvide notificar cualquier duda o comentario (en Menu/Config/Soporte)."
             msg = msg + "\n\nSu acceso a la plataforma de DTone está listo: " + \
                     appNeo.app_access_cfg.get("app_link", "https://dt-one-b7bbdf083efc.herokuapp.com/")
+            msg = msg + "\n\nTe recomendamos visitar nuestro canal en youtube - " + \
+                    appNeo.app_access_cfg.get("youtubechannel", "")            
+            msg = msg + "donde encontrarás la guía de uso de DTone - " + \
+                    appNeo.app_access_cfg.get("playlist_userguide", "") + " - para que aproveches al máximo sus beneficios."
 
             subj = "DTone - Notificación de Registro - " + userId
         else:
             msg = "Registration in DTone has been completed. Don't forget to access Menu/Config/Support for any doubt or comment."
             msg = msg + "\n\nYour access to DTone platform is ready: " + \
                     appNeo.app_access_cfg.get("app_link", "https://dt-one-b7bbdf083efc.herokuapp.com/")
+            msg = msg + "\n\nDon't forget to visit our youtube channel - " + \
+                    appNeo.app_access_cfg.get("youtubechannel", "")            
+            msg = msg + "you will find the DTone's user guide - " + \
+                    appNeo.app_access_cfg.get("playlist_userguide", "") + " - to understand how to use this tool."
             
             subj = "DTone - Registration Notice - " + userId        
         
