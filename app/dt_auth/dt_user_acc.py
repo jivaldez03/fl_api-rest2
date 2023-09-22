@@ -311,7 +311,7 @@ def signup_complete(code:str):
     }
     """
     neo4j_statement = "match (u:User {signup_key:'" + code + "'}) \n" + \
-                    "where //(u.ctInsert + duration({minutes: 20})) >=  datetime() and \n" + \
+                    "where (u.ctInsert + duration({minutes: 60})) >=  datetime() and \n" + \
                     " u.singup_val is null \n" + \
                     "set u.ctUpdate = datetime() \n" + \
                     "return u.userId, u.email, u.selected_lang as selected_lang"
@@ -356,18 +356,19 @@ def signup_complete(code:str):
                             "u.signup_val = datetime(), \n" + \
                             "u.ctUpdate = datetime(), \n" + \
                             "u.kol = '7-FREEPERIOD', \n" + \
-                            "u.kol_lim_date = (datetime() + duration({hours:1})) \n" + \
+                            "u.kol_lim_date = (datetime() + duration({days:7})) \n" + \
                         "return u.userId, u.email, u.selected_lang as selected_lang"
         #print('statement:', neo4j_statement)
         nodes, log = neo4j_exec(session, 'admin', 
-                            log_description="reset password notification",
+                            log_description="sign up notification",
                             statement=neo4j_statement,
                             filename=__name__,
                             function_name=myfunctionname())
         
     else:
-        sentmail = "DTone has tried to send you an email. " + \
-                    "Something was wrong, review your email."
+        sentmail = "DTone has tried to complete the process and send you an email. " + \
+                    "Something was wrong, review your email. " + \
+                    "Likely your process was delayed and it was cancelled, trying sign up again."
     
     return sentmail
 

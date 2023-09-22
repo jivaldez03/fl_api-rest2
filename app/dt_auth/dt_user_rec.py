@@ -1,6 +1,7 @@
 #from typing import Union
 #import smtplib
 #from email.message import EmailMessage
+import stripe
 from fastapi import Request, APIRouter # FastAPI, 
 
 from app.model.md_params_auth import ForResetPass
@@ -8,7 +9,7 @@ from app.model.md_params_auth import ForResetPass
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session
 
-from __generalFunctions import myfunctionname, get_random_string, email_send #, get_path
+from __generalFunctions import myfunctionname, get_random_string, email_send, _getdatetime
 
 import random
 from string import ascii_letters
@@ -188,3 +189,36 @@ def user_change_pass(code:str):
         sentmail = "Something was wrong, review your email."
     
     return sentmail
+
+
+@router.post("/stripe_checkout/")
+def stripe_checkout(datas:ForResetPass):
+    """
+    class ForLogin(BaseModel):
+        userId: str
+        password: str
+    """
+    # Set your secret key. Remember to switch to your live secret key in pr
+    # oduction.   
+    # See your keys here: https://dashboard.stripe.com/apikeys
+    stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    stripeLink = stripe.PaymentLink.create(
+            #line_items=[{"price": '{{25.99}}', "quantity": 1}],
+            line_items=[{"price": 'price_1NtD1qL7SwRlW9BCB8ABhCH0', "quantity": 1}],
+            after_completion={"type": "redirect", "redirect": {"url": "https://www.delthatech.com"}},
+             allow_promotion_codes=True, 
+             #automatic_tax={"enabled": True},
+            
+    )
+    #            after_completion={"type": "redirect", "redirect": {"url": "https://www.delthatech.com"}},
+    """
+    custom_fields=[
+                    {
+                    "key": "datas.userId",
+                    "label": {"type": "license", "custom": str(_getdatetime())},
+                    "type": "license XYZ"
+                },
+            ]
+    """
+    print(stripeLink)
+    return stripeLink
