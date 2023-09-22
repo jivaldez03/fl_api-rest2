@@ -450,7 +450,9 @@ async def login_signup(datas: ForSignUp, request:Request):
                 msg = msg + (" -- " if msg != "" else "") + \
                         "Cuenta de correo no permitida / Invalid email account"
                 koerror = -1
-            
+        else:
+            print ("NO VALORES PARA RESULT - NO ES POSIBLE VALIDAR")
+            koerror == -3   
     #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
         
     if koerror < 0:
