@@ -196,7 +196,7 @@ async def user_change_pass(code:str):
     return sentmail
 
 
-@router.post("/s_pay_validation/{code}")
+@router.get("/s_pay_validation/{code}")
 async def s_pay_validation(code:str):
     """
     class ForLogin(BaseModel):
@@ -236,7 +236,7 @@ async def stripe_checkout(datas:ForLicense, request:Request):
 
     method, pathcomplete, serverlnk = get_path()    
 
-    lnk_toanswer = "http://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass
+    lnk_toanswer = "https://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass
 
     # Set your secret key. Remember to switch to your live secret key in pr
     # oduction.   
