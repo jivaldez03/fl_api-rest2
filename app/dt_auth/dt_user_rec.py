@@ -264,5 +264,5 @@ async def stripe_checkout(datas:ForLicense, request:Request):
                 },
             ]
     """
-    print("*************************\nStripeLink: ", stripeLink, "\n", stripeLink["url"])
-    return {"stripe_url":stripeLink["url"], "redirect_url": lnk_toanswer, "stripe_completeseq": stripeLink}
+    #print("*************************\nStripeLink: ", stripeLink["url"])
+    return {"stripe_url":stripeLink["url"], "redirect_url": lnk_toanswer} # , "stripe_completeseq": stripeLink}
