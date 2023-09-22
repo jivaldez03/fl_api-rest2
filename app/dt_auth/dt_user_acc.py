@@ -418,10 +418,13 @@ async def login_signup(datas: ForSignUp, request:Request):
         detach delete u
         //return u.userId, u.name, u.email, u.ctInsert, u.signup_key, u.signup_val
         """
-        neo4j_statement = "match (u:User) \n" + \
-                    "where (u.ctInsert + duration({minutes: 10})) <  datetime() \n" + \
+        neo4j_statement = "with '" + uuserId +  "' as userId, \n" + \
+                            "'" + uemail +  "' as usemail \n" + \
+                    "optional match (u:User) \n" + \
+                    "where (u.ctInsert + duration({minutes: 60})) <  datetime() \n" + \
                     "        and not u.signup_key is null and  u.signup_val is null \n" + \
                     "        and not exists {(u)<-[:PACKAGED]-(pkg:Package)} \n" + \
+                    "        and not exists {(u)<-[raM:ARCHIVED_M]-(arcM:Archived_M)} \n" + \
                     " detach delete u \n" + \
                     "with '" + uuserId +  "' as userId, \n" + \
                             "'" + uemail +  "' as usemail \n" + \
@@ -436,6 +439,7 @@ async def login_signup(datas: ForSignUp, request:Request):
         result = {}
         for elem in nodes:
             result=dict(elem) #
+        print("****************+\nresult", result)
         if len(result) > 0:  # incorrect user
             msg = ""
             koerror = 0
