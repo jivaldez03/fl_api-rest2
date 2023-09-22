@@ -588,10 +588,9 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     return listEle
 
 
-@router.get("/reclinks/")
-async def recslinks(Authorization: Optional[str] = Header(None)):
+@router.get("/reclinks_borrar/")
+async def recslinks_borrar(Authorization: Optional[str] = Header(None)):
     """    
-
     """
     global appNeo, session, log
 
@@ -606,9 +605,7 @@ async def recslinks(Authorization: Optional[str] = Header(None)):
                     "rl.imagelink as imagelink \n" + \
                 "order by rl.sorted"      
     #print(f"statement pronun: {statement}")
-
     await awsleep(0)
-
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting recommended links",
                         statement=statement, 
@@ -624,8 +621,7 @@ async def recslinks(Authorization: Optional[str] = Header(None)):
 
 @router.get("/reclinks/")
 async def recslinks(Authorization: Optional[str] = Header(None)):
-    """    
-
+    """
     """
     global appNeo, session, log
 
@@ -640,9 +636,7 @@ async def recslinks(Authorization: Optional[str] = Header(None)):
                     "rl.imagelink as imagelink \n" + \
                 "order by rl.sorted"      
     #print(f"statement pronun: {statement}")
-
     await awsleep(0)
-
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting recommended links",
                         statement=statement, 
