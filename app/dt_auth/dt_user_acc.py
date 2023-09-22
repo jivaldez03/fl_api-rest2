@@ -335,7 +335,7 @@ def signup_complete(code:str):
                     appNeo.app_access_cfg.get("app_link", "https://dt-one-b7bbdf083efc.herokuapp.com/")
             msg = msg + "\n\nTe recomendamos visitar nuestro canal en youtube - " + \
                     appNeo.app_access_cfg.get("youtubechannel", "")            
-            msg = msg + "donde encontrarás la guía de uso de DTone - " + \
+            msg = msg + " donde encontrarás la guía de uso de DTone - " + \
                     appNeo.app_access_cfg.get("playlist_userguide", "") + " - para que aproveches al máximo sus beneficios."
 
             subj = "DTone - Notificación de Registro - " + userId

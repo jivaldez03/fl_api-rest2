@@ -35,6 +35,12 @@ class ForUserReg(BaseModel):
     kolic : str=None
     
 
+class ForLicense(BaseModel):
+    userId:str
+    KoLic: str
+    price_complete: float
+    price_cupon : float
+    cupon: str
 
 """    
 us.userId as userId \n" + \

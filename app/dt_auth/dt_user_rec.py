@@ -4,15 +4,17 @@
 import stripe
 from fastapi import Request, APIRouter # FastAPI, 
 
-from app.model.md_params_auth import ForResetPass
+from app.model.md_params_auth import ForResetPass, ForLicense
 
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session
 
-from __generalFunctions import myfunctionname, get_random_string, email_send, _getdatetime
+from __generalFunctions import myfunctionname, get_random_string, email_send
 
 import random
 from string import ascii_letters
+
+from asyncio import sleep as awsleep
 
 router = APIRouter()
 
@@ -62,7 +64,7 @@ def email_send(target_userId, target_email, message):
 """
 
 @router.post("/reset_pass_notification/")
-def user_change_pass_notification(datas:ForResetPass, request:Request):
+async def user_change_pass_notification(datas:ForResetPass, request:Request):
     global appNeo
     """
     Function for reset the user password \n
@@ -97,6 +99,7 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
     #print("mmmethod:", method)
     #print("pathcomplete:", pathcomplete)
     #print("serverlnk:", serverlnk)
+    awsleep(0)
 
     lnk_toanswer = "http://" + serverlnk + "/dt/auth/reset_pass/"
     
@@ -146,7 +149,7 @@ def user_change_pass_notification(datas:ForResetPass, request:Request):
 
 
 @router.get("/reset_pass/{code}")
-def user_change_pass(code:str):
+async def user_change_pass(code:str):
     global appNeo
     """
     Function for reset the user password \n
@@ -175,6 +178,8 @@ def user_change_pass(code:str):
     userId = sdict.get("u.userId", "")
     emailuser = sdict.get("u.email", "")
     
+    awsleep(0)
+
     if emailuser != "":
         if sdict["selected_lang"] == 'es':
             msg = "Su password ha sido renovado, su nuevo password es: " + temppass
@@ -191,25 +196,64 @@ def user_change_pass(code:str):
     return sentmail
 
 
-@router.post("/stripe_checkout/")
-def stripe_checkout(datas:ForResetPass):
+@router.post("/s_pay_validation/{code}")
+async def stripe_checkout(code:str):
     """
     class ForLogin(BaseModel):
         userId: str
-        password: str
+        KoLic: str
     """
+    send = "processing pay with code:" + code + " ... wait a minute please..."
+    awsleep(3)
+    return send
+
+@router.post("/stripe_checkout/")
+async def stripe_checkout(datas:ForLicense, request:Request):
+    """
+    class ForLogin(BaseModel):
+        userId: str
+        KoLic: str
+        price_complete: float
+        price_cupon : float
+        cupon: str
+    """
+
+    def get_path():
+        met  =  request.scope['method'] 
+        path =  request.scope['root_path'] + request.scope['route'].path
+        #encoding = 'utf-8'
+        serverlnk = ""
+        for elehead in request.scope['headers']:
+            #print('eeeelehead:', elehead, type(elehead))
+            val=str(elehead[0],'utf-8')
+            if val == 'host':
+                serverlnk = str(elehead[1], 'utf-8')  
+        return met, path, serverlnk
+    
+    userId = datas.userId
+
+    temppass = get_random_string(random.randint(45,60))
+
+    method, pathcomplete, serverlnk = get_path()    
+
+    lnk_toanswer = "http://" + serverlnk + "/dt/auth/stripe_pay_validation/" + temppass
+
     # Set your secret key. Remember to switch to your live secret key in pr
     # oduction.   
     # See your keys here: https://dashboard.stripe.com/apikeys
     stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    #stripeLink = {"url":lnk_toanswer}    
+    #"""
     stripeLink = stripe.PaymentLink.create(
             #line_items=[{"price": '{{25.99}}', "quantity": 1}],
             line_items=[{"price": 'price_1NtD1qL7SwRlW9BCB8ABhCH0', "quantity": 1}],
-            after_completion={"type": "redirect", "redirect": {"url": "https://www.delthatech.com"}},
+            after_completion={"type": "redirect", "redirect": {"url": lnk_toanswer}},
              allow_promotion_codes=True, 
              #automatic_tax={"enabled": True},
-            
+            # "https://www.delthatech.com"
     )
+    #"""
+    awsleep(0)
     #            after_completion={"type": "redirect", "redirect": {"url": "https://www.delthatech.com"}},
     """
     custom_fields=[
@@ -220,5 +264,5 @@ def stripe_checkout(datas:ForResetPass):
                 },
             ]
     """
-    print(stripeLink)
-    return stripeLink
+    print("*************************\nStripeLink: ", stripeLink, "\n", stripeLink["url"])
+    return {"stripe_url":stripeLink["url"], "redirect_url": lnk_toanswer, "stripe_completeseq": stripeLink}
