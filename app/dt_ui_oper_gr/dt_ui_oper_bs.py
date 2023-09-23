@@ -1178,7 +1178,7 @@ async def post_user_words4(datas:ForNewPackage
     idSCat = idSCat % 1000000
     pkgname = datas.package
     capacity = datas.capacity    
-
+    capacity = 12
     level = 'lvl_40_01'
 
     dtexec = funcs._getdatime_T()
