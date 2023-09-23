@@ -212,6 +212,10 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                     "es": "Lo invitamos a continuar con nosotros, le ofrecemos las siguientes opciones",
                     "en": "We invite you to continue with us, you have some fantastic options"
                 },
+                "label01": { 
+                    "es": "Productos disponibles",
+                    "en": "Available products"
+                },
                 "Options": [ 
                     {
                     "KoLic": "01M",
