@@ -81,78 +81,92 @@ async def login_user(datas: ForLogin):
             detail=merror
             #headers={"WWW-Authenticate": "Basic"},
         )
-    elif kol_lim_date < _getdatetime():
-        print("\n\nKOL:", datas.userId.lower(), result["kol"], type(result["kol_lim_date"]), result["kol_lim_date"],"\n\n")
-        merror = "License Permission Error"
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=merror
-        )
-    elif datas.password == result["us.keypass"]:   # success access
-        #log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
-        print("\n\nKOL:", datas.userId.lower(), result["kol"], result["kol_lim_date"],"\n\n")
-        
-        #print(kol_lim_date, str(kol_lim_date), type(kol_lim_date))
-        resp_dict ={'status': 'OK', 
-                    'text': 'successful access',
-                    "userId":datas.userId.lower(),
-                    "username": result["us.name"], 
-                    "useremail": result["us.email"],
-                    "useremail_alt": result["us.email_alt"],
-                    "age":0, 
-                    "country_birth": result["us.country_birth"], 
-                    "country_res": result["us.country_res"],
-                    "native_lang" : result["us.native_lang"],
-                    "selected_lang" : result["selected_lang"],
-                    "kol" : result["kol"],
-                    "kol_lim_date" : str(kol_lim_date)
-                }
-        #print("resp_dict:", resp_dict)
-        
-        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
-                    ", user:'" + datas.userId.lower() + "'}) \n" + \
-                    "where elementId(l) = '" + log[0] + "' \n" + \
-                    "set l.ctClosed = datetime(), l.additionalResult = 'login - success access' \n" + \
-                    "return count(l)"
-        nodes, log = neo4j_exec(session, datas.userId.lower() ,
-                        log_description="validate login user"
-                        , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
-                        , recLog=False)
+    else:
+        if datas.password == result["us.keypass"]:   # success access
+            #log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
+            print("\n\nKOL:", datas.userId.lower(), result["kol"], result["kol_lim_date"],"\n\n")
+            
+            #print(kol_lim_date, str(kol_lim_date), type(kol_lim_date))
+            resp_dict ={'status': 'OK', 
+                        'text': 'successful access',
+                        "userId":datas.userId.lower(),
+                        "username": result["us.name"], 
+                        "useremail": result["us.email"],
+                        "useremail_alt": result["us.email_alt"],
+                        "age":0, 
+                        "country_birth": result["us.country_birth"], 
+                        "country_res": result["us.country_res"],
+                        "native_lang" : result["us.native_lang"],
+                        "selected_lang" : result["selected_lang"],
+                        "kol" : result["kol"],
+                        "kol_lim_date" : str(kol_lim_date)
+                    }
+            #print("resp_dict:", resp_dict)
+            
+            token = funcs.return_token(data=resp_dict)
+            result_tk = {"token": token, 
+                        "user_name": result["us.name"], 
+                        "age":0, 
+                        "country_birth": result["us.country_birth"], 
+                        "country_res": result["us.country_res"],
+                        "native_lang" : result["us.native_lang"],
+                        "selected_lang" : result["selected_lang"]
+            }
 
-        token = funcs.return_token(data=resp_dict)
-        return {"token": token, 
-                    "user_name": result["us.name"], 
-                    "age":0, 
-                    "country_birth": result["us.country_birth"], 
-                    "country_res": result["us.country_res"],
-                    "native_lang" : result["us.native_lang"],
-                    "selected_lang" : result["selected_lang"]
-        }
-    else: # incorrect pass
-        #log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())        
-        merror = "Usuario-Password Incorrecto - Invalid User-Password"
-        resp_dict ={'status': 'ERROR', 'text': merror, "username": "",  
-                    "age":0, 
-                    "country_birth": "", 
-                    "country_res": ""
-                }
-        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
-                    ", user:'" + datas.userId.lower() + "'}) \n" + \
-                    "where elementId(l) = '" + log[0] + "' \n" + \
-                    "set l.ctClosed = datetime(), l.additionalResult = 'invalid user or password - (p)' \n" + \
-                    "return count(l)"
+            if kol_lim_date < _getdatetime():
+                print("\n\nKOL:", datas.userId.lower(), result["kol"], type(result["kol_lim_date"]), result["kol_lim_date"],"\n\n")
+                merror = "License Permission Error"
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=result_tk
+                )
+            neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
+                        ", user:'" + datas.userId.lower() + "'}) \n" + \
+                        "where elementId(l) = '" + log[0] + "' \n" + \
+                        "set l.ctClosed = datetime(), l.additionalResult = 'login - success access' \n" + \
+                        "return count(l)"
+            nodes, log = neo4j_exec(session, datas.userId.lower() ,
+                            log_description="validate login user"
+                            , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                            , recLog=False)
+            
+            """
+            {"token": token, 
+                        "user_name": result["us.name"], 
+                        "age":0, 
+                        "country_birth": result["us.country_birth"], 
+                        "country_res": result["us.country_res"],
+                        "native_lang" : result["us.native_lang"],
+                        "selected_lang" : result["selected_lang"]
+            }
+            """
+            return  result_tk
         
-        nodes, log = neo4j_exec(session, datas.userId.lower() ,
-                        log_description=merror
-                        , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
-                        , recLog=False)        
+        else: # incorrect pass
+            #log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())        
+            merror = "Usuario-Password Incorrecto - Invalid User-Password"
+            resp_dict ={'status': 'ERROR', 'text': merror, "username": "",  
+                        "age":0, 
+                        "country_birth": "", 
+                        "country_res": ""
+                    }
+            neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
+                        ", user:'" + datas.userId.lower() + "'}) \n" + \
+                        "where elementId(l) = '" + log[0] + "' \n" + \
+                        "set l.ctClosed = datetime(), l.additionalResult = 'invalid user or password - (p)' \n" + \
+                        "return count(l)"
+            
+            nodes, log = neo4j_exec(session, datas.userId.lower() ,
+                            log_description=merror
+                            , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                            , recLog=False)        
 
-        #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,            
-            detail =merror
-            #headers={"WWW-Authenticate": "Basic"},
-        )
+            #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,            
+                detail =merror
+                #headers={"WWW-Authenticate": "Basic"},
+            )
     print("id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return resp_dict
 #

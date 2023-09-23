@@ -2,14 +2,17 @@
 #import smtplib
 #from email.message import EmailMessage
 import stripe
-from fastapi import Request, APIRouter # FastAPI, 
+from fastapi import Request, APIRouter, Header # FastAPI, 
+
+from typing import Optional
 
 from app.model.md_params_auth import ForResetPass, ForLicense
 
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session
 
-from __generalFunctions import myfunctionname, get_random_string, email_send
+from __generalFunctions import myfunctionname, get_random_string, email_send, validating_token
+
 
 import random
 from string import ascii_letters
@@ -196,7 +199,10 @@ async def user_change_pass(code:str):
 
 
 @router.get("/s_available_products/")
-async def s_available_products():
+async def s_available_products(Authorization: Optional[str] = Header(None)):
+
+    token=validating_token(Authorization)
+    userId = token['userId']
     sdict = {
                 "title": {
                     "es": "La vigencia de acceso ha concluído",
@@ -210,12 +216,12 @@ async def s_available_products():
                     {
                     "KoLic": "01M",
                     "value": {
-                        "es": "1 MES DE USO",
-                        "en": "1 MES DE USO"
+                        "es": "01M - 1 MES DE ACCESO",
+                        "en": "01M - ACCESING FOR 1 MONTH"
                     },
                     "description": {
-                        "es": "Por lanzamiento obten 50% gratis",
-                        "en": "Por lanzamiento obten 50% gratis"
+                        "es": "Por lanzamiento obten 50% de descuento",
+                        "en": "50% Free"
                     },
                     "cupon": "RIGHTNOW",
                     "price": 60,
@@ -224,12 +230,12 @@ async def s_available_products():
                     {
                     "KoLic": "03M",
                     "value": {
-                        "es": "3 MESES DE USO",
-                        "en": "3 MESES DE USO"
+                        "es": "03M - 3 MESES DE ACCESO",
+                        "en": "03M - ACCESING FOR 3 MONTHS"
                     },
                     "description": {
-                        "es": "Por lanzamiento obten 50% gratis",
-                        "en": "Por lanzamiento obten 50% gratis"
+                        "es": "Por lanzamiento obten 50% de descuento",
+                        "en": "50% Free"
                     },
                     "cupon": "RIGHTNOW",
                     "price": 170,
@@ -238,12 +244,12 @@ async def s_available_products():
                     {
                     "KoLic": "06M",
                     "value": {
-                        "es": "6 MESES DE USO",
-                        "en": "6 MESES DE USO"
+                        "es": "06M - 6 MESES DE ACCESO",
+                        "en": "06M - ACCESING FOR 6 MONTHS"
                     },
                     "description": {
-                        "es": "Por lanzamiento obten 50% gratis",
-                        "en": "Por lanzamiento obten 50% gratis"
+                        "es": "Por lanzamiento obten 50% de descuento",
+                        "en": "50% Free"
                     },
                     "cupon": "RIGHTNOW",
                     "price": 320,
@@ -252,12 +258,12 @@ async def s_available_products():
                     {
                     "KoLic": "12M",
                     "value": {
-                        "es": "12 MESES DE USO",
-                        "en": "12 MESES DE USO"
+                        "es": "12M - 12 MESES DE ACCESO",
+                        "en": "12M - ACCESING FOR 12 MONTHS"
                     },
                     "description": {
-                        "es": "Por lanzamiento obten 50% gratis",
-                        "en": "Por lanzamiento obten 50% gratis"
+                        "es": "Por lanzamiento obten 50% de descuento",
+                        "en": "50% Free"
                     },
                     "cupon": "RIGHTNOW",
                     "price": 550,
@@ -266,12 +272,12 @@ async def s_available_products():
                     {
                     "KoLic": "00U",
                     "value": {
-                        "es": "NO LIMITADA",
-                        "en": "NO LIMITADA"
+                        "es": "00U - NO LIMITADA",
+                        "en": "00U -UNLIMMITED ACCESS"
                     },
                     "description": {
-                        "es": "Por lanzamiento obten 50% gratis",
-                        "en": "Por lanzamiento obten 50% gratis"
+                        "es": "Por lanzamiento obten 50% de descuento",
+                        "en": "50% Free"
                     },
                     "cupon": "RIGHTNOW",
                     "price": 600,
@@ -300,7 +306,8 @@ async def s_pay_validation(code:str):
     return send
 
 @router.post("/stripe_checkout/")
-async def stripe_checkout(datas:ForLicense, request:Request):
+async def stripe_checkout(datas:ForLicense, request:Request
+                    , Authorization: Optional[str] = Header(None)):
     """
     class ForLogin(BaseModel):
         userId: str
@@ -309,6 +316,9 @@ async def stripe_checkout(datas:ForLicense, request:Request):
         price_cupon : float
         cupon: str
     """
+    token=validating_token(Authorization)
+    userId = token['userId']
+
     product = None
     if datas.KoLic == '01M':
         product = 'price_1NtD1qL7SwRlW9BCB8ABhCH0'
@@ -382,7 +392,7 @@ async def stripe_checkout(datas:ForLicense, request:Request):
             ]
     """
     print("stripeLink:", stripeLink)
-    neo4j_statement = "match (u:User {userId:'" + datas.userId + "'}) \n" + \
+    neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
                     "create (plink:Payments {userId:u.userId, url:'" + stripeLink['url'] + "'" + \
                         ", uId:'" + temppass + "'}) \n" + \
                     "set plink.ctInsert = datetime(),  \n" + \
