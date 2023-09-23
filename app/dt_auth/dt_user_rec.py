@@ -195,7 +195,7 @@ async def user_change_pass(code:str):
     return sentmail
 
 
-@router.get("/s_products_availabe/")
+@router.get("/s_products_available/")
 async def s_products_availabe():
     sdict = {
                 "title": {
