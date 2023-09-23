@@ -210,8 +210,8 @@ async def s_available_products():
                     {
                     "KoLic": "01M",
                     "value": {
-                        "es": " - Lanzamiento",
-                        "en": " - Launching"
+                        "es": "1 MES DE USO",
+                        "en": "1 MES DE USO"
                     },
                     "description": {
                         "es": "Por lanzamiento obten 50% gratis",
@@ -224,22 +224,22 @@ async def s_available_products():
                     {
                     "KoLic": "03M",
                     "value": {
-                        "es": " - Lanzamiento",
-                        "en": " - Launching"
+                        "es": "3 MESES DE USO",
+                        "en": "3 MESES DE USO"
                     },
                     "description": {
                         "es": "Por lanzamiento obten 50% gratis",
                         "en": "Por lanzamiento obten 50% gratis"
                     },
                     "cupon": "RIGHTNOW",
-                    "price": 160,
-                    "price_cupon": 80
+                    "price": 170,
+                    "price_cupon": 85
                     },
                     {
                     "KoLic": "06M",
                     "value": {
-                        "es": " - Lanzamiento",
-                        "en": " - Launching"
+                        "es": "6 MESES DE USO",
+                        "en": "6 MESES DE USO"
                     },
                     "description": {
                         "es": "Por lanzamiento obten 50% gratis",
@@ -252,8 +252,8 @@ async def s_available_products():
                     {
                     "KoLic": "12M",
                     "value": {
-                        "es": " - Lanzamiento",
-                        "en": " - Launching"
+                        "es": "12 MESES DE USO",
+                        "en": "12 MESES DE USO"
                     },
                     "description": {
                         "es": "Por lanzamiento obten 50% gratis",
@@ -261,13 +261,13 @@ async def s_available_products():
                     },
                     "cupon": "RIGHTNOW",
                     "price": 550,
-                    "price_cupon": 225
+                    "price_cupon": 275
                     },
                     {
-                    "KoLic": "99M-UNIVERSAL",
+                    "KoLic": "00U",
                     "value": {
-                        "es": " - Lanzamiento",
-                        "en": " - Launching"
+                        "es": "NO LIMITADA",
+                        "en": "NO LIMITADA"
                     },
                     "description": {
                         "es": "Por lanzamiento obten 50% gratis",
@@ -309,6 +309,17 @@ async def stripe_checkout(datas:ForLicense, request:Request):
         price_cupon : float
         cupon: str
     """
+    product = None
+    if datas.KoLic == '01M':
+        product = 'price_1NtD1qL7SwRlW9BCB8ABhCH0'
+    elif datas.KoLic == '03M':
+        product = 'price_1NtXe0L7SwRlW9BCmIjLsK3J'
+    elif datas.KoLic == '06M':
+        product = 'price_1NtXp0L7SwRlW9BCrXchRTAu'
+    elif datas.KoLic == '12M':
+        product = 'price_1NtXquL7SwRlW9BCvHCNVoxA'
+    elif datas.KoLic == '00U':
+        product = 'price_1NtXylL7SwRlW9BCf5m9HwSZ'
 
     def get_path():
         met  =  request.scope['method'] 
@@ -336,18 +347,20 @@ async def stripe_checkout(datas:ForLicense, request:Request):
     stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
     #stripeLink = {"url":lnk_toanswer}    
     #"""
-    if 1 == 1: 
-        stripeLink = stripe.PaymentLink.create(
-                #line_items=[{"price": '{{25.99}}', "quantity": 1}],
-                line_items=[{"price": 'price_1NtD1qL7SwRlW9BCB8ABhCH0', "quantity": 1}],
-                after_completion={"type": "redirect", "redirect": {"url": lnk_toanswer}},
-                allow_promotion_codes=True, 
-                #automatic_tax={"enabled": True},
-                # "https://www.delthatech.com"
-        )
-        spupdate = stripe.PaymentLink.retrieve(id="plink_1NtKIhL7SwRlW9BCX7QAMX09")
-        print("spudate: ", spupdate)
+    # PROCESO POR PAYMENT LINK
+    stripeLink = stripe.PaymentLink.create(
+            #line_items=[{"price": '{{25.99}}', "quantity": 1}],
+            line_items=[{"price": product, "quantity": 1}],
+            after_completion={"type": "redirect", "redirect": {"url": lnk_toanswer}},
+            allow_promotion_codes=True, 
+            #automatic_tax={"enabled": True},
+            # "https://www.delthatech.com"
+    )
+    spupdate = stripe.PaymentLink.retrieve(id="plink_1NtKIhL7SwRlW9BCX7QAMX09")
+    print("spudate: ", spupdate)
 
+    # PROCESO POR PAYMENT INTENT
+    """    
     else:
         stripeLink = stripe.PaymentIntent.create(
                     amount=1500,
@@ -356,7 +369,7 @@ async def stripe_checkout(datas:ForLicense, request:Request):
                     statement_descriptor="01M - DTone",
                     )
 
-    #"""
+    """
     awsleep(0)
     #            after_completion={"type": "redirect", "redirect": {"url": "https://www.delthatech.com"}},
     """
