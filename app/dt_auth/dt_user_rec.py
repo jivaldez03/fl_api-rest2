@@ -191,10 +191,95 @@ async def user_change_pass(code:str):
         refmail = emailuser.split('@')
         sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
     else:
-        sentmail = "Something was wrong, review your email."
-    
+        sentmail = "Something was wrong, review your email."    
     return sentmail
 
+
+@router.get("/s_products_availabe/")
+async def s_products_availabe():
+    sdict = {
+                "title": {
+                    "es": "La vigencia de acceso ha concluído",
+                    "en": "Your license period has finished"
+                },
+                "title02": {
+                    "es": "Lo invitamos a continuar con nosotros, le ofrecemos las siguientes opciones",
+                    "en": "We invite you to continue with us, you have some fantastic options"
+                },
+                "Options": [ 
+                    {
+                    "KoLic": "01M",
+                    "value": {
+                        "es": " - Lanzamiento",
+                        "en": " - Launching"
+                    },
+                    "description": {
+                        "es": "Por lanzamiento obten 50% gratis",
+                        "en": "Por lanzamiento obten 50% gratis"
+                    },
+                    "cupon": "RIGHTNOW",
+                    "price": 60,
+                    "price_cupon": 30
+                    },
+                    {
+                    "KoLic": "03M",
+                    "value": {
+                        "es": " - Lanzamiento",
+                        "en": " - Launching"
+                    },
+                    "description": {
+                        "es": "Por lanzamiento obten 50% gratis",
+                        "en": "Por lanzamiento obten 50% gratis"
+                    },
+                    "cupon": "RIGHTNOW",
+                    "price": 160,
+                    "price_cupon": 80
+                    },
+                    {
+                    "KoLic": "06M",
+                    "value": {
+                        "es": " - Lanzamiento",
+                        "en": " - Launching"
+                    },
+                    "description": {
+                        "es": "Por lanzamiento obten 50% gratis",
+                        "en": "Por lanzamiento obten 50% gratis"
+                    },
+                    "cupon": "RIGHTNOW",
+                    "price": 320,
+                    "price_cupon": 160
+                    },
+                    {
+                    "KoLic": "12M",
+                    "value": {
+                        "es": " - Lanzamiento",
+                        "en": " - Launching"
+                    },
+                    "description": {
+                        "es": "Por lanzamiento obten 50% gratis",
+                        "en": "Por lanzamiento obten 50% gratis"
+                    },
+                    "cupon": "RIGHTNOW",
+                    "price": 550,
+                    "price_cupon": 225
+                    },
+                    {
+                    "KoLic": "99M-UNIVERSAL",
+                    "value": {
+                        "es": " - Lanzamiento",
+                        "en": " - Launching"
+                    },
+                    "description": {
+                        "es": "Por lanzamiento obten 50% gratis",
+                        "en": "Por lanzamiento obten 50% gratis"
+                    },
+                    "cupon": "RIGHTNOW",
+                    "price": 600,
+                    "price_cupon": 300
+                    }
+                ]
+    }
+    return sdict
 
 @router.get("/s_pay_validation/{code}")
 async def s_pay_validation(code:str):
@@ -205,6 +290,13 @@ async def s_pay_validation(code:str):
     """
     send = "processing pay with code:" + code + " ... wait a minute please..."
     awsleep(3)
+    stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+
+    #intent = stripe.PaymentIntent.retrieve('{{PAYMENT_INTENT_ID}}')
+    intent = stripe.PaymentIntent.retrieve("plink_1NtKIhL7SwRlW9BCX7QAMX09")
+    charges = intent.charges.data
+    print("stripe intent: ", intent)
+    print("stripe charges: ", charges)
     return send
 
 @router.post("/stripe_checkout/")
@@ -244,14 +336,26 @@ async def stripe_checkout(datas:ForLicense, request:Request):
     stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
     #stripeLink = {"url":lnk_toanswer}    
     #"""
-    stripeLink = stripe.PaymentLink.create(
-            #line_items=[{"price": '{{25.99}}', "quantity": 1}],
-            line_items=[{"price": 'price_1NtD1qL7SwRlW9BCB8ABhCH0', "quantity": 1}],
-            after_completion={"type": "redirect", "redirect": {"url": lnk_toanswer}},
-             allow_promotion_codes=True, 
-             #automatic_tax={"enabled": True},
-            # "https://www.delthatech.com"
-    )
+    if 1 == 1: 
+        stripeLink = stripe.PaymentLink.create(
+                #line_items=[{"price": '{{25.99}}', "quantity": 1}],
+                line_items=[{"price": 'price_1NtD1qL7SwRlW9BCB8ABhCH0', "quantity": 1}],
+                after_completion={"type": "redirect", "redirect": {"url": lnk_toanswer}},
+                allow_promotion_codes=True, 
+                #automatic_tax={"enabled": True},
+                # "https://www.delthatech.com"
+        )
+        spupdate = stripe.PaymentLink.retrieve(id="plink_1NtKIhL7SwRlW9BCX7QAMX09")
+        print("spudate: ", spupdate)
+
+    else:
+        stripeLink = stripe.PaymentIntent.create(
+                    amount=1500,
+                    currency="mxn",
+                    payment_method_types=["card"],
+                    statement_descriptor="01M - DTone",
+                    )
+
     #"""
     awsleep(0)
     #            after_completion={"type": "redirect", "redirect": {"url": "https://www.delthatech.com"}},
@@ -264,5 +368,24 @@ async def stripe_checkout(datas:ForLicense, request:Request):
                 },
             ]
     """
+    print("stripeLink:", stripeLink)
+    neo4j_statement = "match (u:User {userId:'" + datas.userId + "'}) \n" + \
+                    "create (plink:Payments {userId:u.userId, url:'" + stripeLink['url'] + "'" + \
+                        ", uId:'" + temppass + "'}) \n" + \
+                    "set plink.ctInsert = datetime(),  \n" + \
+                    "   plink.plId = '" + stripeLink["id"] + "' \n" + \
+                    "return u.userId as userId, elementId(plink) as eleId"
+    
+    print("neo4j_statement: ", neo4j_statement )
+
+    nodes, log = neo4j_exec(session, 'admin', 
+                        log_description="paymenlink saving",
+                        statement=neo4j_statement,
+                        filename=__name__,
+                        function_name=myfunctionname())
+    sdict = {}
+    for node in nodes:
+        sdict = dict(node)    
+
     #print("*************************\nStripeLink: ", stripeLink["url"])
-    return {"stripe_url":stripeLink["url"], "redirect_url": lnk_toanswer} # , "stripe_completeseq": stripeLink}
+    return {"stripe_url":stripeLink["url"], "redirect_url": lnk_toanswer, "eleId":sdict["eleId"]} # , "stripe_completeseq": stripeLink}
