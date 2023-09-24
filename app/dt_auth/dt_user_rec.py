@@ -201,7 +201,7 @@ async def user_change_pass(code:str):
 @router.get("/s_available_products/")
 async def s_available_products(Authorization: Optional[str] = Header(None)):
 
-    print('\n\n *********************** \nauthorization', Authorization)
+    #print('\n\n *********************** \nauthorization', Authorization)
     token=validating_token(Authorization)
     userId = token['userId']
     sdict = {
@@ -311,7 +311,7 @@ async def s_pay_validation(code:str):
     return send
 
 @router.post("/stripe_checkout/")
-async def stripe_checkout(datas:ForLicense #, request:Request
+async def stripe_checkout(datas:ForLicense, request:Request
                      , Authorization: Optional[str] = Header(None)):
     """
     class ForLogin(BaseModel):
@@ -321,7 +321,7 @@ async def stripe_checkout(datas:ForLicense #, request:Request
         price_cupon : float
         cupon: str
     """
-    print('\n\n *********************** \nauthorization STRIPE : ', Authorization)
+    #print('\n\n *********************** \nauthorization STRIPE : ', Authorization)
     token=validating_token(Authorization)
     userId = token['userId']
 
@@ -336,8 +336,7 @@ async def stripe_checkout(datas:ForLicense #, request:Request
         product = 'price_1NtXquL7SwRlW9BCvHCNVoxA'
     elif datas.KoLic == '00U':
         product = 'price_1NtXylL7SwRlW9BCf5m9HwSZ'
-
-    """
+    
     def get_path():
         met  =  request.scope['method'] 
         path =  request.scope['root_path'] + request.scope['route'].path
@@ -349,15 +348,15 @@ async def stripe_checkout(datas:ForLicense #, request:Request
             if val == 'host':
                 serverlnk = str(elehead[1], 'utf-8')  
         return met, path, serverlnk
-    """
+    
     userId = datas.userId
 
     temppass = get_random_string(random.randint(45,60))
 
-    #method, pathcomplete, serverlnk = get_path()    
+    method, pathcomplete, serverlnk = get_path()    
 
-    # lnk_toanswer = "https://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass
-    lnk_toanswer = "https://dtl001-1158a6696bb9.herokuapp.com/dtauth/s_pay_validation" + temppass
+    lnk_toanswer = "https://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass
+    #lnk_toanswer = "https://dtl001-1158a6696bb9.herokuapp.com/dtauth/s_pay_validation" + temppass
 
     # Set your secret key. Remember to switch to your live secret key in pr
     # oduction.   
@@ -374,8 +373,8 @@ async def stripe_checkout(datas:ForLicense #, request:Request
             #automatic_tax={"enabled": True},
             # "https://www.delthatech.com"
     )
-    spupdate = stripe.PaymentLink.retrieve(id="plink_1NtKIhL7SwRlW9BCX7QAMX09")
-    print("spudate: ", spupdate)
+    #spupdate = stripe.PaymentLink.retrieve(id="plink_1NtKIhL7SwRlW9BCX7QAMX09")
+    #print("spudate: ", spupdate)
 
     # PROCESO POR PAYMENT INTENT
     """    
@@ -399,7 +398,7 @@ async def stripe_checkout(datas:ForLicense #, request:Request
                 },
             ]
     """
-    print("stripeLink:", stripeLink)
+    #print("stripeLink:", stripeLink)
     neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
                     "create (plink:Payments {userId:u.userId, url:'" + stripeLink['url'] + "'" + \
                         ", uId:'" + temppass + "'}) \n" + \
@@ -407,7 +406,7 @@ async def stripe_checkout(datas:ForLicense #, request:Request
                     "   plink.plId = '" + stripeLink["id"] + "' \n" + \
                     "return u.userId as userId, elementId(plink) as eleId"
     
-    print("neo4j_statement: ", neo4j_statement )
+    #print("neo4j_statement: ", neo4j_statement )
 
     nodes, log = neo4j_exec(session, 'admin', 
                         log_description="paymenlink saving",
