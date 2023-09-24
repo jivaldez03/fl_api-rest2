@@ -492,7 +492,10 @@ async def s_pay_validation(code:str):
                         "optional match (u:User {userId:pc.userId}) \n" + \
                         " set u.ctUpdate = datetime(), \n" + \
                             "u.kol = pc.KoLic, \n" + \
-                            "u.kol_lim_date = (u.kol_lim_date + duration({months:pr.months})), \n" + \
+                            "u.kol_lim_date = case when u.kol_lim_date > datetime() \n" + \
+                                                "then (u.kol_lim_date + duration({months:pr.months})) \n" + \
+                                                "else (datetime() + duration({months:pr.months})) \n" + \
+                                            "end " + \
                             "u.update_lic = datetime() \n" + \
                         "with pl, pc, u \n" + \
                         "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
