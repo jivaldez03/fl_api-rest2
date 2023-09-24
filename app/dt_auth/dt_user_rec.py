@@ -487,21 +487,28 @@ async def s_pay_validation(code:str):
                         "   pc.pintent = '"+ paid["pintent"] + "',  \n" + \
                         "   pc.created = "+ str(paid["created"]) + "  \n" + \
                         "with pl, pc \n" + \
-                        "where not pc.Kolic is null \n" + \
+                        "where not pc.KoLic is null \n" + \
                         "match (pr:Product {KoLic:pc.KoLic}) \n" + \
                         "optional match (u:User {userId:pc.userId}) \n" + \
                         " set u.ctUpdate = datetime(), \n" + \
                             "u.kol = pc.KoLic, \n" + \
                             "u.kol_lim_date = (u.kol_lim_date + duration({months:pr.months})), \n" + \
                             "u.update_lic = datetime() \n" + \
-                        "with pl, pc \n" + \
+                        "with pl, pc, u \n" + \
                         "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
                         "set r.ctInsert = datetime() \n" + \
-                        "return pc.csId as csId, pc.KoLic as KoLic, pc.ctInsert as ctInsert" 
+                        "with pc, u \n" + \
+                        "merge (pc)-[rlic:CONFIRMED_LIC]->(u) \n" + \
+                        "set rlic.ctInsert = datetime() \n" + \
+                        "return pc.csId as csId, pc.KoLic as KoLic, u.userId as userId, pc.ctInsert as ctInsert" 
+        # "with pl, pc \n" + \
+        # "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
+        # "set r.ctInsert = datetime() \n" + \
+        print("neo4j_statement:", neo4j_statement)
         awsleep(0)
 
         nodes, log = neo4j_exec(session, 'admin',
-                            log_description="getting the last pay inserted ",
+                            log_description="recording confirmed payment and updating user ",
                             statement=neo4j_statement,
                             filename=__name__,
                             function_name=myfunctionname())    
