@@ -3,7 +3,6 @@
 #from email.message import EmailMessage
 import stripe
 from fastapi import Request, APIRouter, Header # FastAPI, 
-
 from typing import Optional
 
 from app.model.md_params_auth import ForResetPass, ForLicense
@@ -301,13 +300,13 @@ async def s_pay_validation(code:str):
     """
     send = "processing pay with code:" + code + " ... wait a minute please..."
     awsleep(3)
-    stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    #stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
 
     #intent = stripe.PaymentIntent.retrieve('{{PAYMENT_INTENT_ID}}')
-    intent = stripe.PaymentIntent.retrieve("plink_1NtKIhL7SwRlW9BCX7QAMX09")
-    charges = intent.charges.data
-    print("stripe intent: ", intent)
-    print("stripe charges: ", charges)
+    #intent = stripe.PaymentIntent.retrieve("plink_1NtKIhL7SwRlW9BCX7QAMX09")
+    #charges = intent.charges.data
+    #print("stripe intent: ", intent)
+    #print("stripe charges: ", charges)
     return send
 
 @router.post("/stripe_checkout/")
