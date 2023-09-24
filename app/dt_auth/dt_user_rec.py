@@ -12,7 +12,7 @@ from app.model.md_params_auth import ForResetPass, ForLicense
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session
 
-from __generalFunctions import myfunctionname, get_random_string, email_send, validating_token
+from __generalFunctions import myfunctionname, get_random_string, email_send, validating_token, _sleep
 
 
 import random
@@ -198,6 +198,129 @@ async def user_change_pass(code:str):
         sentmail = "Something was wrong, review your email."    
     return sentmail
 
+@router.get("/s_fileplink_borrar/")
+async def s_fileplink_borrar(Authorization: Optional[str] = Header(None)):  # obtiene la lista de pagos procesados en stripe
+    #print('\n\n *********************** \nauthorization', Authorization)
+    token=validating_token(Authorization)
+    userId = token['userId']
+    stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    resultsconfirmplink = stripe.checkout.Session.list(
+                    limit=1000
+                    ) 
+    datas = resultsconfirmplink["data"]
+    ldatas = []
+    for gia, data in enumerate(datas[:]):
+        if data["status"] == "complete" \
+            and  data["status"] == "complete" \
+            :
+                for giaCF, cf in enumerate(data["custom_fields"]):
+                    if cf["key"] == 'userId':
+                        userIdINDAT = cf["text"]["value"]
+                useremailINDAT = data["customer_details"]["email"]
+                sdict = {"csId" : data["id"],
+                         "userId" : userIdINDAT,
+                         "email" : useremailINDAT,
+                        "paym_st" : data["payment_status"],
+                        "checkS" : data["status"],
+                        "amount_stot" : data["amount_subtotal"],
+                        "amount_total" : data["amount_total"],
+                        "curr" : data["currency"],
+                        "plink" : data["payment_link"],
+                        "pintent" :data["payment_intent"],
+                        "created" : data["created"]
+                }
+                ldatas.append(sdict)
+
+    return len(resultsconfirmplink), len(ldatas), ldatas  # resultsplink, 
+
+def s_checkout_session(cs):  # obtiene la lista de pagos procesados en stripe
+    stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    if cs:
+        resultsconfirmplink = stripe.checkout.Session.list(
+                        limit=100
+                        , ending_before=cs
+                        ) 
+    else:
+        resultsconfirmplink = stripe.checkout.Session.list(
+                        limit=100
+                        ) 
+
+    datas = resultsconfirmplink["data"]
+    ldatas = []
+    for gia, data in enumerate(datas[:]):
+        if data["status"] == "complete" \
+            and  data["status"] == "complete" \
+            :
+                for giaCF, cf in enumerate(data["custom_fields"]):
+                    if cf["key"] == 'userId':
+                        userIdINDAT = cf["text"]["value"]
+                useremailINDAT = data["customer_details"]["email"]
+                sdict = {"csId" : data["id"],
+                         "userId" : userIdINDAT,
+                         "email" : useremailINDAT,
+                        "paym_st" : data["payment_status"],
+                        "checkS" : data["status"],
+                        "amount_stot" : data["amount_subtotal"],
+                        "amount_total" : data["amount_total"],
+                        "curr" : data["currency"],
+                        "plink" : data["payment_link"],
+                        "pintent" :data["payment_intent"],
+                        "created" : data["created"]
+                }
+                ldatas.append(sdict)
+
+    return ldatas  # resultsplink, 
+
+
+def s_paymentslink(sApiKey):  # obtiene la lista de los paymentslink en strip - solo activos
+    stripe.api_key = sApiKey
+    paymlinks = stripe.PaymentLink.list(
+                    limit=100
+                    ) 
+    datas = paymlinks["data"]
+    ldatas = []
+    
+    for gia, data in enumerate(datas[:]):
+        if data["active"] == True:
+            for giaCF, cf in enumerate(data["custom_fields"]):                    
+                userIdINDAT = cf["key"]
+
+            for gia, ac in enumerate(data["after_completion"]):
+                #print("after_complettion:", ac)
+                if ac == 'redirect':
+                    redirectINDAT = data["after_completion"]["redirect"]["url"]
+            
+            #useremailINDAT = data["customer_details"]["email"]
+            sdict = {"plId" : data["id"],
+                        "url"  : data["url"],
+                        "status" : True, 
+                        "keyUserId" : userIdINDAT, 
+                        "allow_promotion_codes" : data["allow_promotion_codes"],
+                        "curr" : data["currency"] #"created" : data["created"]
+            }
+            ldatas.append(sdict)
+
+    return len(paymlinks) \
+            , ldatas
+
+def search_pl_actives_plinks(pl, pl_actives):  # busca si existe pl en la lista de paymentslinks activos - true si existe
+    print("\n\n******************pl:", pl, "plactives:", len(pl_actives))
+    for gia, pl_ac in enumerate(pl_actives):
+        if pl_ac["plId"] == pl:
+            return True
+    return False
+
+
+#@router.get("/s_paymlink/")
+#async 
+def s_paymlink(): #Authorization: Optional[str] = Header(None)):
+    #print('\n\n *********************** \nauthorization', Authorization)
+    #token=validating_token(Authorization)
+    #userId = token['userId']
+    s_api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    lenpl, paymlinks = s_paymentslink(s_api_key)
+
+    return lenpl, paymlinks
 
 @router.get("/s_available_products/")
 async def s_available_products(Authorization: Optional[str] = Header(None)):
@@ -300,22 +423,96 @@ async def s_pay_validation(code:str):
         userId: str
         KoLic: str
     """
+    global appNeo
+    
     send = "processing pay with code:" + code + " ... wait a minute please..."
     send = send + f"\n\nupdating new license for user ..."
 
+    neo4j_statement = "match (pc:PaymentsConfirmed) \n" + \
+                    "return pc.csId as csId, pc.created as created \n" + \
+                    "order by created desc \n" + \
+                    "limit 1"
+    #print("nneo4j: ", neo4j_statement)
+    awsleep(0)
+
+    nodes, log = neo4j_exec(session, 'admin',
+                        log_description="getting the last pay inserted ",
+                        statement=neo4j_statement,
+                        filename=__name__,
+                        function_name=myfunctionname())    
+    ldict = []
+    for node in nodes:
+        ldict.append(dict(node))    
+
     print("sending:", send)
-    awsleep(3)
+    print("csID initial :", ldict[0]["csId"])
 
-    #stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    awsleep(0)
+    if len(ldict) > 0:
+        paidscompleted = s_checkout_session(ldict[0]["csId"])
+    else:
+        paidscompleted = s_checkout_session(None)
 
-    #intent = stripe.PaymentIntent.retrieve('{{PAYMENT_INTENT_ID}}')
-    #intent = stripe.PaymentIntent.retrieve("plink_1NtKIhL7SwRlW9BCX7QAMX09")
-    #charges = intent.charges.data
-    #print("stripe intent: ", intent)
-    #print("stripe charges: ", charges)
+    """
 
+                sdict = {"csId" : data["id"],
+                         "userId" : userIdINDAT,
+                         "email" : useremailINDAT,
+                        "paym_st" : data["payment_status"],
+                        "checkS" : data["status"],
+                        "amount_stot" : data["amount_subtotal"],
+                        "amount_total" : data["amount_total"],
+                        "curr" : data["currency"],
+                        "plink" : data["payment_link"],
+                        "pintent" :data["payment_intent"],
+                        "created" : data["created"]
+                }
 
-    url = f'https://dt-one-b7bbdf083efc.herokuapp.com/#/sign-in'
+    """
+    for gia, paid in enumerate(paidscompleted[::-1]):
+        print(f"paid {gia + 1}: {paid}")
+        neo4j_statement = "optional match (pl:PaymentLinks {plId:'"+ paid["plink"] + "'}) \n" + \
+                        "merge (pc:PaymentsConfirmed {csId:'" + paid["csId"] + "', \n" + \
+                                    "userId:'" + paid["userId"] + "'}) \n" + \
+                        "on create set pc.ctInsert = datetime() " + \
+                        "on match set pc.ctUpdate = datetime() " + \
+                        "set pc.email = '" + paid["email"] + "',  \n" + \
+                        "   pc.KoLic = pl.KoLic, \n" + \
+                        "   pc.paym_st = '"+ paid["paym_st"] + "',  \n" + \
+                        "   pc.checkout_st = '"+ paid["checkS"]+ "',  \n" + \
+                        "   pc.amount_stot = "+ str(paid["amount_stot"]) + ",  \n" + \
+                        "   pc.amount_total = "+ str(paid["amount_total"]) + ",  \n" + \
+                        "   pc.curr = '"+ paid["curr"] + "',  \n" + \
+                        "   pc.plink = '"+ paid["plink"] + "',  \n" + \
+                        "   pc.pintent = '"+ paid["pintent"] + "',  \n" + \
+                        "   pc.created = "+ str(paid["created"]) + "  \n" + \
+                        "with pl, pc \n" + \
+                        "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
+                        "set r.ctInsert = datetime() \n" + \
+                        "with pl, pc \n" + \
+                        "match (pr:Product {KoLic:pc.KoLic}) \n" + \
+                        "optional match (u:User {userId:pc.userId}) \n" + \
+                        " set u.ctUpdate = datetime(), \n" + \
+                            "u.kol = pc.KoLic, \n" + \
+                            "u.kol_lim_date = (u.kol_lim_date() + duration({months:pr.months})), \n" + \
+                            "u.update_lic = datetime() \n" + \
+                        "return pc.csId as csId, pc.KoLic as KoLic, pc.ctInsert as ctInsert" 
+        awsleep(0)
+
+        nodes, log = neo4j_exec(session, 'admin',
+                            log_description="getting the last pay inserted ",
+                            statement=neo4j_statement,
+                            filename=__name__,
+                            function_name=myfunctionname())    
+        ldict = []
+        for node in nodes:
+            ldict.append(dict(node))    
+            
+
+    _sleep(1)
+    
+    #url = f'https://dt-one-b7bbdf083efc.herokuapp.com/#/sign-in'
+    url = appNeo.app_access_cfg.get("app_link", "https://dt-one-b7bbdf083efc.herokuapp.com/")
     response = RedirectResponse(url=url)
     return response #send
 
@@ -330,10 +527,15 @@ async def stripe_checkout(datas:ForLicense, request:Request
         price_cupon : float
         cupon: str
     """
+    # ESTE PROCESO BUSCA EN LA DTL001 SI EXISTE UN PAYLINK PARA EL PRODUCTO
+    # SELECCIONADO Y LO COMPARA CON LOS PAYLINKS ACTIVOS EN STRIPE
+    # SI ESTÁ ACTIVO, REGRESA ESE URL AL USUARIO
+
     #print('\n\n *********************** \nauthorization STRIPE : ', Authorization)
     token=validating_token(Authorization)
     userId = token['userId']
 
+    # lista de productos declarados en STRIPE
     product = None
     if datas.KoLic == '01M':
         product = 'price_1NtD1qL7SwRlW9BCB8ABhCH0'
@@ -346,85 +548,97 @@ async def stripe_checkout(datas:ForLicense, request:Request
     elif datas.KoLic == '00U':
         product = 'price_1NtXylL7SwRlW9BCf5m9HwSZ'
     
-    def get_path():
-        met  =  request.scope['method'] 
-        path =  request.scope['root_path'] + request.scope['route'].path
-        #encoding = 'utf-8'
-        serverlnk = ""
-        for elehead in request.scope['headers']:
-            #print('eeeelehead:', elehead, type(elehead))
-            val=str(elehead[0],'utf-8')
-            if val == 'host':
-                serverlnk = str(elehead[1], 'utf-8')  
-        return met, path, serverlnk
-    
-    userId = datas.userId
+    s_api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"    
 
-    temppass = get_random_string(random.randint(45,60))
-
-    method, pathcomplete, serverlnk = get_path()    
-
-    lnk_toanswer = "https://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass
-    #lnk_toanswer = "https://dtl001-1158a6696bb9.herokuapp.com/dtauth/s_pay_validation" + temppass
-
-    # Set your secret key. Remember to switch to your live secret key in pr
-    # oduction.   
-    # See your keys here: https://dashboard.stripe.com/apikeys
-    stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
-    #stripeLink = {"url":lnk_toanswer}    
-    #"""
-    # PROCESO POR PAYMENT LINK
-    stripeLink = stripe.PaymentLink.create(
-            #line_items=[{"price": '{{25.99}}', "quantity": 1}],
-            line_items=[{"price": product, "quantity": 1}],
-            after_completion={"type": "redirect", "redirect": {"url": lnk_toanswer}},
-            allow_promotion_codes=True, 
-            #automatic_tax={"enabled": True},
-            # "https://www.delthatech.com"
-    )
-    #spupdate = stripe.PaymentLink.retrieve(id="plink_1NtKIhL7SwRlW9BCX7QAMX09")
-    #print("spudate: ", spupdate)
-
-    # PROCESO POR PAYMENT INTENT
-    """    
-    else:
-        stripeLink = stripe.PaymentIntent.create(
-                    amount=1500,
-                    currency="mxn",
-                    payment_method_types=["card"],
-                    statement_descriptor="01M - DTone",
-                    )
-
-    """
+    neo4j_statement = "match (pl:PaymentsLinks) \n" + \
+                    "where pl.KoLic = '" + datas.KoLic + "' \n" + \
+                    "return pl.KoLic as KoLic, pl.plId as plId, pl.redirect as plredirect, \n" + \
+                        "pl.url as url, pl.product as product, elementId(pl) as eleId \n" + \
+                    "order by pl.ctInsert desc"    
+    #print("nneo4j: ", neo4j_statement)
     awsleep(0)
-    #            after_completion={"type": "redirect", "redirect": {"url": "https://www.delthatech.com"}},
-    """
-    custom_fields=[
-                    {
-                    "key": "datas.userId",
-                    "label": {"type": "license", "custom": str(_getdatetime())},
-                    "type": "license XYZ"
-                },
-            ]
-    """
-    #print("stripeLink:", stripeLink)
-    neo4j_statement = "match (u:User {userId:'" + userId + "'}) \n" + \
-                    "create (plink:Payments {userId:u.userId, url:'" + stripeLink['url'] + "'" + \
-                        ", uId:'" + temppass + "'}) \n" + \
-                    "set plink.ctInsert = datetime(),  \n" + \
-                    "   plink.plId = '" + stripeLink["id"] + "' \n" + \
-                    "return u.userId as userId, elementId(plink) as eleId"
-    
-    #print("neo4j_statement: ", neo4j_statement )
 
-    nodes, log = neo4j_exec(session, 'admin', 
-                        log_description="paymenlink saving",
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting payments links created before",
                         statement=neo4j_statement,
                         filename=__name__,
-                        function_name=myfunctionname())
-    sdict = {}
+                        function_name=myfunctionname())    
+    ldict = []
     for node in nodes:
-        sdict = dict(node)    
+        ldict.append(dict(node))
+    
+    url, pl, eleId, lnk_toanswer = None, None, None, None
 
-    #print("*************************\nStripeLink: ", stripeLink["url"])
-    return {"stripe_url":stripeLink["url"], "redirect_url": lnk_toanswer, "eleId":sdict["eleId"]} # , "stripe_completeseq": stripeLink}
+    if len(ldict) > 0:
+        for gia, plink in enumerate(ldict):
+            if plink["KoLic"] == datas.KoLic: 
+                url = plink["url"]
+                pl = plink["plId"]
+                eleId = plink["eleId"]
+                lnk_toanswer = plink["plredirect"]
+                break            
+    
+    if pl: # si ya existe un paymenLink declarado buscará si está activo, si no lo lo está creará uno
+        lenplinks, plinks_actives = s_paymentslink(s_api_key)  # se extraen los paymentslinks creados y activos en stripe
+        if not search_pl_actives_plinks(pl, plinks_actives): #si no esta activo se deberá crear uno nuevo
+            pl = None
+
+    if not pl:   # significa que no existe un paymentLink declarado y activo, se deberá crear uno nuevo
+        def get_path():  # para obtener el nombre del dominio y server donde se ejecuta
+            met  =  request.scope['method'] 
+            path =  request.scope['root_path'] + request.scope['route'].path
+            #encoding = 'utf-8'
+            serverlnk = ""
+            for elehead in request.scope['headers']:
+                #print('eeeelehead:', elehead, type(elehead))
+                val=str(elehead[0],'utf-8')
+                if val == 'host':
+                    serverlnk = str(elehead[1], 'utf-8')  
+            return met, path, serverlnk
+        
+        userId = datas.userId
+
+        temppass = get_random_string(random.randint(45,60))
+        method, pathcomplete, serverlnk = get_path()
+        lnk_toanswer = "https://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass    
+        
+        # PROCESO para CREAR UN PAYMENT LINK
+        stripe.api_key = s_api_key
+        #print("parametros de strip:", product, lnk_toanswer)
+        stripeLink = stripe.PaymentLink.create(
+                #line_items=[{"price": '{{25.99}}', "quantity": 1}],
+                line_items=[{"price": product, "quantity": 1}],
+                after_completion={"type": "redirect", "redirect": {"url": lnk_toanswer}},
+                allow_promotion_codes=True,   
+                custom_fields=[{
+                    "key": "userId",
+                    "label": {"type": "custom", "custom": "Usuario en DTone (DTone's UserId)"},
+                    "type": "text"
+                }
+                ],
+        )
+        awsleep(0)
+        sdict = {'eleId': 'abc'}
+        if not lnk_toanswer.__contains__(":5000"):  # NO SE CREAR EN BASE DE DATOS SI ES LOCALHOST
+            neo4j_statement = "create (plink:PaymentsLinks {KoLic:'" + datas.KoLic +"', \n" + \
+                                " url:'" + stripeLink['url'] + "'}) \n" + \
+                            "set plink.ctInsert = datetime(), \n" + \
+                                "plink.product = '" + product + "', \n" + \
+                            "   plink.plId = '" + stripeLink["id"] + "', \n" + \
+                            "   plink.redirect = '" + lnk_toanswer + "' \n" + \
+                            "return plink.url as url, elementId(plink) as eleId"                    
+            #print("neo4j_statement: ", neo4j_statement )
+
+            nodes, log = neo4j_exec(session, 'admin', 
+                                log_description="paymenlink saving",
+                                statement=neo4j_statement,
+                                filename=__name__,
+                                function_name=myfunctionname())            
+            for node in nodes:
+                sdict = dict(node)    
+            #url = stripeLink["url"]
+        url = stripeLink['url']
+        eleId = sdict["eleId"]
+
+    print("*************************\nStripeLink: ", url, lnk_toanswer, eleId)
+    return {"stripe_url":url, "redirect_url": lnk_toanswer, "eleId":eleId} # , "stripe_completeseq": stripeLink}
