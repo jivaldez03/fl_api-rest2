@@ -494,7 +494,7 @@ async def s_pay_validation(code:str):
                         "optional match (u:User {userId:pc.userId}) \n" + \
                         " set u.ctUpdate = datetime(), \n" + \
                             "u.kol = pc.KoLic, \n" + \
-                            "u.kol_lim_date = (u.kol_lim_date() + duration({months:pr.months})), \n" + \
+                            "u.kol_lim_date = (u.kol_lim_date + duration({months:pr.months})), \n" + \
                             "u.update_lic = datetime() \n" + \
                         "return pc.csId as csId, pc.KoLic as KoLic, pc.ctInsert as ctInsert" 
         awsleep(0)
