@@ -471,7 +471,7 @@ async def s_pay_validation(code:str):
     """
     for gia, paid in enumerate(paidscompleted[::-1]):
         print(f"paid {gia + 1}: {paid}")
-        neo4j_statement = "optional match (pl:PaymentLinks {plId:'"+ paid["plink"] + "'}) \n" + \
+        neo4j_statement = "optional match (pl:PaymentsLinks {plId:'"+ paid["plink"] + "'}) \n" + \
                         "merge (pc:PaymentsConfirmed {csId:'" + paid["csId"] + "', \n" + \
                                     "userId:'" + paid["userId"] + "'}) \n" + \
                         "on create set pc.ctInsert = datetime() " + \
