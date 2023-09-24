@@ -321,7 +321,7 @@ async def stripe_checkout(datas:ForLicense #, request:Request
         price_cupon : float
         cupon: str
     """
-    print('\n\n *********************** \nauthorization', Authorization)
+    print('\n\n *********************** \nauthorization STRIPE : ', Authorization)
     token=validating_token(Authorization)
     userId = token['userId']
 
