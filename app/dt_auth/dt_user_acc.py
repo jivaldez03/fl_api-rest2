@@ -51,8 +51,6 @@ async def login_user(datas: ForLogin):
         result=dict(elem) #print(f"elem: {type(elem)} {elem}")   
     #result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password)
     # FIN DE VIGENCIA DE LICENCIA
-    kol_lim_date = str(result["kol_lim_date"])
-    kol_lim_date = dt.strptime(kol_lim_date.split('.')[0], '%Y-%m-%dT%H:%M:%S')
     #print('fechas to compare:', kol_lim_date, _getdatetime())
     if len(result) == 0:  # incorrect user
         print("no records - fname__name__and more:",__name__)
@@ -82,6 +80,8 @@ async def login_user(datas: ForLogin):
             #headers={"WWW-Authenticate": "Basic"},
         )
     else:
+        kol_lim_date = str(result["kol_lim_date"])
+        kol_lim_date = dt.strptime(kol_lim_date.split('.')[0], '%Y-%m-%dT%H:%M:%S')
         if datas.password == result["us.keypass"]:   # success access
             #log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
             print("\n\nKOL:", datas.userId.lower(), result["kol"], result["kol_lim_date"],"\n\n")
