@@ -311,7 +311,7 @@ async def s_pay_validation(code:str):
     return send
 
 @router.post("/stripe_checkout/")
-async def stripe_checkout(datas:ForLicense, request:Request
+async def stripe_checkout(datas:ForLicense #, request:Request
                      , Authorization: Optional[str] = Header(None)):
     """
     class ForLogin(BaseModel):
@@ -337,6 +337,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
     elif datas.KoLic == '00U':
         product = 'price_1NtXylL7SwRlW9BCf5m9HwSZ'
 
+    """
     def get_path():
         met  =  request.scope['method'] 
         path =  request.scope['root_path'] + request.scope['route'].path
@@ -348,14 +349,15 @@ async def stripe_checkout(datas:ForLicense, request:Request
             if val == 'host':
                 serverlnk = str(elehead[1], 'utf-8')  
         return met, path, serverlnk
-    
+    """
     userId = datas.userId
 
     temppass = get_random_string(random.randint(45,60))
 
-    method, pathcomplete, serverlnk = get_path()    
+    #method, pathcomplete, serverlnk = get_path()    
 
-    lnk_toanswer = "https://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass
+    # lnk_toanswer = "https://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass
+    lnk_toanswer = "https://dtl001-1158a6696bb9.herokuapp.com/dtauth/s_pay_validation" + temppass
 
     # Set your secret key. Remember to switch to your live secret key in pr
     # oduction.   
