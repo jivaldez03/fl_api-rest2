@@ -5,6 +5,8 @@ import stripe
 from fastapi import Request, APIRouter, Header # FastAPI, 
 from typing import Optional
 
+from starlette.responses import RedirectResponse
+
 from app.model.md_params_auth import ForResetPass, ForLicense
 
 from _neo4j.neo4j_operations import neo4j_exec
@@ -300,7 +302,10 @@ async def s_pay_validation(code:str):
     """
     send = "processing pay with code:" + code + " ... wait a minute please..."
     send = send + f"\n\nupdating new license for user ..."
+
+    print("sending:", send)
     awsleep(3)
+
     #stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
 
     #intent = stripe.PaymentIntent.retrieve('{{PAYMENT_INTENT_ID}}')
@@ -308,7 +313,11 @@ async def s_pay_validation(code:str):
     #charges = intent.charges.data
     #print("stripe intent: ", intent)
     #print("stripe charges: ", charges)
-    return send
+
+
+    url = f'https://dt-one-b7bbdf083efc.herokuapp.com/#/sign-in'
+    response = RedirectResponse(url=url)
+    return response #send
 
 @router.post("/stripe_checkout/")
 async def stripe_checkout(datas:ForLicense, request:Request
