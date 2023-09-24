@@ -201,6 +201,7 @@ async def user_change_pass(code:str):
 @router.get("/s_available_products/")
 async def s_available_products(Authorization: Optional[str] = Header(None)):
 
+    print('\n\n *********************** \nauthorization', Authorization)
     token=validating_token(Authorization)
     userId = token['userId']
     sdict = {
@@ -311,7 +312,7 @@ async def s_pay_validation(code:str):
 
 @router.post("/stripe_checkout/")
 async def stripe_checkout(datas:ForLicense, request:Request
-                    , Authorization: Optional[str] = Header(None)):
+                     , Authorization: Optional[str] = Header(None)):
     """
     class ForLogin(BaseModel):
         userId: str
@@ -320,6 +321,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
         price_cupon : float
         cupon: str
     """
+    print('\n\n *********************** \nauthorization', Authorization)
     token=validating_token(Authorization)
     userId = token['userId']
 
