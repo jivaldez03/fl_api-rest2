@@ -487,15 +487,16 @@ async def s_pay_validation(code:str):
                         "   pc.pintent = '"+ paid["pintent"] + "',  \n" + \
                         "   pc.created = "+ str(paid["created"]) + "  \n" + \
                         "with pl, pc \n" + \
-                        "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
-                        "set r.ctInsert = datetime() \n" + \
-                        "with pl, pc \n" + \
+                        "where not pc.Kolic is null \n" + \
                         "match (pr:Product {KoLic:pc.KoLic}) \n" + \
                         "optional match (u:User {userId:pc.userId}) \n" + \
                         " set u.ctUpdate = datetime(), \n" + \
                             "u.kol = pc.KoLic, \n" + \
                             "u.kol_lim_date = (u.kol_lim_date + duration({months:pr.months})), \n" + \
                             "u.update_lic = datetime() \n" + \
+                        "with pl, pc \n" + \
+                        "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
+                        "set r.ctInsert = datetime() \n" + \
                         "return pc.csId as csId, pc.KoLic as KoLic, pc.ctInsert as ctInsert" 
         awsleep(0)
 
