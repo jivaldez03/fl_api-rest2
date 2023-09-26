@@ -34,7 +34,8 @@ class ForGames_KOW(BaseModel):
 class ForGames_archive(BaseModel):
     orgId: str
     subcat:int
-    words  : str
+    words  : list
+    grades : list
     average: float
     kogame : str
 

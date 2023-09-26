@@ -80,10 +80,11 @@ async def login_user(datas: ForLogin):
             #headers={"WWW-Authenticate": "Basic"},
         )
     else:
-        kol_lim_date = str(result["kol_lim_date"])
-        kol_lim_date = dt.strptime(kol_lim_date.split('.')[0], '%Y-%m-%dT%H:%M:%S')
-        if datas.password == result["us.keypass"]:   # success access
+        if not result["kol_lim_date"] is None \
+            and datas.password == result["us.keypass"]:   # success access
             #log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
+            kol_lim_date = str(result["kol_lim_date"])
+            kol_lim_date = dt.strptime(kol_lim_date.split('.')[0], '%Y-%m-%dT%H:%M:%S')
             print("\n\nKOL:", datas.userId.lower(), result["kol"], result["kol_lim_date"],"\n\n")
             
             #print(kol_lim_date, str(kol_lim_date), type(kol_lim_date))
@@ -169,7 +170,7 @@ async def login_user(datas: ForLogin):
             )
     print("id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return resp_dict
-#
+#kol_lim_date
 
 @router.post("/change_pass/")
 async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(None)):
