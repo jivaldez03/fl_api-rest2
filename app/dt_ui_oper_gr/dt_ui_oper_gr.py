@@ -372,7 +372,8 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
         ulevel:str      # A1,A2,B1,B2,C1,C2
         kog: str        # "puzzlewords"
         hms: int        # how many sentences
-        words: str      # "['abc','cde','fgh']"
+        words: list      # "['abc','cde','fgh','ijk','lmn']"
+        grades: list      # "[100, 80, 90, 70, 60]"
         avg: float      # avg result - post exercise
         setlevel: int       # save or not
     }
@@ -393,6 +394,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
     else: 
         kogame = 'G_UNKNOWN'
 
+    #no aplica, siempre se recibe A1
     if datas.ulevel == 'A1':
         llev = 2
         ulev = 5
@@ -425,11 +427,19 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
         source = None
         target = None
 
-    swords = str(datas.words)
-    sswords = swords.replace("[",",").replace("]",",").replace("'","").replace('"',"").replace(", ",",")
 
-    print('puzzle datas:', datas)
+    swords_complete = str(datas.words)
+    swords_ap = datas.words
 
+    swords = []
+    for gia, ele in enumerate(datas.grades):
+        if ele >= 80:
+            swords.append(swords_ap[gia])
+
+    swords = str(swords)
+    sswords = swords.replace("[",",").replace("]",",").replace("'","").replace('"',"").replace(", ",",")        
+
+    #print('puzzle datas:', datas)
     if datas.setlevel == False: 
         neo4j_statement = "with '" + datas.org + "' as org \n" + \
                     "    , '" + userId + "' as userId \n" + \
@@ -476,18 +486,23 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                                 str(yearr) + " as yearr, \n" + \
                                 str(monthh) + " as monthh, \n" + \
                                 str(weekk) + " as weekk, \n" + \
-                                swords + 'as words, \n' + \
+                                swords + ' as words, \n' + \
                                 '"' + sswords + '" as swords, \n' + \
+                                swords_complete + " as swords_complete, \n" + \
+                                str(datas.grades) + " as swords_grades, \n" + \
                                 str(datas.avg) + " as average, \n" + \
                                 "1 as idCat, 1 as idSCat \n" + \
                     "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})\n" + \
                     "with u, kogame, userId, yearr, monthh, weekk, \n" + \
-                        "o.lSource as Source, o.lTarget as Target, words, swords, average \n" + \
+                        "o.lSource as Source, o.lTarget as Target, words, swords, average, \n" + \
+                        "swords_complete, swords_grades \n" + \
                     "merge (u)<-[rg:" + kogame + "]-(gm:Game \n" + \
                         "{game:kogame, userId:userId, swords:swords, \n" + \
                             " year:yearr, month:monthh, week:weekk}) \n" + \
                     "set gm.lSource = Source, gm.lTarget = Target, \n" + \
                         " gm.words = words, \n" + \
+                    " gm.words_complete = swords_complete, \n" + \
+                    " gm.grades = swords_grades, \n" + \
                         " gm.average = average, \n" + \
                         " gm.ctInsert = datetime() \n" + \
                     "return u.userId as userId, size(gm.words) as qtywords "
