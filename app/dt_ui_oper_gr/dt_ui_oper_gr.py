@@ -232,9 +232,9 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "with u, o, sword, adj, verb, noun, adv, prep, ptense, conj, pron, \n" + \
                 " case when sword in wordsgameSh then 1 else 0 end as prioridad \n" + \
                 "match (we:Word {word:sword}) \n" + \
-                "where o.lSource in labels(we) \n" + \
-                "with distinct u, o, we, adj, verb, noun, adv, prep, ptense, conj, pron, prioridad, \n" + \
-                        "REDUCE(mergedString = ',', \n" + \
+                "where o.lSource in labels(we) and not we.word contains ' ' \n" + \
+                "with distinct u, o, we, adj, verb, noun, adv, prep, ptense, conj, pron, prioridad \n" + \
+                "/*, REDUCE(mergedString = ',', \n" + \
                             "kow IN we.ckowb_complete | mergedString+kow +',') as ckowlist \n" + \
                 "where  (ptense and ckowlist contains 'past – verb')  \n" + \
                 "        or ((verb and ckowlist contains 'intrans verb' \n" + \
@@ -246,7 +246,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "        or noun and ckowlist contains 'noun' \n" + \
                 "        or conj and ckowlist contains 'conj' \n" + \
                 "        or pron and ckowlist contains 'pron' \n" + \
-                "        or ckowlist contains 'modal' \n" + \
+                "        or ckowlist contains 'modal' */ \n" + \
                 "match (we)-[rt:TRANSLATOR]-(ws:Word)  \n" + \
                 "where o.lTarget in labels(ws) \n" + \
                 "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words, prioridad  \n" + \
