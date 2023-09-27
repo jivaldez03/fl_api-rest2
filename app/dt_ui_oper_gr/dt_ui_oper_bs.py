@@ -712,13 +712,13 @@ def get_words(userId, pkgname, wordslevel='words'):
                             "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
-    print('statement:', neo4j_statement)
+    #print('statement:', neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
                         filename=__name__, 
                         function_name=myfunctionname())      
-    print("YA EJECUTÓ")
+    #print("YA EJECUTÓ")
     pkgdescriptor = {}
     words = []
     npackage = []
