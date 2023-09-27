@@ -195,44 +195,45 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                             str(datas.pt_verb) + " as ptense, \n" + \
                             str(datas.noun) + " as noun, \n" + \
                             str(datas.adv) + " as adv, \n" + \
-                            " True as prep, True as conj,  \n" + \
+                            " True as prep, True as conj, True as pron, \n" + \
                             "'" + datas.orgId + "' as org, \n" + \
                             "'" + userId + "' as userId, \n" + \
                             "1 as idCat, 1 as idSCat \n" + \
                 "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-\n" + \
                 "[rc:SUBJECT]-(c:Category {idCat:idCat})-[rsc:CAT_SUBCAT]-(sc:SubCategory {idSCat:idSCat}) \n" + \
                 "with u,o.lSource as Source, o.lTarget as Target, o, sc, \n" + \
-                "    adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "    adj, verb, noun, adv, prep, ptense, conj, pron \n" + \
                 "// *** SE LOCALIZAN LAS PALABRAS QUE YA SE HAN EJERCITADO \n" + \
                 "optional match (u)<-[r]-(gm:Game) \n" + \
                 "where not type(r) in ['PUZZLEWORDS'] \n" + \
                 "with u, Source, Target, o, sc, coalesce(gm.words,['']) as wordsgame, \n" + \
-                "    adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "    adj, verb, noun, adv, prep, ptense, conj, pron \n" + \
                 "unwind wordsgame as word \n" + \
                 "with u, Source, Target, o, sc,  word, \n" + \
-                    "adj, verb, noun, adv, prep, ptense, conj \n" + \
+                    "adj, verb, noun, adv, prep, ptense, conj, pron \n" + \
                 "order by word \n" + \
                 "with u, Source, Target, o, sc, collect(distinct word) as wordsgame, \n" + \
-                "    adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "    adj, verb, noun, adv, prep, ptense, conj, pron \n" + \
                 "with u, Source, Target, o, sc, wordsgame, apoc.coll.shuffle(wordsgame) as wordsgameSh, \n" + \
-                "    adj, verb, noun, adv, prep, ptense, conj \n" + \
+                "    adj, verb, noun, adv, prep, ptense, conj, pron \n" + \
                 "// SE LOCALIZAN LAS PALABRAS ARCHIVADAS \n" + \
                 "match (u)<-[r:ARCHIVED_M]-(rM:Archived_M)-[rsm:SUBCAT_ARCHIVED_M]->(sc) \n" + \
                 "where o.lSource in labels(rM) and o.lTarget in labels(rM) \n" + \
                 "// Y SE ELIMINAN LAS QUE FUERON LLEVADAS A JUEGOS \n" + \
                 "with u, o, apoc.coll.subtract(rM.words, wordsgame) as words, wordsgame, rM.words as rmwords, \n" + \
-                "  adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
+                "  adj, verb, noun, adv, prep, ptense, conj, pron, wordsgameSh \n" + \
                 "with u, o, (case when words = [] then rmwords else words end) as words, wordsgame,  \n" + \
-                "  adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
+                "  adj, verb, noun, adv, prep, ptense, conj, pron, wordsgameSh \n" + \
                 "unwind words as sword \n" + \
-                "with u, o, collect(sword) as swords, adj, verb, noun, adv, prep, ptense, conj, wordsgameSh \n" + \
+                "with u, o, collect(sword) as swords, adj, verb, noun, adv, prep, ptense, conj, pron, wordsgameSh \n" + \
                 "with u, o, swords + wordsgameSh[0.." + str(datas.limit * 2) + "] as swordsC, \n" + \
-                    " adj, verb, noun, adv, prep, ptense, conj, swords \n" + \
+                    " adj, verb, noun, adv, prep, ptense, conj, pron, wordsgameSh \n" + \
                 "unwind swordsC as sword \n" + \
-                "with u, o, sword, adj, verb, noun, adv, prep, ptense, conj, swords \n" + \
+                "with u, o, sword, adj, verb, noun, adv, prep, ptense, conj, pron, \n" + \
+                " case when sword in wordsgameSh then 1 else 0 end as prioridad \n" + \
                 "match (we:Word {word:sword}) \n" + \
                 "where o.lSource in labels(we) \n" + \
-                "with distinct u, o, we, adj, verb, noun, adv, prep, ptense, conj, swords, \n" + \
+                "with distinct u, o, we, adj, verb, noun, adv, prep, ptense, conj, pron, prioridad, \n" + \
                         "REDUCE(mergedString = ',', \n" + \
                             "kow IN we.ckowb_complete | mergedString+kow +',') as ckowlist \n" + \
                 "where  (ptense and ckowlist contains 'past – verb')  \n" + \
@@ -244,15 +245,16 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "        or prep and ckowlist contains 'prep' \n" + \
                 "        or noun and ckowlist contains 'noun' \n" + \
                 "        or conj and ckowlist contains 'conj' \n" + \
+                "        or pron and ckowlist contains 'pron' \n" + \
                 "        or ckowlist contains 'modal' \n" + \
                 "match (we)-[rt:TRANSLATOR]-(ws:Word)  \n" + \
                 "where o.lTarget in labels(ws) \n" + \
-                "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words  \n" + \
-                "order by worde in swords desc, worde, rt.sorted \n" + \
-                "with u, worde, ckow, collect(words) as words \n" + \
-                " //limit "  + str(datas.limit) + \
-                "\n" + \
-                "return worde, words, ckow order by rand() limit "  + str(datas.limit) 
+                "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words, prioridad  \n" + \
+                "order by prioridad, // worde in swords desc, \n" + \
+                    " worde, rt.sorted \n" + \
+                "with u, prioridad, worde, ckow, collect(words) as words \n" + \
+                "limit "  + str(datas.limit) + " \n" + \
+                "return worde, words, ckow order by rand() " #// limit "  + str(datas.limit) 
     #print(f"statement pronun: {statement}")
 
     await awsleep(0)
