@@ -189,6 +189,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
         kogame = ":" + datas.kogame.upper()
     else:
         kogame = ""
+    print("\nkog:", kogame)
     """
     "PUT_TOGETHER_WORD"
     "PUZZLEWORDS"
