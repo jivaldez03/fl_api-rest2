@@ -955,7 +955,7 @@ async def post_user_words(datas:ForNewPackage
     #
 
     dtexec = funcs._getdatime_T()
-    print("datas:", datas)
+    #print("datas:", datas)
 
     idCat = datas.idScat // 1000000
     idSCat = datas.idScat % 1000000
@@ -1088,7 +1088,7 @@ async def post_user_words(datas:ForNewPackage
                 #+ \
                 #"ewlist[0.." + str(capacity) + "] as slSource, " + \
                 #"swlist[0.." + str(capacity) + "] as slTarget"
-    print(f"ne04j_state: {neo4j_statement}")
+    #print(f"ne04j_state: {neo4j_statement}")
     await awsleep(0)
     
     nodes, log = neo4j_exec(session, userId,
