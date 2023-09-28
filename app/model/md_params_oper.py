@@ -23,6 +23,7 @@ class ForGames_KOW(BaseModel):
     orgId: str
     limit: int
     subcat:int
+    kogame: str = None
     adj: bool
     verb: bool
     pt_verb: bool

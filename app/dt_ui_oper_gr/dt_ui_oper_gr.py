@@ -169,6 +169,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
     orgId: str
     limit: int
     subcat:int
+    kogame: str
     adj: bool
     verb: bool
     pt_verb: bool
@@ -182,6 +183,12 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
 
     token=funcs.validating_token(Authorization)
     userId = token['userId']
+    
+
+    if datas.kogame: 
+        kogame = ":" + datas.kogame.upper()
+    else:
+        kogame = ""
     """
     "PUT_TOGETHER_WORD"
     "PUZZLEWORDS"
@@ -204,7 +211,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "with u,o.lSource as Source, o.lTarget as Target, o, sc, \n" + \
                 "    adj, verb, noun, adv, prep, ptense, conj, pron \n" + \
                 "// *** SE LOCALIZAN LAS PALABRAS QUE YA SE HAN EJERCITADO \n" + \
-                "optional match (u)<-[r]-(gm:Game) \n" + \
+                "optional match (u)<-[r" + kogame + "]-(gm:Game) \n" + \
                 "where not type(r) in ['PUZZLEWORDS'] \n" + \
                 "with u, Source, Target, o, sc, coalesce(gm.words,['']) as wordsgame, \n" + \
                 "    adj, verb, noun, adv, prep, ptense, conj, pron \n" + \
@@ -256,7 +263,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "order by u, prioridad, rand() \n" + \
                 "limit "  + str(datas.limit) + " \n" + \
                 "return worde, words, ckow " #// order by rand() // limit "  + str(datas.limit) 
-    print(f"statement AAAgames: {statement}")
+    #print(f"statement AAAgames: {statement}")
 
     await awsleep(0)
 
@@ -334,7 +341,7 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
                 "with u, kogame, userId, yearr, monthh, weekk, \n" + \
                     "o.lSource as Source, o.lTarget as Target, words, swords, average, \n" + \
                     "swords_complete, swords_grades\n" + \
-                "merge (u)<-[rg:" + kogame + "]-(gm:Game \n" + \
+                "merge (u)<-[rg:" + kogame + " {ctInsert:datetime()}]-(gm:Game \n" + \
                     "{game:kogame, userId:userId, swords:swords, \n" + \
                         " year:yearr, month:monthh, week:weekk}) \n" + \
                 "set gm.lSource = Source, gm.lTarget = Target, \n" + \

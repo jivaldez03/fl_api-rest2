@@ -253,8 +253,8 @@ def s_checkout_session(cs):  # obtiene la lista de pagos procesados en stripe
             :
                 for giaCF, cf in enumerate(data["custom_fields"]):
                     if cf["key"] == 'userId':
-                        userIdINDAT = cf["text"]["value"]
-                useremailINDAT = data["customer_details"]["email"]
+                        userIdINDAT = cf["text"]["value"].lower()
+                useremailINDAT = data["customer_details"]["email"].lower()
                 sdict = {"csId" : data["id"],
                          "userId" : userIdINDAT,
                          "email" : useremailINDAT,
