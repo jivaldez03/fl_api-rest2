@@ -255,15 +255,16 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "        or conj and ckowlist contains 'conj' \n" + \
                 "        or pron and ckowlist contains 'pron' \n" + \
                 "        or ckowlist contains 'modal' */ \n" + \
-                "match (we)-[rt:TRANSLATOR]-(ws:Word)  \n" + \
+                "match (wss:WordSound)<-[:PRONUNCIATION]-(we)-[rt:TRANSLATOR]-(ws:Word)  \n" + \
                 "where o.lTarget in labels(ws) \n" + \
-                "with u, we.word as worde, we.ckowb_complete as ckow, ws.word as words, prioridad  \n" + \
+                "with u, elementId(wss) as soundId, we.word as worde, \n" + \
+                " we.ckowb_complete as ckow, ws.word as words, prioridad  \n" + \
                 "order by prioridad, // worde in swords desc, \n" + \
                     " worde, rt.sorted \n" + \
-                "with u, prioridad, worde, ckow, collect(words) as words \n" + \
+                "with u, soundId, prioridad, worde, ckow, collect(words) as words \n" + \
                 "order by u, prioridad, rand() \n" + \
                 "limit "  + str(datas.limit) + " \n" + \
-                "return worde, words, ckow " #// order by rand() // limit "  + str(datas.limit) 
+                "return worde, words, ckow, soundId " #// order by rand() // limit "  + str(datas.limit) 
     #print(f"statement AAAgames: {statement}")
 
     await awsleep(0)

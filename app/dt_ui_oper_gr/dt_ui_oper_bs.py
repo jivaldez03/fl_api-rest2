@@ -712,7 +712,7 @@ def get_words(userId, pkgname, wordslevel='words'):
                             "level as maxlevel, linktitles, links, \n" + \
                             "ewlist as slSource, kow, kowc, wordref, swlist as slTarget, \n" + \
                             "wr_wordref, wr_kow, pkg.source as langsource, pkg.target as langtarget" 
-    #print('statement:', neo4j_statement)
+    #print('statement 01:', neo4j_statement)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for user and pkgId="+pkgname,
                         statement=neo4j_statement,
@@ -1273,6 +1273,44 @@ async def get_user_word_pronunciation(word:str, idWord:int):
     for ele in nodes:
         elems = dict(ele)
     print("        ->   ========== ending get_user_word_pronunciation id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    return Response(elems['ws.binfile'])
+
+
+@router.get("/get_/word_sound_element/")
+async def get_word_sound_element(word:str, idWord:str
+                    , Authorization: Optional[str] = Header(None)):
+    """
+    Function to get the file .mp3 with the pronunciation example
+
+    params :  \n
+        word:str, \n
+        idNode: int
+    """
+    userId = '__publicPron__' #token['userId']
+    #print("========== starting get_user_word_pronunciation id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    global appNeo, session, log
+
+    #token=funcs.validating_token(Authorization) 
+    #
+
+    #word = datas.word
+    #idWord = datas.idNode
+
+    statement = 'match (ws:WordSound {word: "' +  word + '"}) ' + \
+                "where elementId(ws) = '" + idWord + "' \n" + \
+                "return ws.binfile limit 1"  # ws.word, ws.actived, 
+    #print(f"statement pronun: {statement}")
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting sound element - word: " + word,
+                        statement=statement, 
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    
+    await awsleep(0)
+    
+    for ele in nodes:
+        elems = dict(ele)
+    print("        ->   ========== ending get_word_sound_element: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return Response(elems['ws.binfile'])
 
 
