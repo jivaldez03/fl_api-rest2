@@ -583,10 +583,10 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "<-[rc:SUBJECT]-(c:Category {idCat:"+ str(idCat) + "}) \n" + \
                     "<-[rcs:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
                     "with og, c.idCat as idCat, sc, u \n" + \
-                    "match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM2:Archived_M:" + source + ":" + target + ")-\n" + \
+                    "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM2:Archived_M:" + source + ":" + target + ")-\n" + \
                         "[:ARCHIVED_M]->(u) \n" + \
                     "where arcM2.reference is null " + \
-                    "with og, idCat, sc, u, arcM2.words as words \n" + \
+                    "with og, idCat, sc, u, coalesce(arcM2.words,['.']) as words \n" + \
                     "unwind words as word \n" + \
                     "with og, idCat, sc, u, collect(word) as wordsarcM \n" + \
                     "match (we:Word:" + source + ") \n" + \

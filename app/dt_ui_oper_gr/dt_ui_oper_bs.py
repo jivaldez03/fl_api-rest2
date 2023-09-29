@@ -1246,7 +1246,7 @@ async def get_user_word_pronunciation(word:str, idWord:int):
 
     params :  \n
         word:str, \n
-        idNode: int
+        idWord: int
     """
     userId = '__publicPron__' #token['userId']
     #print("========== starting get_user_word_pronunciation id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
@@ -1284,7 +1284,7 @@ async def get_word_sound_element(word:str, idWord:str
 
     params :  \n
         word:str, \n
-        idNode: int
+        idWord: int
     """
     userId = '__publicPron__' #token['userId']
     #print("========== starting get_user_word_pronunciation id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
