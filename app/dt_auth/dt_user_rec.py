@@ -352,7 +352,7 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                         "es": "Por lanzamiento obten 50% de descuento",
                         "en": "50% Free"
                     },
-                    "cupon": "RIGHTNOW-01",
+                    "cupon": "RIGHTNOW",
                     "price": 60,
                     "price_cupon": 30
                     },
@@ -366,7 +366,7 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                         "es": "Por lanzamiento obten 50% de descuento",
                         "en": "50% Free"
                     },
-                    "cupon": "RIGHTNOW-02",
+                    "cupon": "RIGHTNOW",
                     "price": 170,
                     "price_cupon": 85
                     },
@@ -380,7 +380,7 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                         "es": "Por lanzamiento obten 50% de descuento",
                         "en": "50% Free"
                     },
-                    "cupon": "RIGHTNOW-03",
+                    "cupon": "RIGHTNOW",
                     "price": 320,
                     "price_cupon": 160
                     },
@@ -394,7 +394,7 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                         "es": "Por lanzamiento obten 50% de descuento",
                         "en": "50% Free"
                     },
-                    "cupon": "RIGHTNOW-04",
+                    "cupon": "RIGHTNOW",
                     "price": 550,
                     "price_cupon": 275
                     },
@@ -408,7 +408,7 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                         "es": "Por lanzamiento obten 50% de descuento",
                         "en": "50% Free"
                     },
-                    "cupon": "RIGHTNOW-05",
+                    "cupon": "RIGHTNOW",
                     "price": 600,
                     "price_cupon": 300
                     }
