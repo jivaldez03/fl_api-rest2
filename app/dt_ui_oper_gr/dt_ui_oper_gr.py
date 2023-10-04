@@ -615,7 +615,9 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     
     await awsleep(0)
     
-    print(f"statement pronun: {statement}")
+    print(f"====================================================================\nstatement pronun: ") #{statement}")
+    print(f"datas: ", datas, "\n", _getdatime_T(),"\n") 
+    print(f"====================================================================\nstatement pronun: ") #{statement}")
 
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for evaluation: ",
