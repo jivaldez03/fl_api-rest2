@@ -409,10 +409,10 @@ async def login_signup(datas: ForSignUp, request:Request):
     """
     global session
 
-    uuserId = datas.userId.lower()
-    uname = datas.name
-    ukeyp = datas.password
-    uemail = datas.email.lower()
+    uuserId = datas.userId.lower().strip()
+    uname = datas.name.strip()
+    ukeyp = datas.password.strip()
+    uemail = datas.email.lower().strip()
     if datas.lang == 'en':
         ulang = datas.lang
     else:

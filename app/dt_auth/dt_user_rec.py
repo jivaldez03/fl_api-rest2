@@ -253,8 +253,8 @@ def s_checkout_session(cs):  # obtiene la lista de pagos procesados en stripe
             :
                 for giaCF, cf in enumerate(data["custom_fields"]):
                     if cf["key"] == 'userId':
-                        userIdINDAT = cf["text"]["value"].lower()
-                useremailINDAT = data["customer_details"]["email"].lower()
+                        userIdINDAT = cf["text"]["value"].lower().strip()
+                useremailINDAT = data["customer_details"]["email"].lower().strip()
                 sdict = {"csId" : data["id"],
                          "userId" : userIdINDAT,
                          "email" : useremailINDAT,
@@ -471,8 +471,10 @@ async def s_pay_validation(code:str):
     """
     for gia, paid in enumerate(paidscompleted[::-1]):
         print(f"paid {gia + 1}: {paid}")
-        neo4j_statement = "optional match (pl:PaymentsLinks {plId:'"+ paid["plink"] + "'}) \n" + \
-                        "merge (pc:PaymentsConfirmed {csId:'" + paid["csId"] + "', \n" + \
+        neo4j_statement = "optional match (pl:UserLicPayReq {userId:'" + paid["userId"] + "', \n" + \
+                        "   plId:'"+ paid["plink"] + "'}) \n" + \
+                        "with pl order by pl.ctInsert desc limit 1 \n" + \
+                        "create (pc:PaymentsConfirmed {csId:'" + paid["csId"] + "', \n" + \
                                     "userId:'" + paid["userId"] + "'}) \n" + \
                         "on create set pc.ctInsert = datetime() " + \
                         "on match set pc.ctUpdate = datetime() " + \
@@ -487,6 +489,13 @@ async def s_pay_validation(code:str):
                         "   pc.pintent = '"+ paid["pintent"] + "',  \n" + \
                         "   pc.created = "+ str(paid["created"]) + "  \n" + \
                         "with pl, pc \n" + \
+                        " set pl.paym_st = pc.paym_st,  \n" + \
+                        "   pl.checkout_st = pc.checkout_st,  \n" + \
+                        "   pl.amount_stot = pc.amount_stot, \n" + \
+                        "   pl.amount_total = pc.amount_total,  \n" + \
+                        "   pl.curr = pc.curr,  \n" + \
+                        "   pl.csId = pc.csId, \n" + \
+                        "   pl.ctUpdate_paid = datetime() \n" + \
                         "where not pc.KoLic is null \n" + \
                         "match (pr:Product {KoLic:pc.KoLic}) \n" + \
                         "optional match (u:User {userId:pc.userId}) \n" + \
@@ -540,7 +549,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
     """
     # ESTE PROCESO BUSCA EN LA DTL001 SI EXISTE UN PAYLINK PARA EL PRODUCTO
     # SELECCIONADO Y LO COMPARA CON LOS PAYLINKS ACTIVOS EN STRIPE
-    # SI ESTÁ ACTIVO, REGRESA ESE URL AL USUARIO
+    # SI ESTÁ ACTIVO, REGRESA ESE URL AL USUARIO DE LO CONTRARIO GENERA UN NUEVO PAYLINK
 
     #print('\n\n *********************** \nauthorization STRIPE : ', Authorization)
     token=validating_token(Authorization)
@@ -630,7 +639,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
         )
         awsleep(0)
         sdict = {'eleId': 'abc'}
-        if not lnk_toanswer.__contains__(":5000"):  # NO SE CREAR EN BASE DE DATOS SI ES LOCALHOST
+        if not lnk_toanswer.__contains__(":5000"):  # NO SE CREA EN BASE DE DATOS SI ES LOCALHOST
             neo4j_statement = "create (plink:PaymentsLinks {KoLic:'" + datas.KoLic +"', \n" + \
                                 " url:'" + stripeLink['url'] + "'}) \n" + \
                             "set plink.ctInsert = datetime(), \n" + \
@@ -651,5 +660,31 @@ async def stripe_checkout(datas:ForLicense, request:Request
         url = stripeLink['url']
         eleId = sdict["eleId"]
 
-    print("*************************\nStripeLink: ", url, lnk_toanswer, eleId)
+    # SE CREA registro de la solicitud de pago de liciencia con el usuario que corresponden token.userId
+    neo4j_statement = "create (ulink:UserLicPayReq {userId:'" + userId + "', \n" + \
+                        " KoLic:'" + datas.KoLic +"', \n" + \
+                        " plId:'" + pl + "', \n" + \
+                        " product:'" + product + "', \n" + \
+                        " url:'" + url + "'}) \n" + \
+                    "set ulink.ctInsert = datetime(), \n" + \
+                    "   ulink.redirect = '" + lnk_toanswer + "' \n" + \
+                    "match (u:User {userId:'" + userId + "'}) \n" + \
+                    "merge (u)<-[rul:USER_PAYREQUEST]-(ulink)" + \
+                    "return u.userId as userId, ulink.url as url, elementId(plink) as eleId"
+    print("neo4j_statement: ", neo4j_statement )
+    nodes, log = neo4j_exec(session, 'admin', 
+                        log_description="user paymenlink request saving",
+                        statement=neo4j_statement,
+                        filename=__name__,
+                        function_name=myfunctionname())            
+    lsdict = []
+    for node in nodes:
+        sdict = dict(node)
+        lsdict.append(sdict)
+
+    if len(lsdict) != 1: 
+        print(str(len(lsdict)) + " RECORDS, FATAL ERROR TRYING TO GET NEW LINK FOR USER PAYMENT LICENSE REQUEST - CHECK WITH SYSADMIN " + userId)
+        url = 'www.delthatech.com'
+    
+    print("*************************\nStripeLink: ", userId, url, lnk_toanswer, eleId)
     return {"stripe_url":url, "redirect_url": lnk_toanswer, "eleId":eleId} # , "stripe_completeseq": stripeLink}

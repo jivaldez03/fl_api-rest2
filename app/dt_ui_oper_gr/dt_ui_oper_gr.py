@@ -569,7 +569,8 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
         statement = "with '" + datas.orgId + "' as org \n" + \
                     "match (og:Organization {idOrg:org}) \n" + \
                     "match (we:Word:" + source + ") \n" + \
-                    "where exists {(we)-[r:TRANSLATOR]-(ws:Word:" + target + ")} \n" + \
+                    "where exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
+                    " and exists {(we)-[r:PRONUNCIATION]->(wss:WordSound:" + source + ")} \n" + \
                     "with we order by we.wordranking, we.word \n" + \
                     "skip "  + str(datas.starton) + " \n" + \
                     "limit " + str(datas.limit) + "\n" + \
@@ -596,7 +597,8 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "with og, idCat, sc, u, wordsarcM, we \n" + \
                     "match (we) \n" + \
                     "where not we.word in wordsarcM \n" + \
-                        " and exists {(we)-[r:TRANSLATOR]-(ws:Word:" + target + ")} \n" + \
+                    " and exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
+                    " and exists {(we)-[r:PRONUNCIATION]->(wss:WordSound:" + source + ")} \n" + \
                     "with og, idCat, sc, u, collect(we.word) as words \n"  + \
                     "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
                     "    source:og.lSource, target:og.lTarget, \n" + \
@@ -610,7 +612,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     
     await awsleep(0)
     
-    #print(f"statement pronun: {statement}")
+    print(f"statement pronun: {statement}")
 
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for evaluation: ",
