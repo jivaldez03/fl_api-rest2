@@ -592,13 +592,16 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "with og, idCat, sc, u, collect(word) as wordsarcM \n" + \
                     "match (we:Word:" + source + ") \n" + \
                     "with og, idCat, sc, u, wordsarcM, we \n" + \
-                    "order by we.wordranking, we.word \n" + \
-                    " limit " + str(datas.starton) + " \n" + \
+                    "//order by we.wordranking, we.word \n" + \
+                    "// limit " + str(datas.starton) + " \n" + \
                     "with og, idCat, sc, u, wordsarcM, we \n" + \
                     "match (we) \n" + \
                     "where not we.word in wordsarcM \n" + \
                     " and exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
                     " and exists {(we)-[r:PRONUNCIATION]->(wss:WordSound:" + source + ")} \n" + \
+                    "with og, idCat, sc, u, wordsarcM, we \n" + \
+                    "order by we.wordranking, we.word \n" + \
+                    "limit " + str(datas.starton) + " \n" + \
                     "with og, idCat, sc, u, collect(we.word) as words \n"  + \
                     "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
                     "    source:og.lSource, target:og.lTarget, \n" + \
