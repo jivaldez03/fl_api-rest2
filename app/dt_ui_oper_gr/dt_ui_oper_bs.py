@@ -188,6 +188,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             "qtyweek, qtymonth, sum(rofMt.month_qty) as qtytotal \n" + \
         "match (es:Word)-[:TRANSLATOR]->(ess:Word) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ess) \n" + \
+        " and exists {(es)-[r:PRONUNCIATION]->(wss:WordSound) where o.lSource in labels(wss)} \n" + \
         "with u, o, c, sc, count(distinct es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth,qtytotal \n" + \
         "return c.name as CatName, sc.name as SCatName, wordsSC as totalwords, \n" + \
                 "sum(qtymonth) as learned, \n" + \
