@@ -550,8 +550,9 @@ async def stripe_checkout(datas:ForLicense, request:Request
 
     # lista de productos declarados en STRIPE
     product = None
+    """
     if datas.KoLic == '01M':
-        product = 'price_1NtD1qL7SwRlW9BCB8ABhCH0'
+        product = 'price_1NtD1qL7SwRlW9BCB8ABhCH0' # price_1NtD1qL7SwRlW9BCB8ABhCH0
     elif datas.KoLic == '03M':
         product = 'price_1NtXe0L7SwRlW9BCmIjLsK3J'
     elif datas.KoLic == '06M':
@@ -560,9 +561,26 @@ async def stripe_checkout(datas:ForLicense, request:Request
         product = 'price_1NtXquL7SwRlW9BCvHCNVoxA'
     elif datas.KoLic == '00U':
         product = 'price_1NtXylL7SwRlW9BCf5m9HwSZ'
-    
-    s_api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"    
+    s_api_key = 
+    "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"    
+    "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"
+    """
+    if datas.KoLic == '01M':
+        product = 'price_1NyLg9L7SwRlW9BC1MlEUdeD' # price_1NtD1qL7SwRlW9BCB8ABhCH0
+    elif datas.KoLic == '03M':
+        product = 'price_1NyLvmL7SwRlW9BCd1owCOeA'
+    elif datas.KoLic == '06M':
+        product = 'price_1NyLvwL7SwRlW9BC4BQT0yOh'
+    elif datas.KoLic == '12M':
+        product = 'price_1NyLw6L7SwRlW9BCqIbyn5ZI'
+    elif datas.KoLic == '00U':
+        product = 'price_1NyLwFL7SwRlW9BCxw0v71wn'
+    s_api_key = "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"
 
+    
+    #"sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    #s_api_key = "pk_live_51NmjkxL7SwRlW9BCxmT70aHtWf9psHeyc7EdpWnoxlaybUUtIldxTTHXxDECIg5v308C1lCQ4tGi6n3eg8Hbjv5k00sXw9hqmK"
+    
     neo4j_statement = "match (pl:PaymentsLinks) \n" + \
                     "where pl.KoLic = '" + datas.KoLic + "' \n" + \
                     "return pl.KoLic as KoLic, pl.plId as plId, pl.redirect as plredirect, \n" + \
