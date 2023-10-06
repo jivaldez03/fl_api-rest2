@@ -692,7 +692,7 @@ def get_words(userId, pkgname, wordslevel='words'):
                             "->(cat:Category {idCat:pkg.idCat})\n" + \
                         "-[:SUBJECT]->(org:Organization) \n" + \
                         "where org.lSource = pkg.source and org.lTarget = pkg.target \n" + \
-                        "unwind pkg.words as pkgwords \n" + \
+                        "unwind pkg. " + wordslevel + " as pkgwords \n" + \
                         "match(s)-[rscat:SUBCAT]-(ew:ElemSubCat {word:pkgwords})\n" + \
                         "-[:TRANSLATOR]->(sw:ElemSubCat) \n" + \
                         "where pkg.source in labels(ew) and pkg.target in labels(sw) \n" + \
@@ -1221,7 +1221,7 @@ async def post_user_words4(datas:ForNewPackage
             #            "THEN pkg2.words40[0..-1] ELSE pkg2.words40 END \n" + \
             #"return userId, packageId, pkg2.words40 limit 1 "
     await awsleep(0)
-    #print("neo4j_statement:", neo4j_statement)
+    print("neo4j_statement:", neo4j_statement)
     
     nodes, log = neo4j_exec(session, userId,
                     log_description="post_user_words4 -level_40_ \n packageId: " + pkgname,
