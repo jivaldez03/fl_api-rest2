@@ -693,8 +693,8 @@ def get_words(userId, pkgname, wordslevel='words'):
                         "-[:SUBJECT]->(org:Organization) \n" + \
                         "where org.lSource = pkg.source and org.lTarget = pkg.target \n" + \
                         "unwind pkg. " + wordslevel + " as pkgwords \n" + \
-                        "match(s)-[rscat:SUBCAT]-(ew:ElemSubCat {word:pkgwords})\n" + \
-                        "-[:TRANSLATOR]->(sw:ElemSubCat) \n" + \
+                        "match(s)<-[rscat:SUBCAT]-(ew:ElemSubCat {word:pkgwords})\n" + \
+                        "-[:TRANSLATOR]->(sw:ElemSubCat)-[:SUBCAT]->(s) \n" + \
                         "where pkg.source in labels(ew) and pkg.target in labels(sw) \n" + \
                         "with org, pkg, s, ew, collect(distinct sw.word) as sw, rscat \n" + \
                         "order by rscat.wordranking, ew.wordranking, ew.word  \n" + \
