@@ -11,6 +11,7 @@ from app.model.md_params_auth import ForResetPass, ForLicense
 
 from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session
+from _neo4j.config import kodb
 
 from __generalFunctions import myfunctionname, get_random_string, email_send, validating_token, _sleep
 
@@ -311,6 +312,13 @@ def s_paymlink(): #Authorization: Optional[str] = Header(None)):
     #token=validating_token(Authorization)
     #userId = token['userId']
     s_api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    if kodb() == 1:
+        s_api_key = appNeo.app_access_cfg.get("sk_test", "")
+    elif kodb() == 2:
+        s_api_key = appNeo.app_access_cfg.get("sk_live", "")
+    else:
+        s_api_key = 'error on s_api_key'
+    s_api_key = s_api_key.replace("JAIV03","")
     lenpl, paymlinks = s_paymentslink(s_api_key)
 
     return lenpl, paymlinks
@@ -563,8 +571,16 @@ async def stripe_checkout(datas:ForLicense, request:Request
         product = 'price_1NtXylL7SwRlW9BCf5m9HwSZ'
     s_api_key = 
     "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"    
-    "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"
+    
     """
+    if kodb() == 1:
+        s_api_key = appNeo.app_access_cfg.get("sk_test", "")
+    elif kodb() == 2:
+        s_api_key = appNeo.app_access_cfg.get("sk_live", "")
+    else:
+        s_api_key = 'error on s_api_key'
+    s_api_key = s_api_key.replace("JAIV03","")
+
     if datas.KoLic == '01M':
         product = 'price_1NyLg9L7SwRlW9BC1MlEUdeD' # price_1NtD1qL7SwRlW9BCB8ABhCH0
     elif datas.KoLic == '03M':
@@ -575,7 +591,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
         product = 'price_1NyLw6L7SwRlW9BCqIbyn5ZI'
     elif datas.KoLic == '00U':
         product = 'price_1NyLwFL7SwRlW9BCxw0v71wn'
-    s_api_key = "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"
+    
 
     
     #"sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
