@@ -110,7 +110,7 @@ async def post_level(datas:ForClosePackages, Authorization: Optional[str] = Head
     return {'message': listcat}
 
 
-def set_archived_package(packagename, userId):
+async def set_archived_package(packagename, userId):
     """
     Function to closed and add package words to the user's learned words
     """
@@ -171,7 +171,7 @@ def set_archived_package(packagename, userId):
     # filter (x in n.A where x<>"newValue")
     # "ArcM.words = ArcM.words + p.words \n" + \
     #print('archiving:', neo4j_statement)
-
+    await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="archive package" + packagename,
                         statement=neo4j_statement,

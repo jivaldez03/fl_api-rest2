@@ -96,6 +96,7 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                                 "collect(subcategory) as subcategories, collect(idCS) as subid"
     
     #print('cats-subcats:', neo4j_statement)
+    await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting categories for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -141,7 +142,7 @@ async def pst_packagename(datas:ForNamePackages
                     "match (p:Package {packageId:pkgname, userId:userId}) \n" + \
                     "set p.label = newname, p.cdUpdate = datetime() \n" + \
                     "return p.packageId as packageId , p.label as newlabel"
-    
+    await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="rename package" + pkgname + ' as ' + newlabel,
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -629,132 +630,6 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
         elems = dict(ele)
         listEle.append(elems)
 
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
-    return listEle
-
-
-@router.post("/set_leval/")
-async def set_levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(None)):
-    """
-    orgId   : str  DTL-01 for English
-    starton : int
-    limit   : int
-    word    : string
-    setlevel: 
-    """
-    global appNeo, session, log
-
-    token=funcs.validating_token(Authorization)
-    userId = token['userId']
-
-    if datas.orgId == 'DTL-01':
-        source = 'English'
-        target = 'Spanish'
-        idCat = 1
-        idSCat = 1
-    elif datas.orgId == 'DTL-02':
-        source = 'German'
-        target = 'Spanish'
-        idCat = 101
-        idSCat = 1
-    else:
-        source = None
-        target = None
-
-    if datas.setlevel == False:
-        statement = "with '" + datas.orgId + "' as org \n" + \
-                    "match (og:Organization {idOrg:org}) \n" + \
-                    "match (we:Word:" + source + ") \n" + \
-                    "where exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
-                    " and exists {(we)-[r:PRONUNCIATION]->(wss:WordSound:" + source + ")} \n" + \
-                    "with we order by we.wordranking, we.word \n" + \
-                    "skip "  + str(datas.starton) + " \n" + \
-                    "limit " + str(datas.limit) + "\n" + \
-                    "return we.word as word, we.wordranking as prevmax"        
-    else:
-        statement = "with '" + datas.orgId + "' as org, \n" + \
-                    "'" + str(datas.word) + "' as word \n" + \
-                    "match (u:User {userId:'" + userId + "'}) \n" + \
-                    "-[ruo:RIGHTS_TO]-> \n" + \
-                    "(og:Organization {idOrg:org}) \n" + \
-                    "<-[rc:SUBJECT]-(c:Category {idCat:"+ str(idCat) + "}) \n" + \
-                    "<-[rcs:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
-                    "with og, c.idCat as idCat, sc, u \n" + \
-                    "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM2:Archived_M:" + source + ":" + target + ")-\n" + \
-                        "[:ARCHIVED_M]->(u) \n" + \
-                    "where arcM2.reference is null " + \
-                    "with og, idCat, sc, u, coalesce(arcM2.words,['.']) as words \n" + \
-                    "unwind words as word \n" + \
-                    "with og, idCat, sc, u, collect(word) as wordsarcM \n" + \
-                    "match (we:Word:" + source + ") \n" + \
-                    "with og, idCat, sc, u, wordsarcM, we \n" + \
-                    "//order by we.wordranking, we.word \n" + \
-                    "// limit " + str(datas.starton) + " \n" + \
-                    "with og, idCat, sc, u, wordsarcM, we \n" + \
-                    "match (we) \n" + \
-                    "where not we.word in wordsarcM \n" + \
-                    " and exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
-                    " and exists {(we)-[r:PRONUNCIATION]->(wss:WordSound:" + source + ")} \n" + \
-                    "with og, idCat, sc, u, wordsarcM, we \n" + \
-                    "order by we.wordranking, we.word \n" + \
-                    "limit " + str(datas.starton) + " \n" + \
-                    "with og, idCat, sc, u, collect(we.word) as words \n"  + \
-                    "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
-                    "    source:og.lSource, target:og.lTarget, \n" + \
-                    "    idCat:idCat, idSCat:sc.idSCat, reference:'Initial_Level'}) \n" + \
-                    "on create set arcM.ctInsert = datetime() \n" + \
-                    "on match set arcM.ctUpdate = datetime(),  \n" + \
-                        "arcM.wordsBack=[toString(datetime())] + arcM.words \n" + \
-                    "set arcM.words = words, arcM.month_qty = size(words) \n" + \
-                    "merge (u)<-[rua:ARCHIVED_M]-(arcM)-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
-                    "return arcM.words, arcM.wordsBack  \n"
-    
-    await awsleep(0)
-    
-    print(f"====================================================================\nstatement pronun: ") #{statement}")
-    print(f"datas: ", datas, "\n", _getdatime_T(),"\n") 
-    print(f"====================================================================\nstatement pronun: ") #{statement}")
-
-    nodes, log = neo4j_exec(session, userId,
-                        log_description="getting words for evaluation: ",
-                        statement=statement, 
-                        filename=__name__, 
-                        function_name=myfunctionname())
-    listEle = []
-    for ele in nodes:
-        elems = dict(ele)
-        listEle.append(elems)
-
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
-    return listEle
-
-@router.get("/reclinks_borrar/")
-async def recslinks_borrar(Authorization: Optional[str] = Header(None)):
-    """    
-    """
-    global appNeo, session, log
-
-    token=funcs.validating_token(Authorization)
-    userId = token['userId']
-
-    statement = "with " + "'" + userId + "' as userId \n" + \
-                "match (u:User {userId:userId})-[ro:RIGHTS_TO]->(o:Organization) \n" + \
-                    "<-[r:ORG_RECLINK]-(rl:RecLinks) \n" + \
-                "return rl.image as logo,  rl.name as name, rl.link as link, \n" + \
-                    "coalesce(rl[u.selected_lang],rl['Spanish']) as texttoshow, \n" + \
-                    "rl.imagelink as imagelink \n" + \
-                "order by rl.sorted"      
-    #print(f"statement pronun: {statement}")
-    await awsleep(0)
-    nodes, log = neo4j_exec(session, userId,
-                        log_description="getting recommended links",
-                        statement=statement, 
-                        filename=__name__, 
-                        function_name=myfunctionname())
-    listEle = []
-    for ele in nodes:
-        elems = dict(ele)
-        listEle.append(elems)
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
 

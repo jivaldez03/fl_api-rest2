@@ -592,6 +592,34 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
     #print("========== starting get_user_package_st id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     
     statement = "match (u:User {userId:'" + userId + "'})<-[:PACKAGED]-\n" + \
+                    "(pkg:Package {packageId: '" + packageId + "'}) \n" + \
+                    "-[:PACK_SUBCAT]-(sc:SubCategory)\n" + \
+                    "-[:CAT_SUBCAT]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
+                "return pkg.packageId, c.idCat as idCat, c.name as CatName, \n" + \
+                " sc.name as SCatName, \n" + \
+                " c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
+                " pkg.level as level"
+    
+    nodes, log = neo4j_exec(session, userId,
+                        log_description="getting opened packages list",
+                        statement=statement,
+                        filename=__name__, 
+                        function_name=myfunctionname())
+    await awsleep(0)
+
+    listPack = []
+    for node in nodes:
+        sdict = dict(node)
+        ndic = {'packageId': sdict["pkg.packageId"]
+                , 'Category': sdict["CatName"], 'idCat' : sdict["idCat"]
+                , 'SubCat': sdict["SCatName"], 'idSCat' : sdict["idSCat"]
+                , 'maxlevel': sdict["level"]
+        }
+        
+        listPack.append(ndic)   
+
+    """
+    statement = "match (u:User {userId:'" + userId + "'})<-[:PACKAGED]-\n" + \
                 "(pkg:Package {packageId: '" + packageId + "'}) \n" + \
                 "-[:PACK_SUBCAT]-(sc:SubCategory)\n" + \
                 "-[:CAT_SUBCAT]-(c:Category)-[:SUBJECT]->(o:Organization) \n" + \
@@ -607,15 +635,6 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "split(level,'-,-')[0] as level, \n" + \
                 "toFloat(split(level,'-,-')[1]) as grade, levs, maxerrs"
-    
-    
-    nodes, log = neo4j_exec(session, userId,
-                        log_description="getting opened packages list",
-                        statement=statement,
-                        filename=__name__, 
-                        function_name=myfunctionname())
-    await awsleep(0)
-        
     listPack = []
     for node in nodes:
         sdict = dict(node)    
@@ -642,6 +661,7 @@ async def get_user_package_st(packageId:str, Authorization: Optional[str] = Head
         }
         
         listPack.append(ndic)
+    """
     print("        ->   ========== ending get_user_package_st id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': listPack}
 
@@ -1347,7 +1367,6 @@ def get_user_word_pron2(word:str, idWord:int
         elems = dict(ele)
     print("        ->   ========== ending get_user_word_pron2 id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return Response(elems['ws.binfile'])
-
 
 
 @router.get("/get_/user_words4_borrar/")

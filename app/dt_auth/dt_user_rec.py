@@ -22,13 +22,6 @@ from asyncio import sleep as awsleep
 
 router = APIRouter()
 
-def get_random_string_borrar(length):
-    # choose from all lowercase letter
-    letters = ascii_letters # string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    print("Random string of length", length, "is:", result_str)
-    return result_str
-
 """
 def email_send(target_userId, target_email, message):
     edom = "delthatech"
@@ -672,6 +665,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
                     "merge (u)<-[rul:USER_PAYREQUEST]-(ulink)" + \
                     "return u.userId as userId, ulink.url as url, elementId(plink) as eleId"
     print("neo4j_statement: ", neo4j_statement )
+    await awsleep(0)
     nodes, log = neo4j_exec(session, 'admin', 
                         log_description="user paymenlink request saving",
                         statement=neo4j_statement,

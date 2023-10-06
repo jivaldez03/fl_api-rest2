@@ -9,6 +9,8 @@ from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
 from __generalFunctions import myfunctionname, _getdatime_T, get_random_string, email_send, _getdatetime
 
+from asyncio import sleep as awsleep
+
 from datetime import datetime as dt
 
 #models:
@@ -45,7 +47,8 @@ async def login_user(datas: ForLogin):
     nodes, log = neo4j_exec(session, datas.userId.lower(),
                         log_description="validate login user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
-    
+    await awsleep(0)
+
     result = {}
     for elem in nodes:
         result=dict(elem) #print(f"elem: {type(elem)} {elem}")   
@@ -67,7 +70,7 @@ async def login_user(datas: ForLogin):
                     "where elementId(l) = '" + log[0] + "' \n" + \
                     "set l.ctClosed = datetime(), l.additionalResult = '" + merror + "' \n" + \
                     "return count(l)"
-        
+        await awsleep(0)
         nodes, log = neo4j_exec(session, datas.userId.lower() ,
                         log_description=merror
                         , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
@@ -113,7 +116,6 @@ async def login_user(datas: ForLogin):
                         "native_lang" : result["us.native_lang"],
                         "selected_lang" : result["selected_lang"]
             }
-
             if kol_lim_date < _getdatetime():
                 print("\n\nKOL:", datas.userId.lower(), result["kol"], type(result["kol_lim_date"]), result["kol_lim_date"],"\n\n")
                 merror = "License Permission Error"
@@ -126,6 +128,8 @@ async def login_user(datas: ForLogin):
                         "where elementId(l) = '" + log[0] + "' \n" + \
                         "set l.ctClosed = datetime(), l.additionalResult = 'login - success access' \n" + \
                         "return count(l)"
+            await awsleep(0)
+
             nodes, log = neo4j_exec(session, datas.userId.lower() ,
                             log_description="validate login user"
                             , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
@@ -156,7 +160,7 @@ async def login_user(datas: ForLogin):
                         "where elementId(l) = '" + log[0] + "' \n" + \
                         "set l.ctClosed = datetime(), l.additionalResult = 'invalid user or password - (p)' \n" + \
                         "return count(l)"
-            
+            await awsleep(0)
             nodes, log = neo4j_exec(session, datas.userId.lower() ,
                             log_description=merror
                             , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
@@ -212,7 +216,7 @@ async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = H
                     "where elementId(l) = '" + log[0] + "' \n" + \
                     "set l.ctClosed = datetime(), l.additionalResult = 'updated password' \n" + \
                     "return count(l)"
-        
+        await awsleep(0)
         nodes, log = neo4j_exec(session, token['userId'],
                         log_description="updating password"
                         , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
@@ -304,6 +308,8 @@ async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(
                     "return us.userId, us.name, us.native_lang, us.selected_lang, us.kol limit 1"
 
     #print("neo4j:", neo4j_statement)
+    await awsleep(0)
+
     nodes, log = neo4j_exec(session, token['userId'],
                         log_description="update user configure id",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -317,7 +323,7 @@ async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(
 
 
 @router.get("/signupval/{code}")
-def signup_complete(code:str):
+async def signup_complete(code:str):
     global appNeo
     """
     Function for reset the user password \n
@@ -331,6 +337,7 @@ def signup_complete(code:str):
                     "set u.ctUpdate = datetime() \n" + \
                     "return u.userId, u.email, u.selected_lang as selected_lang"
     #print('statement:', neo4j_statement)
+    await awsleep(0)
     nodes, log = neo4j_exec(session, 'admin', 
                         log_description="reset password notification",
                         statement=neo4j_statement,
@@ -382,6 +389,8 @@ def signup_complete(code:str):
                             "u.kol_lim_date = (datetime() + duration({days:7})) \n" + \
                         "return u.userId, u.email, u.selected_lang as selected_lang"
         #print('statement:', neo4j_statement)
+        await awsleep(0)
+
         nodes, log = neo4j_exec(session, 'admin', 
                             log_description="sign up notification",
                             statement=neo4j_statement,
@@ -447,6 +456,7 @@ async def login_signup(datas: ForSignUp, request:Request):
                     "optional match (usmail:User {email: usemail}) " +  \
                     "return us.userId as uuserId, us.name as uname, \n" + \
                             "usmail.userId as ususerId, usmail.email as usemail limit 1"
+        await awsleep(0)
         nodes, log = neo4j_exec(session, datas.userId.lower(),
                             log_description="validate user and email",
                             statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -538,7 +548,7 @@ async def login_signup(datas: ForSignUp, request:Request):
                         " set r.ctInsert = datetime() \n" + \
                         "return u.userId, u.name, u.email, u.selected_lang "
             #print("statement neo4j:", neo4j_statement)
-
+            await awsleep(0)
             nodes, log = neo4j_exec(session, datas.userId.lower(),
                                     log_description="insert user sign up",
                                     statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -573,6 +583,7 @@ async def get_org(Authorization: Optional[str] = Header(None)):
                         "return o.idOrg as idOrg, o.name as name, o.lSource as Source, o.lTarget as Target"
     
     #print('cats-subcats:', neo4j_statement)
+    await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting organization for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -582,50 +593,6 @@ async def get_org(Authorization: Optional[str] = Header(None)):
         ndic = {'orgId': sdict["idOrg"], 'OrgName': sdict["name"]
                 , 'source' : sdict["Source"], 'target': sdict["Target"]}
         listcat.append(ndic)
-    print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
-    return listcat
-
-
-@router.get("/countries_borrar/")
-async def countries(Authorization: Optional[str] = Header(None)):
-    """
-    Function to get all countries
-
-    """
-    global appNeo, session, log 
-
-    token=funcs.validating_token(Authorization)
-    userId = token['userId']
-        
-    neo4j_statement = "with '" + userId + "' as userId " + \
-                        "match (u:User {userId:userId})-[:RIGHTS_TO]->(o:Organization) \n" + \
-                        "return o.idOrg as idOrg, o.name as name, o.lSource as Source, o.lTarget as Target"
-    
-    #print('cats-subcats:', neo4j_statement)
-    """
-    nodes, log = neo4j_exec(session, userId,
-                        log_description="getting organization for the user",
-                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
-    listcat = []
-    for node in nodes:
-        sdict = dict(node)
-        ndic = {'orgId': sdict["idOrg"], 'OrgName': sdict["name"]
-                , 'source' : sdict["Source"], 'target': sdict["Target"]}
-        listcat.append(ndic)
-    """
-    listcat = []
-    sdict = {'country':'México'}
-    sdict2 = {'country':'Costa Rica'}
-    sdict3 = {'country':'United States'}
-    listcat = [sdict, sdict2, sdict3]
-    listcat.append({'country':'Guatemala'})
-    listcat.append({'country':'Puerto Rico'})
-    listcat.append({'country':'Germany'})
-    listcat.append({'country':'Hungry'})
-    listcat.append({'country':'El Salvador'})
-    listcat.append({'country':'Belice'})
-    listcat.append({'country':'Chile'})
-
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listcat
 
@@ -643,6 +610,7 @@ async def get_countries(Authorization: Optional[str] = Header(None)):
         
     neo4j_statement = "match (cou:Country) \n" + \
                       "return distinct cou.name as name order by cou.name"
+    await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting organization for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
@@ -668,6 +636,7 @@ async def get_langs(Authorization: Optional[str] = Header(None)):
         
     neo4j_statement = "match (cou:Country) \n" + \
                       "return distinct cou.language as langname order by langname"
+    await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting organization for the user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
