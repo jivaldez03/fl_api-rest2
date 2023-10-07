@@ -240,7 +240,7 @@ async def token_data(Authorization: Optional[str] = Header(None)):
     name = token["username"]
     selected_lang = token["selected_lang"]
 
-    kok = ['supp','comm', 'lics', 'clam', 'pmet', 'othr']
+    kok = ['supp','comm', 'lics', 'clam', 'pmet', 'dacc', 'othr']
     if selected_lang == 'es':
         koh = ['Soporte','Comentario', 'Licencias', 'Queja', 'Métodos de Pago', 'Eliminar Cuenta', 'Otro']
     else:
