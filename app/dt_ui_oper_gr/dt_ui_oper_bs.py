@@ -259,9 +259,9 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
             "qtyweek, qtymonth, sum(rofMt.month_qty) as qtytotal \n" + \
         "match (sc)<-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]->(ws:ElemSubCat) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
-        "match (u)<-[:PACKAGED]-(pkg:Package {status:'closed'})-[:PACK_SUBCAT]->(sc) \n" + \
+        "optional match (u)<-[:PACKAGED]-(pkg:Package {status:'closed'})-[:PACK_SUBCAT]->(sc) \n" + \
         "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, \n" + \
-            " qtyweek, qtymonth,qtytotal, count(pkg) as clsdpkgs \n" + \
+            " qtyweek, qtymonth,qtytotal, coalesce(count(pkg),0) as clsdpkgs \n" + \
         "order by sc.idCat, sc.idSCat, c.name, sc.name \n" + \
         "return c.name as CatName, \n" + \
                 "sc.name as SCatName, \n" + \
