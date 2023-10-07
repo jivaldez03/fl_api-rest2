@@ -192,6 +192,7 @@ async def user_change_pass(code:str):
         sentmail = "Something was wrong, review your email."    
     return sentmail
 
+"""
 @router.get("/s_fileplink_borrar/")
 async def s_fileplink_borrar(Authorization: Optional[str] = Header(None)):  # obtiene la lista de pagos procesados en stripe
     #print('\n\n *********************** \nauthorization', Authorization)
@@ -226,9 +227,21 @@ async def s_fileplink_borrar(Authorization: Optional[str] = Header(None)):  # ob
                 ldatas.append(sdict)
 
     return len(resultsconfirmplink), len(ldatas), ldatas  # resultsplink, 
+"""
+
+def s_getapi():
+    if kodb() == 1:
+        s_api_key = appNeo.app_access_cfg.get("sk_test", "")
+    elif kodb() == 2:
+        s_api_key = appNeo.app_access_cfg.get("sk_live", "")
+    else:
+        s_api_key = 'error on s_api_key'
+    s_api_key = s_api_key.replace("JAIV03","")
+    return s_api_key
 
 def s_checkout_session(cs):  # obtiene la lista de pagos procesados en stripe
-    stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
+    stripe.api_key = s_getapi()    
+    #"sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
     if cs:
         resultsconfirmplink = stripe.checkout.Session.list(
                         limit=100
@@ -262,9 +275,24 @@ def s_checkout_session(cs):  # obtiene la lista de pagos procesados en stripe
                         "created" : data["created"]
                 }
                 ldatas.append(sdict)
-
     return ldatas  # resultsplink, 
 
+
+def s_prices(sApiKey):
+    stripe.api_key = sApiKey
+    prices = stripe.Price.list(
+                    limit=100
+            )
+    #print("\n\npricess:", prices)
+    return prices
+
+def s_products(sApiKey):
+    stripe.api_key = sApiKey
+    products = stripe.Product.list(
+                    limit=100
+                ) 
+    #print("\n\nproductos:", products)
+    return products
 
 def s_paymentslink(sApiKey):  # obtiene la lista de los paymentslink en strip - solo activos
     stripe.api_key = sApiKey
@@ -311,14 +339,7 @@ def s_paymlink(): #Authorization: Optional[str] = Header(None)):
     #print('\n\n *********************** \nauthorization', Authorization)
     #token=validating_token(Authorization)
     #userId = token['userId']
-    s_api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
-    if kodb() == 1:
-        s_api_key = appNeo.app_access_cfg.get("sk_test", "")
-    elif kodb() == 2:
-        s_api_key = appNeo.app_access_cfg.get("sk_live", "")
-    else:
-        s_api_key = 'error on s_api_key'
-    s_api_key = s_api_key.replace("JAIV03","")
+    s_api_key = s_getapi()
     lenpl, paymlinks = s_paymentslink(s_api_key)
 
     return lenpl, paymlinks
@@ -558,45 +579,43 @@ async def stripe_checkout(datas:ForLicense, request:Request
 
     # lista de productos declarados en STRIPE
     product = None
-    """
-    if datas.KoLic == '01M':
-        product = 'price_1NtD1qL7SwRlW9BCB8ABhCH0' # price_1NtD1qL7SwRlW9BCB8ABhCH0
-    elif datas.KoLic == '03M':
-        product = 'price_1NtXe0L7SwRlW9BCmIjLsK3J'
-    elif datas.KoLic == '06M':
-        product = 'price_1NtXp0L7SwRlW9BCrXchRTAu'
-    elif datas.KoLic == '12M':
-        product = 'price_1NtXquL7SwRlW9BCvHCNVoxA'
-    elif datas.KoLic == '00U':
-        product = 'price_1NtXylL7SwRlW9BCf5m9HwSZ'
-    s_api_key = 
-    "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"    
-    
+    s_api_key = s_getapi()
+    sproducts = s_products(s_api_key)["data"]
+    sprices = s_prices(s_api_key)["data"]
+    price_default = None
+    for gia, product in enumerate(sproducts):
+        if product["active"] == True:
+            if datas.KoLic.strip() == product["name"].strip():
+                price_default = product["default_price"].strip()
+    product = price_default
+
     """
     if kodb() == 1:
-        s_api_key = appNeo.app_access_cfg.get("sk_test", "")
+        if datas.KoLic == '01M':
+            product = 'price_1NtD1qL7SwRlW9BCB8ABhCH0' # price_1NtD1qL7SwRlW9BCB8ABhCH0
+        elif datas.KoLic == '03M':
+            product = 'price_1NtXe0L7SwRlW9BCmIjLsK3J'
+        elif datas.KoLic == '06M':
+            product = 'price_1NtXp0L7SwRlW9BCrXchRTAu'
+        elif datas.KoLic == '12M':
+            product = 'price_1NtXquL7SwRlW9BCvHCNVoxA'
+        elif datas.KoLic == '00U':
+            product = 'price_1NtXylL7SwRlW9BCf5m9HwSZ'
     elif kodb() == 2:
-        s_api_key = appNeo.app_access_cfg.get("sk_live", "")
+        if datas.KoLic == '01M':
+            product = 'price_1NyLg9L7SwRlW9BC1MlEUdeD' # price_1NtD1qL7SwRlW9BCB8ABhCH0
+        elif datas.KoLic == '03M':
+            product = 'price_1NyLvmL7SwRlW9BCd1owCOeA'
+        elif datas.KoLic == '06M':
+            product = 'price_1NyLvwL7SwRlW9BC4BQT0yOh'
+        elif datas.KoLic == '12M':
+            product = 'price_1NyLw6L7SwRlW9BCqIbyn5ZI'
+        elif datas.KoLic == '00U':
+            product = 'price_1NyLwFL7SwRlW9BCxw0v71wn'
     else:
         s_api_key = 'error on s_api_key'
-    s_api_key = s_api_key.replace("JAIV03","")
-
-    if datas.KoLic == '01M':
-        product = 'price_1NyLg9L7SwRlW9BC1MlEUdeD' # price_1NtD1qL7SwRlW9BCB8ABhCH0
-    elif datas.KoLic == '03M':
-        product = 'price_1NyLvmL7SwRlW9BCd1owCOeA'
-    elif datas.KoLic == '06M':
-        product = 'price_1NyLvwL7SwRlW9BC4BQT0yOh'
-    elif datas.KoLic == '12M':
-        product = 'price_1NyLw6L7SwRlW9BCqIbyn5ZI'
-    elif datas.KoLic == '00U':
-        product = 'price_1NyLwFL7SwRlW9BCxw0v71wn'
-    
-
-    
-    #"sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
-    #s_api_key = "pk_live_51NmjkxL7SwRlW9BCxmT70aHtWf9psHeyc7EdpWnoxlaybUUtIldxTTHXxDECIg5v308C1lCQ4tGi6n3eg8Hbjv5k00sXw9hqmK"
-    
+    """
+        
     neo4j_statement = "match (pl:PaymentsLinks) \n" + \
                     "where pl.KoLic = '" + datas.KoLic + "' \n" + \
                     "return pl.KoLic as KoLic, pl.plId as plId, pl.redirect as plredirect, \n" + \
@@ -695,9 +714,10 @@ async def stripe_checkout(datas:ForLicense, request:Request
                         " url:'" + url + "'}) \n" + \
                     "set ulink.ctInsert = datetime(), \n" + \
                     "   ulink.redirect = '" + lnk_toanswer + "' \n" + \
+                    "with ulink \n" + \
                     "match (u:User {userId:'" + userId + "'}) \n" + \
-                    "merge (u)<-[rul:USER_PAYREQUEST]-(ulink)" + \
-                    "return u.userId as userId, ulink.url as url, elementId(plink) as eleId"
+                    "merge (u)<-[rul:USER_PAYREQUEST]-(ulink) \n" + \
+                    "return u.userId as userId, ulink.url as url, elementId(ulink) as eleId"
     print("neo4j_statement: ", neo4j_statement )
     await awsleep(0)
     nodes, log = neo4j_exec(session, 'admin', 

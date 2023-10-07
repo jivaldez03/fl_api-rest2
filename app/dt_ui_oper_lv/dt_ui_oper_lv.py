@@ -171,7 +171,7 @@ async def set_archived_package(packagename, userId):
     # filter (x in n.A where x<>"newValue")
     # "ArcM.words = ArcM.words + p.words \n" + \
     #print('archiving:', neo4j_statement)
-    await awsleep(0)
+    #await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="archive package" + packagename,
                         statement=neo4j_statement,
