@@ -111,6 +111,7 @@ async def post_level(datas:ForClosePackages, Authorization: Optional[str] = Head
 
 
 def set_archived_package(packagename, userId):
+    # ESTA FUNCION NO PUEDE SER ASYNC 
     """
     Function to closed and add package words to the user's learned words
     """
