@@ -260,12 +260,13 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
         "match (sc)<-[esr]-(es:ElemSubCat)-[tr:TRANSLATOR]->(ws:ElemSubCat) \n" + \
         "where o.lSource in labels(es) and o.lTarget in labels(ws) \n" + \
         "match (u)<-[:PACKAGED]-(pkg:Package {status:'closed'})-[:PACK_SUBCAT]->(sc) \n" + \
-        "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, qtyweek, qtymonth,qtytotal, count(pkg) \n" + \
+        "with o, c, sc, count(es) as wordsSC, yearr, monthh, weekk, \n" + \
+            " qtyweek, qtymonth,qtytotal, count(pkg) as clsdpkgs \n" + \
         "order by sc.idCat, sc.idSCat, c.name, sc.name \n" + \
         "return c.name as CatName, \n" + \
                 "sc.name as SCatName, \n" + \
                 "wordsSC as totalwords, \n" + \
-                "sum(qtymonth) as learned, \n" + \
+                "clsdpkgs as learned, \n" + \
                 "c.idCat * 1000000 + sc.idSCat as idSCat, \n" + \
                 "c.idCat as idCat, \n" + \
                 "sc.idSCat as idCS, \n" + \
