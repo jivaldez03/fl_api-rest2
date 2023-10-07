@@ -110,7 +110,7 @@ async def post_level(datas:ForClosePackages, Authorization: Optional[str] = Head
     return {'message': listcat}
 
 
-async def set_archived_package(packagename, userId):
+def set_archived_package(packagename, userId):
     """
     Function to closed and add package words to the user's learned words
     """
