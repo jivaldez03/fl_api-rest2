@@ -242,9 +242,9 @@ async def token_data(Authorization: Optional[str] = Header(None)):
 
     kok = ['supp','comm', 'lics', 'clam', 'pmet', 'othr']
     if selected_lang == 'es':
-        koh = ['Soporte','Comentario', 'Licencias', 'Queja', 'Métodos de Pago', 'Otro']
+        koh = ['Soporte','Comentario', 'Licencias', 'Queja', 'Métodos de Pago', 'Eliminar Cuenta', 'Otro']
     else:
-        koh = ['Support','Comments', 'Licenses', 'Claim', 'Payment Methods', 'Other']
+        koh = ['Support','Comments', 'Licenses', 'Claim', 'Payment Methods', 'Drop Account', 'Other']
 
     koh_k = []
     for gia, ele in enumerate(koh):
