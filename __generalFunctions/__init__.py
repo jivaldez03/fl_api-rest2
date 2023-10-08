@@ -2,6 +2,7 @@ from datetime import datetime as dt, timedelta
 from time import sleep as sleep
 from random import randint, choice
 from re import compile, match
+import bcrypt
 
 from string import ascii_letters
 
@@ -38,6 +39,21 @@ def get_random_string(length):
     result_str = ''.join(choice(letters) for i in range(length))
     print("Random string of length", length, "is:", result_str)
     return result_str
+
+def bcrypt_pass(codetocrypt):
+    pwd = codetocrypt.encode('utf-8')
+    print("codetocrupe:", codetocrypt, pwd)
+    gsal = bcrypt.gensalt()
+    encript = bcrypt.hashpw(pwd,gsal)
+    print("encripen genfun:", encript)
+    return encript
+
+def bcrypt_pass_compare(codetocompare, encrypted):    
+    if bcrypt.checkpw(codetocompare, encrypted):
+        return True
+    else:
+        return False
+
 
 def _sleep(secs, init_range=0, end_range=10):
     if secs:

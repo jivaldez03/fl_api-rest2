@@ -4,10 +4,13 @@ from typing import Optional #, Annotated
 from _neo4j.neo4j_operations import neo4j_exec 
                     #,  login_validate_user_pass_trx, \
                     # user_change_password, neo4_log, q01
+from _neo4j.config import convert_pass as decodestring
 
 from _neo4j import appNeo, session, log, user
 import __generalFunctions as funcs
-from __generalFunctions import myfunctionname, _getdatime_T, get_random_string, email_send, _getdatetime
+from __generalFunctions import myfunctionname, _getdatime_T, get_random_string \
+                , email_send, _getdatetime \
+                , bcrypt_pass_compare, bcrypt_pass
 
 from asyncio import sleep as awsleep
 
@@ -37,14 +40,16 @@ async def login_user(datas: ForLogin):
     this operation needs a input structure such as {userId, password}
     """
     global session
- 
-    neo4j_statement = "with '" + datas.userId.lower() +  "' as userId \n" + \
-                "match (us:User {userId: userId }) \n" +  \
+    duserId = datas.userId
+    duserId = duserId.lower().strip()
+
+    neo4j_statement = "with '" + duserId +  "' as userId \n" + \
+                "match (us:User {userId:userId}) \n" +  \
                 "optional match (us)<-[l:LICENSE]-(kol:KoL {active:true}) \n" + \
                 "return us.userId, us.name, us.keypass, us.age, us.email, us.email_alt, \n" + \
                     "us.native_lang, coalesce(us.selected_lang,'es') as selected_lang, \n" + \
                     "us.country_birth, us.country_res, us.kol as kol, us.kol_lim_date as kol_lim_date limit 1"
-    nodes, log = neo4j_exec(session, datas.userId.lower(),
+    nodes, loglogin = neo4j_exec(session, duserId,
                         log_description="validate login user",
                         statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
     await awsleep(0)
@@ -54,7 +59,6 @@ async def login_user(datas: ForLogin):
         result=dict(elem) #print(f"elem: {type(elem)} {elem}")   
     #result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password)
     # FIN DE VIGENCIA DE LICENCIA
-    #print('fechas to compare:', kol_lim_date, _getdatetime())
     if len(result) == 0:  # incorrect user
         print("no records - fname__name__and more:",__name__)
         #log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
@@ -65,9 +69,9 @@ async def login_user(datas: ForLogin):
                     "country_res": ""
                 }        
         
-        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
-                    ", user:'" + datas.userId.lower() + "'}) \n" + \
-                    "where elementId(l) = '" + log[0] + "' \n" + \
+        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(loglogin[1]) + "')\n" + \
+                    ", user:'" + duserId + "'}) \n" + \
+                    "where elementId(l) = '" + loglogin[0] + "' \n" + \
                     "set l.ctClosed = datetime(), l.additionalResult = '" + merror + "' \n" + \
                     "return count(l)"
         await awsleep(0)
@@ -83,12 +87,39 @@ async def login_user(datas: ForLogin):
             #headers={"WWW-Authenticate": "Basic"},
         )
     else:
+        #passdecode = decodestring(datas.password) #decode()
+        #print("befodecode:", passdecode)        
+        #passdecode = passdecode.decode('utf-8')
+        #print("dp_cfg:", passdecode)
+        passtocompare = datas.password
+        realpass = bytes(result["us.keypass"], 'utf-8')
+        if len(result["us.keypass"]) < 30:
+            passaccess = False
+        else:
+            passaccess = bcrypt_pass_compare(bytes(passtocompare, 'utf-8'), realpass)
+        if not passaccess: #  passdecode != result["us.keypass"]:
+            if passtocompare == result["us.keypass"]:
+                newencripass=bcrypt_pass(passtocompare)
+                #print("newencpass bef byte:", newencripass)
+                newencripass=newencripass.decode('utf-8')
+                #print("newencpass:", newencripass)
+                neo4j_statement = "match (u:User {userId:'" + duserId + "'}) \n" + \
+                        "set u.keypass = '" + newencripass + "' \n" + \
+                        "return u.userId"                        
+                await awsleep(0)
+                nodes, log = neo4j_exec(session, duserId,
+                                log_description='update decodepass'
+                                , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                                , recLog=False)
+                passaccess = True            
+
+        #if datas.password == result["us.keypass"]:
         if not result["kol_lim_date"] is None \
-            and datas.password == result["us.keypass"]:   # success access
+            and passaccess: #passtocompare == result["us.keypass"]:   # success access
             #log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
             kol_lim_date = str(result["kol_lim_date"])
             kol_lim_date = dt.strptime(kol_lim_date.split('.')[0], '%Y-%m-%dT%H:%M:%S')
-            print("\n\nKOL:", datas.userId.lower(), result["kol"], result["kol_lim_date"],"\n\n")
+            print("\n\nKOL:", duserId, result["kol"], result["kol_lim_date"],"\n\n")
             
             #print(kol_lim_date, str(kol_lim_date), type(kol_lim_date))
             resp_dict ={'status': 'OK', 
@@ -123,9 +154,9 @@ async def login_user(datas: ForLogin):
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=result_tk
                 )
-            neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
-                        ", user:'" + datas.userId.lower() + "'}) \n" + \
-                        "where elementId(l) = '" + log[0] + "' \n" + \
+            neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(loglogin[1]) + "')\n" + \
+                        ", user:'" + duserId + "'}) \n" + \
+                        "where elementId(l) = '" + loglogin[0] + "' \n" + \
                         "set l.ctClosed = datetime(), l.additionalResult = 'login - success access' \n" + \
                         "return count(l)"
             await awsleep(0)
@@ -155,13 +186,13 @@ async def login_user(datas: ForLogin):
                         "country_birth": "", 
                         "country_res": ""
                     }
-            neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
-                        ", user:'" + datas.userId.lower() + "'}) \n" + \
-                        "where elementId(l) = '" + log[0] + "' \n" + \
+            neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(loglogin[1]) + "')\n" + \
+                        ", user:'" + duserId + "'}) \n" + \
+                        "where elementId(l) = '" + loglogin[0] + "' \n" + \
                         "set l.ctClosed = datetime(), l.additionalResult = 'invalid user or password - (p)' \n" + \
                         "return count(l)"
             await awsleep(0)
-            nodes, log = neo4j_exec(session, datas.userId.lower() ,
+            nodes, log = neo4j_exec(session, duserId,
                             log_description=merror
                             , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
                             , recLog=False)        
@@ -186,41 +217,58 @@ async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = H
     }
     """
     global session
-    token=funcs.validating_token(Authorization)
+    token=funcs.validating_token(Authorization)  
 
     neo4j_statement = "match (us:User {userId:'" + token['userId'] + "', \n" + \
-                    "keypass:'" + datas.oldkeypass + "'}) \n" +  \
-                    "set us.keypass = '" + datas.newkeypass + "' \n" + \
                     "return us.userId, us.keypass limit 1"
 
     nodes, log = neo4j_exec(session, token['userId'],
-                        log_description="update password",
-                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
-    """nodes = user_change_password(session, token['userId'].lower(), datas.oldkeypass, datas.newkeypass,
-                                 filename=__name__,
-                                 function_name=myfunctionname())"""
-    
+                        log_description="verify old pass to update",
+                        statement=neo4j_statement, filename=__name__, function_name=myfunctionname())    
     result = {}
     for elem in nodes:
         result=dict(elem)
 
-    if len(result) == 0:
+    if len(result) > 0:
+        realpass = bytes(result["us.keypass"], 'utf-8')
+        passaccess = bcrypt_pass_compare(bytes(datas.oldkeypass, 'utf-8'), realpass)
+
+        if passaccess:
+            newencripass=bcrypt_pass(datas.newkeypass)
+            newencripass=newencripass.decode('utf-8')
+            neo4j_statement = "match (us:User {userId:'" + token['userId'] + "'}) \n" +  \
+                            "set us.keypass = '" + newencripass + "', \n" + \
+                            "   us.ctUpdate = datetime() \n" + \
+                            "return us.userId, us.keypass limit 1"
+            nodes, log = neo4j_exec(session, token['userId'],
+                                log_description="update password",
+                                statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
+            result = {}
+            for elem in nodes:
+                result=dict(elem)
+
+            if len(result) == 1: #update pass was done
+                neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
+                            ", user:'" + token['userId'] + "'}) \n" + \
+                            "where elementId(l) = '" + log[0] + "' \n" + \
+                            "set l.ctClosed = datetime(), l.additionalResult = 'updated password' \n" + \
+                            "return count(l)"
+                await awsleep(0)
+                nodes, log = neo4j_exec(session, token['userId'],
+                                log_description="updating password"
+                                , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
+                                , recLog=False)        
+        else: # oldpass is wrong
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect user or password",
+            )
+    else: #if len(result) == 0:
         #print("id: ", token['userId'], " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raiseHTTP - user / pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect user or password",
         )
-    else: # update pass was done
-        neo4j_statement = "match (l:Log {ctInsert:datetime('" + str(log[1]) + "')\n" + \
-                    ", user:'" + token['userId'] + "'}) \n" + \
-                    "where elementId(l) = '" + log[0] + "' \n" + \
-                    "set l.ctClosed = datetime(), l.additionalResult = 'updated password' \n" + \
-                    "return count(l)"
-        await awsleep(0)
-        nodes, log = neo4j_exec(session, token['userId'],
-                        log_description="updating password"
-                        , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
-                        , recLog=False)
         
     print("========== id: ", token['userId'].lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return {'message': "password updated"}
@@ -290,7 +338,7 @@ async def user_registry(datas:ForUserReg, Authorization: Optional[str] = Header(
 
     neo4j_statement = "merge (us:User {userId:'" + datas.userId + "'}) \n" + \
                     " on match set us.ctUpdate = datetime()  \n" + \
-                    " on create set us.ctInsert = datetime(), us.keypass='"+ datas.userId+"' \n" + \
+                    " on create set us.ctInsert = datetime() \n" + \
                     "set us.name = '" + dname + "', \n" + \
                     "  us.email = '" + demail + "', \n" + \
                     "  us.email_alt = '" + demail_alt + "', \n" + \
@@ -528,6 +576,9 @@ async def login_signup(datas: ForSignUp, request:Request):
             subj = "DTone - Sign Up Notification - " + uuserId
 
         sentmail = email_send(uuserId, uemail, msg, subj, appNeo)
+
+        newencripass=bcrypt_pass(ukeyp)
+        ukeyp=newencripass.decode('utf-8')
 
         if sentmail != "False":   # email_send return an string 
             neo4j_statement = "with '" + uuserId +  "' as userId, \n" + \

@@ -47,4 +47,12 @@ def get_pass(username):
     msg_ori2 = fern.decrypt(msg_encripreadit).decode()
     #print(f"\n\nfrom encrypted pass") # : {msg_ori2}")
     return msg_ori2
+
+def convert_pass(codekey):
+    key = read_key()
+    # inicializar fernet
+    codekeye = codekey.encode('utf-8')
+    fern=Fernet(key)
+    passcrypted = fern.encrypt(codekeye)#.decode()
+    return passcrypted
      
