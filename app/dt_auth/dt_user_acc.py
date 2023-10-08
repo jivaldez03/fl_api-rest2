@@ -219,7 +219,7 @@ async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = H
     global session
     token=funcs.validating_token(Authorization)  
 
-    neo4j_statement = "match (us:User {userId:'" + token['userId'] + "', \n" + \
+    neo4j_statement = "match (us:User {userId:'" + token['userId'] + "'} \n" + \
                     "return us.userId, us.keypass limit 1"
 
     nodes, log = neo4j_exec(session, token['userId'],
