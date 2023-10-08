@@ -13,8 +13,9 @@ from _neo4j.neo4j_operations import neo4j_exec
 from _neo4j import appNeo, session
 from _neo4j.config import kodb
 
-from __generalFunctions import myfunctionname, get_random_string, email_send, validating_token, _sleep
-
+from __generalFunctions import myfunctionname, get_random_string \
+                                , email_send, validating_token, _sleep \
+                                , bcrypt_pass
 
 import random
 from string import ascii_letters
@@ -156,10 +157,12 @@ async def user_change_pass(code:str):
     }
     """
     temppass = get_random_string(random.randint(8, 12))
+    newencripass=bcrypt_pass(temppass)
+    newencripass=newencripass.decode('utf-8')
 
     neo4j_statement = "match (u:User {temp_access:'" + code + "'}) \n" + \
                     "where (u.temp_access_dt + duration({minutes: 10})) >=  datetime() \n" + \
-                    "set u.keypass = '" + temppass + "', \n" + \
+                    "set u.keypass = '" + newencripass + "', \n" + \
                         "u.temp_access = reverse(u.temp_access), \n" + \
                         "u.ctUpdate = datetime() \n" + \
                     "return u.userId, u.email, u.selected_lang as selected_lang"
@@ -181,53 +184,16 @@ async def user_change_pass(code:str):
     if emailuser != "":
         if sdict["selected_lang"] == 'es':
             msg = "Su password ha sido renovado, su nuevo password es: " + temppass
-            subj = "DTone - Notificación de Modificación de Password"
+            subj = "DTone - Notificación de Modificación de Password (usuario: " + userId + ")"
         else:
             msg = "Password has been updated, your new password is: " + temppass
-            subj = "DTone - Notification of Password Updated"        
+            subj = "DTone - Notification of Password Updated (user: " + userId + ")"
         sentmail = email_send(userId, emailuser, msg, subj, appNeo)
         refmail = emailuser.split('@')
         sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
     else:
         sentmail = "Something was wrong, review your email."    
     return sentmail
-
-"""
-@router.get("/s_fileplink_borrar/")
-async def s_fileplink_borrar(Authorization: Optional[str] = Header(None)):  # obtiene la lista de pagos procesados en stripe
-    #print('\n\n *********************** \nauthorization', Authorization)
-    token=validating_token(Authorization)
-    userId = token['userId']
-    stripe.api_key = "sk_test_51NmjkxL7SwRlW9BCVBKVANME2kkwita0vUn4adcey8Tu3MpC9RtOg3dLdvDM6sFCzIS08MaZzuTw7B3nOwE8FKMV00e5mQH9BE"
-    resultsconfirmplink = stripe.checkout.Session.list(
-                    limit=1000
-                    ) 
-    datas = resultsconfirmplink["data"]
-    ldatas = []
-    for gia, data in enumerate(datas[:]):
-        if data["status"] == "complete" \
-            and  data["status"] == "complete" \
-            :
-                for giaCF, cf in enumerate(data["custom_fields"]):
-                    if cf["key"] == 'userId':
-                        userIdINDAT = cf["text"]["value"]
-                useremailINDAT = data["customer_details"]["email"]
-                sdict = {"csId" : data["id"],
-                         "userId" : userIdINDAT,
-                         "email" : useremailINDAT,
-                        "paym_st" : data["payment_status"],
-                        "checkS" : data["status"],
-                        "amount_stot" : data["amount_subtotal"],
-                        "amount_total" : data["amount_total"],
-                        "curr" : data["currency"],
-                        "plink" : data["payment_link"],
-                        "pintent" :data["payment_intent"],
-                        "created" : data["created"]
-                }
-                ldatas.append(sdict)
-
-    return len(resultsconfirmplink), len(ldatas), ldatas  # resultsplink, 
-"""
 
 def s_getapi():
     if kodb() == 1:
