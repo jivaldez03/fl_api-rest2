@@ -458,6 +458,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
 
     #print('puzzle datas:', datas)
     if datas.setlevel == False: 
+        """
         neo4j_statement = "with '" + datas.org + "' as org \n" + \
                     "    , '" + userId + "' as userId \n" + \
                     "    , " +  str(llev) + " as llevel \n" + \
@@ -496,6 +497,44 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                     "where llevel < size(wordstouser) < ulevel \n" + \
                     "return sentence2 as sentence, apoc.coll.shuffle(wordstouser) as wordstouser \n" + \
                     "       , eletoshow, idSCat, word, exTarget, sentence as original_sentence limit " + rlimit        
+        """
+
+        neo4j_statement = "with '" + datas.org + "' as org \n" + \
+                    " , '" + userId + "' as userId \n" + \
+                    ", 1 as idCat, 1 as idSCat \n" + \
+                    "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-\n" + \
+                    "[rc:SUBJECT]-(c:Category {idCat:idCat})-[rsc:CAT_SUBCAT]-(sc:SubCategory {idSCat:idSCat}) \n" + \
+                    "with u,o.lSource as Source, o.lTarget as Target, o, sc \n" + \
+                    "// *** SE LOCALIZAN LAS SENTENCIAS QUE YA SE HAN EJERCITADO \n" + \
+                    "optional match (u)<-[r:PUZZLEWORDS]-(gm:Game)  \n" + \
+                    "with u, Source, Target, o, sc, coalesce(gm.words,['']) as wordsgame \n" + \
+                    "unwind wordsgame as word  \n" + \
+                    "with u, Source, Target, o, sc,  word \n" + \
+                    "order by word  \n" + \
+                    "with u, Source, Target, o, sc, collect(distinct word) as wordsgame \n" + \
+                    "with u, Source, Target, o, sc, wordsgame, apoc.coll.shuffle(wordsgame) as wordsgameSh \n" + \
+                    "// SE LOCALIZAN LAS PALABRAS ARCHIVADAS  \n" + \
+                    "match (u)<-[r:ARCHIVED_M]-(rM:Archived_M)-[rsm:SUBCAT_ARCHIVED_M]->(sc)  \n" + \
+                    "where o.lSource in labels(rM) and o.lTarget in labels(rM)  \n" + \
+                    "// Y SE ELIMINAN LAS QUE FUERON LLEVADAS A JUEGOS  \n" + \
+                    "with u, o, apoc.coll.subtract(rM.sentences, wordsgame) as words, wordsgame, \n" + \
+                    " rM.sentences as rmwords, wordsgameSh  \n" + \
+                    "with u, o, (case when words = [] then rmwords else words end) as words, \n" + \
+                    " wordsgame, wordsgameSh  \n" + \
+                    "unwind words as sword  \n" + \
+                    "with u, o, collect(sword) as swords, wordsgameSh  \n" + \
+                    "with u, o, swords + wordsgameSh[0..10] as swordsC, wordsgameSh  \n" + \
+                    "unwind swordsC as sword  \n" + \
+                    "with u, o, sword, \n" + \
+                    "case when sword in wordsgameSh then 1 else 0 end as prioridad  \n" + \
+                    "with distinct u, o, sword as we, prioridad  \n" + \
+                    "order by u, prioridad, rand()  \n" + \
+                    "limit " + rlimit + " \n" + \
+                    "return we as sentence, apoc.coll.shuffle(split(we, ' ')) as wordstouser \n" + \
+                    " , 'elementIdtoSound' as eletoshow, 0 as idSCat, ' ' as word, ' ' as exTarget \n" + \
+                    " , we as original_sentence"
+                    #"return we"
+
     else:        
         neo4j_statement = "with " + "'" + datas.org + "' as org, \n" + \
                                 "'" + userId + "' as userId, \n" + \

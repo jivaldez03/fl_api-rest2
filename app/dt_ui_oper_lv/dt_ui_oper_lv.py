@@ -161,17 +161,41 @@ def set_archived_package(packagename, userId):
                             "{userId:u.userId, year:yearr, month:monthh, " + \
                                 "source:'" + source + "', target:'" + target + "', \n" + \
                                     "idCat:p.idCat, idSCat:p.idSCat}) \n" + \
-                        "on create set ArcM.month_qty = 0, ArcM.words=[], ArcM.ctInsert = datetime() \n" + \
+                        "on create set ArcM.month_qty = 0, ArcM.words=[], ArcM.sentences=[], ArcM.ctInsert = datetime() \n" + \
                         "on match set ArcM.ctUpdate = datetime() \n" + \
                         "set ArcM.words = ArcM.words + [ele in p.words where not ele in ArcM.words] \n" + \
                         "set ArcM.month_qty = size(ArcM.words) \n" + \
                         "merge (rofArc)-[rWM:WEEK_MONTH]->(ArcM) \n" + \
                         "merge (sc)<-[rSArcM:SUBCAT_ARCHIVED_M]-(ArcM) \n" + \
                         "merge (u)<-[rUArcM:ARCHIVED_M]-(ArcM) \n" + \
+                        "// TO INCLUDE EXAMPLE SENTENCES \n" + \
+                        "with p, ArcM, sc \n" + \
+                        "unwind p.words as word \n" + \
+                        "match (we:Word:" + source + " {word:word})-[:PRONUNCIATION]->\n" + \
+                        "(wss:WordSound:" + source + ") \n" + \
+                        "where exists {(wss)-[:SUBCAT]-(sc)} or \n" + \
+                        " (wss.idCat = sc.idCat and wss.idSCat = sc.idSCat) \n" + \
+                        "with p, ArcM, sc, wss.example as wssexample \n" + \
+                        ", replace( \n" + \
+                        "              replace( \n" + \
+                        "                    replace( \n" + \
+                        "                            wss.example  \n" + \
+                        "                            , '" + '"' + "' + word + " + "'" + '". ' + "' \n" + \
+                        "                                , '' \n" + \
+                        "                            )  \n" + \
+                        "                    , '“' + word + '”' \n" + \
+                        "                        , '' \n" + \
+                        "                    ) \n" + \
+                        '            , "' + "'" + '" + word + ' + '"' + "'. " + '" \n' + \
+                        "            , '' \n" + \
+                        "        )  \n" + \
+                        "        as sentence2 \n" + \
+                        "with p, ArcM, sc, collect(wssexample) as wssexamples, collect(sentence2) as sentences2 " + \
+                        "set ArcM.sentences = ArcM.sentences + [ele in sentences2 where not ele in ArcM.sentences] \n" + \
                         "return p.packageId as packageId , p.label as slabel, p.status as status " 
     # filter (x in n.A where x<>"newValue")
     # "ArcM.words = ArcM.words + p.words \n" + \
-    #print('archiving:', neo4j_statement)
+    print('=============================\narchiving:', neo4j_statement)
     #await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="archive package" + packagename,
