@@ -401,6 +401,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
     monthh = dtimenow.month
     weekk = dtimenow.strftime("%W") # , status:'open'
 
+    print("datas PUZZLEWORD:", datas)
     kogame = datas.kog.upper()
     if kogame in ["PUZZLEWORDS"]:
         pass
@@ -423,7 +424,10 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
     else: #if datas.ulevel == 'C1':
         llev = 7
         ulev = 99
-        
+    
+    llev = 3
+    ulev = 20
+
     rlimit = str(datas.hms)
 
     if datas.org== 'DTL-01':
@@ -519,7 +523,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                         " gm.average = average, \n" + \
                         " gm.ctInsert = datetime() \n" + \
                     "return u.userId as userId, size(gm.words) as qtywords "
-    #print("puzzle - neo4_statement:", neo4j_statement)
+    print("puzzle - neo4_statement:", neo4j_statement)
     await awsleep(0)
     
     #print(f"statement pronun: {statement}")
