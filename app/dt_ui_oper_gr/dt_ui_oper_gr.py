@@ -549,10 +549,6 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     """
     global appNeo, session, log
 
-    print(f"START\n====================================================================\n: ") #{statement}")
-    print(f"datas: ", datas, "\n", _getdatime_T(),"\n") 
-    print(f"====================================================================\nstatement pronun: ") #{statement}")
-
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
@@ -633,10 +629,6 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     for ele in nodes:
         elems = dict(ele)
         listEle.append(elems)
-
-    print(f"END \n====================================================================\n: ") #{statement}")
-    print(f"datas: ", datas, "\n", _getdatime_T(),"\n") 
-    print(f"====================================================================\nstatement pronun: ") #{statement}")
 
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
