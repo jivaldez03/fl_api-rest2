@@ -72,7 +72,7 @@ async def user_change_pass_notification(datas:ForResetPass, request:Request):
     "user_email":str"
     }
     """
-    datas.userId = ""
+    datas.userId = "pub_user"
 
     def get_path():
         met  =  request.scope['method'] 
