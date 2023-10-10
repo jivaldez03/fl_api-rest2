@@ -115,9 +115,10 @@ async def get_categories(Authorization: Optional[str] = Header(None)):
                         "union \n" + \
                         "match (u:User {userId:'" + userId + "'})-[rt:RIGHTS_TO]->(o:Organization)\n" + \
                         "<-[:SUBJECT]-(c:Category)<-[:CAT_SUBCAT]-(s:SubCategory) \n" + \
-                        "where c.idCat <> 1 and \n" + \
-                        "exists {match (s)<-[:SUBCAT]-(es:ElemSubCat) \n" + \
-                        "where o.lSource in labels(es)} \n" + \
+                        "where c.idCat <> 1 \n" + \
+                        " and exists { " + \
+                        "   (s)<-[:SUBCAT]-(es:ElemSubCat)-[rts:TRANSLATOR]->(ws:ElemSubCat) \n" + \
+                        "   where o.lSource in labels(es) and o.lTarget in labels(ws)} \n" + \
                         "with o.idOrg as idOrg, o.name as oname, \n" + \
                         "c.idCat as idCat, c.name as cname, \n" + \
                         "s.name as subcategory, c.idCat * 1000000 + s.idSCat as idCS  \n" + \
