@@ -19,7 +19,7 @@ class ForChangePass(BaseModel):
     newkeypass:str
     
 class ForResetPass(BaseModel):
-    userId:str
+    userId:str=None
     user_email:str
 
 class ForUserReg(BaseModel):
