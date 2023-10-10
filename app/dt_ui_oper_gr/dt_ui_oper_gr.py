@@ -458,7 +458,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
 
     #print('puzzle datas:', datas)
     if datas.setlevel == False: 
-        """
+        """ extracción que no verificaba si era con las palabras aprendidas
         neo4j_statement = "with '" + datas.org + "' as org \n" + \
                     "    , '" + userId + "' as userId \n" + \
                     "    , " +  str(llev) + " as llevel \n" + \
