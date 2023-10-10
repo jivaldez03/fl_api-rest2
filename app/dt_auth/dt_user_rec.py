@@ -71,8 +71,7 @@ async def user_change_pass_notification(datas:ForResetPass, request:Request):
     "userId":str,
     "user_email":str"
     }
-    """
-    datas.userId = "pub_user"
+    """    
 
     def get_path():
         met  =  request.scope['method'] 
@@ -92,6 +91,8 @@ async def user_change_pass_notification(datas:ForResetPass, request:Request):
     
     userId = datas.userId
     useremail = datas.user_email
+
+    userId = "pub_user"
 
     temppass = get_random_string(random.randint(30,50))
 
@@ -147,7 +148,6 @@ async def user_change_pass_notification(datas:ForResetPass, request:Request):
         sentmail = "email has been sent to " + userId
 
     return sentmail
-
 
 @router.get("/reset_pass/{code}")
 async def user_change_pass(code:str):
