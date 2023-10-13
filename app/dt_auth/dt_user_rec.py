@@ -655,7 +655,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
         sdict = {'eleId': 'abc'}
         #if not lnk_toanswer.__contains__(":5000"):  # NO SE CREA EN BASE DE DATOS SI ES LOCALHOST
         neo4j_statement = "create (plink:PaymentsLinks {KoLic:'" + datas.KoLic +"', \n" + \
-                            " url:'" + stripeLink['url'] + ", plId:'" + stripeLink["id"] + "'}) \n" + \
+                            " url:'" + stripeLink['url'] + "', plId:'" + stripeLink["id"] + "'}) \n" + \
                         "set plink.ctInsert = datetime(), \n" + \
                             "plink.product = '" + product + "', \n" + \
                         "   plink.redirect = '" + lnk_toanswer + "' \n" + \
