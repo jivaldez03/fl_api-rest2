@@ -505,7 +505,7 @@ async def s_pay_validation(code:str):
                         "with pc, u \n" + \
                         "merge (pc)-[rlic:CONFIRMED_LIC]->(u) \n" + \
                         "set rlic.ctInsert = datetime() \n" + \
-                        "return pc.csId as csId, pc.KoLic as KoLic, u.userId as userId, pc.ctInsert as ctInsert, pr, pl" 
+                        "return pc.csId as csId, pc.KoLic as KoLic, u.userId as userId, pc.ctInsert as ctInsert " 
         # "with pl, pc \n" + \
         # "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
         # "set r.ctInsert = datetime() \n" + \
