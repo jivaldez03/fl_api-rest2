@@ -435,7 +435,7 @@ async def s_pay_validation(code:str):
         ldict.append(dict(node))    
 
     print("sending:", send)
-    print("csID initial :", ldict[0]["csId"])
+    print("csID initial :", ldict) # [0]["csId"])
 
     awsleep(0)
     if len(ldict) > 0:
@@ -444,7 +444,7 @@ async def s_pay_validation(code:str):
         paidscompleted = s_checkout_session(None)
     for gia, paid in enumerate(paidscompleted[::-1]):
         print(f"paid {gia + 1}: {paid}")
-        neo4j_statement = "merge (pc:PaymentConfirmed {csId:'" + paid["csId"] + "', \n" + \
+        neo4j_statement = "merge (pc:PaymentConfirmed {csId:'" + paid["csId"] + "'}) \n" + \
                         "on create set pc.ctInsert = datetime() " + \
                         "on match set pc.ctUpdate = datetime() " + \
                         "set pc.email = '" + paid["email"] + "',  \n" + \
@@ -459,12 +459,13 @@ async def s_pay_validation(code:str):
                         "with pc \n" + \
                         "match (plink:PaymentLink {plId:'"+ paid["plink"] + "'}) \n" + \
                         "merge (pc)-[rcp:CONFIRMED_PAY]->(plink) \n" + \
-                        "set rcp.ctInsert = datetime()" + \
+                        "set rcp.ctInsert = datetime() \n" + \
+                        "set pc.KoLic = plink.KoLic \n" + \
                         "with pc, plink \n" + \
                         "match (u:User)<-[rup:USER_PAYMENTLINK]-(plink) \n" + \
                         "where u.userId = plink.userId \n" + \
-                        "with u, pc \n" + \
-                        "match (pr:Product {KoLic:pc.KoLic}) \n" + \
+                        "with u, pc, plink \n" + \
+                        "match (pr:Product {KoLic:plink.KoLic}) \n" + \
                         "where not exists {(pc)-[rupc:CONFIRMED_LIC]->(u)} \n" + \
                         " set u.ctUpdate = datetime(), \n" + \
                             "u.kol = pc.KoLic, \n" + \
@@ -475,7 +476,7 @@ async def s_pay_validation(code:str):
                             "u.update_lic = datetime() \n" + \
                         "with u, pc \n" + \
                         "merge (pc)-[rupc:CONFIRMED_LIC]->(u) \n" + \
-                        "set rupc.ctInsert = datetime()" + \
+                        "set rupc.ctInsert = datetime() \n" + \
                         "return pc.csId as csId, pc.KoLic as KoLic, u.userId as userId, pc.ctInsert as ctInsert " 
         """
         neo4j_statement = "match (ulink:UserLicPayReq {userId:'" + paid["userId"] + "', \n" + \
@@ -527,7 +528,7 @@ async def s_pay_validation(code:str):
         # "with pl, pc \n" + \
         # "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
         # "set r.ctInsert = datetime() \n" + \
-        print("neo4j_statement:", neo4j_statement)
+        #print("neo4j_statement:", neo4j_statement)
         awsleep(0)
 
         nodes, log = neo4j_exec(session, 'admin',
@@ -683,7 +684,8 @@ async def stripe_checkout(datas:ForLicense, request:Request
                         "   plink.redirect = '" + lnk_toanswer + "' \n" + \
                         "with plink \n" + \
                         "match (u:User {userId:plink.userId}) \n" + \
-                        "merge (u)<-[:USER_PAYMENTLINK]-(plink) \n" + \
+                        "merge (u)<-[rupl:USER_PAYMENTLINK]-(plink) \n" + \
+                        " set rupl.ctInsert = datetime \n" + \
                         "return plink.url as url, elementId(plink) as eleId, plink.plId as plId"                    
         #print("neo4j_statement: ", neo4j_statement )
 
