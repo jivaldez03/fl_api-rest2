@@ -464,7 +464,7 @@ async def s_pay_validation(code:str):
         neo4j_statement = "match (ulink:UserLicPayReq {userId:'" + paid["userId"] + "', \n" + \
                         "   plId:'"+ paid["plink"] + "'})-[rreqPL:UPAYREQUEST_PLINK]->\n" + \
                         "(plink:PaymentsLink {plId:'"+ paid["plink"] + "'}) \n" + \
-                        "where not exists {(pc:PaymentsConfirmed {csId:'" + paid["csId"] + "')} \n" + \
+                        "where not exists {(pc:PaymentsConfirmed {csId:'" + paid["csId"] + "'}) \n" + \
                         " and not exists {(pc:PaymentsConfirmed)-[:CONFIRMED_PAY]->(ulink)} \n" + \
                         "with ulink order by ulink.ctInsert desc limit 1 \n" + \
                         "merge (pc:PaymentsConfirmed {csId:'" + paid["csId"] + "', \n" + \
