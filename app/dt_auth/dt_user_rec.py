@@ -226,12 +226,12 @@ def s_checkout_session(cs):  # obtiene la lista de pagos procesados en stripe ge
         if data["status"] == "complete" \
             and  data["status"] == "complete" \
             :
-                for giaCF, cf in enumerate(data["custom_fields"]):
-                    if cf["key"] == 'userId':
-                        userIdINDAT = cf["text"]["value"].lower().strip()
+                #for giaCF, cf in enumerate(data["custom_fields"]):
+                #    if cf["key"] == 'userId':
+                #        userIdINDAT = cf["text"]["value"].lower().strip()
                 useremailINDAT = data["customer_details"]["email"].lower().strip()
                 sdict = {"csId" : data["id"],
-                         "userId" : userIdINDAT,
+                         #"userId" : userIdINDAT,
                          "email" : useremailINDAT,
                         "paym_st" : data["payment_status"],
                         "checkS" : data["status"],
@@ -272,8 +272,8 @@ def s_paymentslink(sApiKey):  # obtiene la lista de los paymentslink en strip - 
     
     for gia, data in enumerate(datas[:]):
         if data["active"] == True:
-            for giaCF, cf in enumerate(data["custom_fields"]):                    
-                userIdINDAT = cf["key"]
+            #for giaCF, cf in enumerate(data["custom_fields"]):                    
+            #    userIdINDAT = cf["key"]
 
             for gia, ac in enumerate(data["after_completion"]):
                 #print("after_complettion:", ac)
@@ -284,7 +284,7 @@ def s_paymentslink(sApiKey):  # obtiene la lista de los paymentslink en strip - 
             sdict = {"plId" : data["id"],
                         "url"  : data["url"],
                         "status" : True, 
-                        "keyUserId" : userIdINDAT, 
+                        #"keyUserId" : userIdINDAT,  # registro de captura del usuario en DTone
                         "allow_promotion_codes" : data["allow_promotion_codes"],
                         "curr" : data["currency"] #"created" : data["created"]
             }
@@ -418,7 +418,7 @@ async def s_pay_validation(code:str):
     send = "processing pay with code:" + code + " ... wait a minute please..."
     send = send + f"\n\nupdating new license for user ..."
 
-    neo4j_statement = "match (pc:PaymentsConfirmed) \n" + \
+    neo4j_statement = "match (pc:PaymentConfirmed) \n" + \
                     "return pc.csId as csId, pc.created as created \n" + \
                     "order by created desc \n" + \
                     "limit 1"
@@ -442,32 +442,49 @@ async def s_pay_validation(code:str):
         paidscompleted = s_checkout_session(ldict[0]["csId"])
     else:
         paidscompleted = s_checkout_session(None)
-
-    """
-
-                sdict = {"csId" : data["id"],
-                         "userId" : userIdINDAT,
-                         "email" : useremailINDAT,
-                        "paym_st" : data["payment_status"],
-                        "checkS" : data["status"],
-                        "amount_stot" : data["amount_subtotal"],
-                        "amount_total" : data["amount_total"],
-                        "curr" : data["currency"],
-                        "plink" : data["payment_link"],
-                        "pintent" :data["payment_intent"],
-                        "created" : data["created"]
-                }
-
-    """
     for gia, paid in enumerate(paidscompleted[::-1]):
         print(f"paid {gia + 1}: {paid}")
+        neo4j_statement = "merge (pc:PaymentConfirmed {csId:'" + paid["csId"] + "', \n" + \
+                        "on create set pc.ctInsert = datetime() " + \
+                        "on match set pc.ctUpdate = datetime() " + \
+                        "set pc.email = '" + paid["email"] + "',  \n" + \
+                        "   pc.paym_st = '"+ paid["paym_st"] + "',  \n" + \
+                        "   pc.checkout_st = '"+ paid["checkS"]+ "',  \n" + \
+                        "   pc.amount_stot = "+ str(paid["amount_stot"]) + ",  \n" + \
+                        "   pc.amount_total = "+ str(paid["amount_total"]) + ",  \n" + \
+                        "   pc.curr = '"+ paid["curr"] + "',  \n" + \
+                        "   pc.plink = '"+ paid["plink"] + "',  \n" + \
+                        "   pc.pintent = '"+ paid["pintent"] + "',  \n" + \
+                        "   pc.created = "+ str(paid["created"]) + "  \n" + \
+                        "with pc \n" + \
+                        "match (plink:PaymentLink {plId:'"+ paid["plink"] + "'}) \n" + \
+                        "merge (pc)-[rcp:CONFIRMED_PAY]->(plink) \n" + \
+                        "set rcp.ctInsert = datetime()" + \
+                        "with pc, plink \n" + \
+                        "match (u:User)<-[rup:USER_PAYMENTLINK]-(plink) \n" + \
+                        "where u.userId = plink.userId \n" + \
+                        "with u, pc \n" + \
+                        "match (pr:Product {KoLic:pc.KoLic}) \n" + \
+                        "where not exists {(pc)-[rupc:CONFIRMED_LIC]->(u)} \n" + \
+                        " set u.ctUpdate = datetime(), \n" + \
+                            "u.kol = pc.KoLic, \n" + \
+                            "u.kol_lim_date = case when u.kol_lim_date > datetime() \n" + \
+                                                "then (u.kol_lim_date + duration({months:pr.months})) \n" + \
+                                                "else (datetime() + duration({months:pr.months})) \n" + \
+                                            "end, \n" + \
+                            "u.update_lic = datetime() \n" + \
+                        "with u, pc \n" + \
+                        "merge (pc)-[rupc:CONFIRMED_LIC]->(u) \n" + \
+                        "set rupc.ctInsert = datetime()" + \
+                        "return pc.csId as csId, pc.KoLic as KoLic, u.userId as userId, pc.ctInsert as ctInsert " 
+        """
         neo4j_statement = "match (ulink:UserLicPayReq {userId:'" + paid["userId"] + "', \n" + \
                         "   plId:'"+ paid["plink"] + "'})-[rreqPL:UPAYREQUEST_PLINK]->\n" + \
-                        "(plink:PaymentsLinks {plId:'"+ paid["plink"] + "'}) \n" + \
-                        "where not exists {(pc:PaymentsConfirmed {csId:'" + paid["csId"] + "'})} \n" + \
-                        " and not exists {(pc:PaymentsConfirmed)-[:CONFIRMED_PAY]->(ulink)} \n" + \
+                        "(plink:PaymentLink {plId:'"+ paid["plink"] + "'}) \n" + \
+                        "where not exists {(pc:PaymentConfirmed {csId:'" + paid["csId"] + "'})} \n" + \
+                        " and not exists {(pc:PaymentConfirmed)-[:CONFIRMED_PAY]->(ulink)} \n" + \
                         "with ulink order by ulink.ctInsert desc limit 1 \n" + \
-                        "merge (pc:PaymentsConfirmed {csId:'" + paid["csId"] + "', \n" + \
+                        "merge (pc:PaymentConfirmed {csId:'" + paid["csId"] + "', \n" + \
                                     "userId:'" + paid["userId"] + "'}) \n" + \
                         "on create set pc.ctInsert = datetime() " + \
                         "on match set pc.ctUpdate = datetime() " + \
@@ -491,7 +508,7 @@ async def s_pay_validation(code:str):
                         "   ulink.ctUpdate_paid = datetime() \n */" + \
                         "where not pc.KoLic is null \n" + \
                         "match (pr:Product {KoLic:pc.KoLic}) \n" + \
-                        "optional match (u:User {userId:pc.userId}) \n" + \
+                        "match (u:User {userId:pc.userId}) \n" + \
                         " set u.ctUpdate = datetime(), \n" + \
                             "u.kol = pc.KoLic, \n" + \
                             "u.kol_lim_date = case when u.kol_lim_date > datetime() \n" + \
@@ -506,6 +523,7 @@ async def s_pay_validation(code:str):
                         "merge (pc)-[rlic:CONFIRMED_LIC]->(u) \n" + \
                         "set rlic.ctInsert = datetime() \n" + \
                         "return pc.csId as csId, pc.KoLic as KoLic, u.userId as userId, pc.ctInsert as ctInsert " 
+        """
         # "with pl, pc \n" + \
         # "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
         # "set r.ctInsert = datetime() \n" + \
@@ -547,6 +565,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
     #print('\n\n *********************** \nauthorization STRIPE : ', Authorization)
     token=validating_token(Authorization)
     userId = token['userId']
+    
 
     # lista de productos declarados en STRIPE
     product = None
@@ -586,9 +605,11 @@ async def stripe_checkout(datas:ForLicense, request:Request
     else:
         s_api_key = 'error on s_api_key'
     """
-        
-    neo4j_statement = "match (pl:PaymentsLinks) \n" + \
-                    "where pl.KoLic = '" + datas.KoLic + "' \n" + \
+
+    # revisar si existen PL creados por pagados para el usuario    
+    neo4j_statement = "match (pl:PaymentLink {KoLic:'" + datas.KoLic + "', \n" + \
+                    "    userId:'" + userId + "'}) \n" + \
+                    "where not exists {(pl)<-[r:CONFIRMED_PAY]-(pc:PaymentConfirmed)} \n" + \
                     "return pl.KoLic as KoLic, pl.plId as plId, pl.redirect as plredirect, \n" + \
                         "pl.url as url, pl.product as product, elementId(pl) as eleId \n" + \
                     "order by pl.ctInsert desc"    
@@ -633,8 +654,6 @@ async def stripe_checkout(datas:ForLicense, request:Request
                     serverlnk = str(elehead[1], 'utf-8')  
             return met, path, serverlnk
         
-        userId = datas.userId
-
         temppass = get_random_string(random.randint(45,60))
         method, pathcomplete, serverlnk = get_path()
         lnk_toanswer = "https://" + serverlnk + "/dt/auth/s_pay_validation/" + temppass    
@@ -647,21 +666,24 @@ async def stripe_checkout(datas:ForLicense, request:Request
                 line_items=[{"price": product, "quantity": 1}],
                 after_completion={"type": "redirect", "redirect": {"url": lnk_toanswer}},
                 allow_promotion_codes=True,   
-                custom_fields=[{
-                    "key": "userId",
-                    "label": {"type": "custom", "custom": "Usuario en DTone (DTone's UserId)"},
-                    "type": "text"
-                }
-                ],
+                #custom_fields=[{
+                #    "key": "userId",
+                #    "label": {"type": "custom", "custom": "Usuario en DTone (DTone's UserId)"},
+                #    "type": "text"
+                #}
+                #],
         )
         awsleep(0)
         sdict = {'eleId': 'abc'}
         #if not lnk_toanswer.__contains__(":5000"):  # NO SE CREA EN BASE DE DATOS SI ES LOCALHOST
-        neo4j_statement = "create (plink:PaymentsLinks {KoLic:'" + datas.KoLic +"', \n" + \
+        neo4j_statement = "create (plink:PaymentLink {KoLic:'" + datas.KoLic +"', userId:'" + userId + "', \n" + \
                             " url:'" + stripeLink['url'] + "', plId:'" + stripeLink["id"] + "'}) \n" + \
                         "set plink.ctInsert = datetime(), \n" + \
                             "plink.product = '" + product + "', \n" + \
                         "   plink.redirect = '" + lnk_toanswer + "' \n" + \
+                        "with plink \n" + \
+                        "match (u:User {userId:plink.userId}) \n" + \
+                        "merge (u)<-[:USER_PAYMENTLINK]-(plink) \n" + \
                         "return plink.url as url, elementId(plink) as eleId, plink.plId as plId"                    
         #print("neo4j_statement: ", neo4j_statement )
 
@@ -687,7 +709,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
                     "   ulink.redirect = '" + lnk_toanswer + "' \n" + \
                     "with ulink \n" + \
                     "match (u:User {userId:'" + userId + "'}) \n" + \
-                    "match (plink:PaymentsLinks {KoLic:'" + datas.KoLic + "', plId:ulink.plId}) \n" + \
+                    "match (plink:PaymentLink {KoLic:'" + datas.KoLic + "', plId:ulink.plId}) \n" + \
                     "merge (u)<-[rul:USER_PAYREQUEST]-(ulink) \n" + \
                     "merge (ulink)-[rreqPL:UPAYREQUEST_PLINK]->(plink) \n" + \
                     "return u.userId as userId, ulink.url as url, elementId(ulink) as eleId"

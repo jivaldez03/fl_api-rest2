@@ -407,6 +407,17 @@ async def signup_complete(code:str):
                     appNeo.app_access_cfg.get("youtubechannel", "")            
             msg = msg + " donde encontrarás la guía de uso de DTone - " + \
                     appNeo.app_access_cfg.get("playlist_userguide", "") + " - para que aproveches al máximo sus beneficios."
+            
+            msg = msg + "\n\nLa secuencia general es muy simple:"
+            msg = msg + "\n0. Crear paquete nuevo de palabras"
+            msg = msg + "\n1. Aprender. Tarjeta superior (Inglés) - Tarjeta Inferior (Español)"
+            msg = msg + "\n2. Relacionar tarjetas por Visualización y Audición"
+            msg = msg + "\n3. Relacionar tarjetas por Audición"
+            msg = msg + "\n4. Activa todos tus sentidos - Visualización - Audición - Memoria"
+            msg = msg + "\n5. Activa todos tus sentidos - con más tajertas (opcional)"
+            msg = msg + "\n6. Archivar paquete"
+            msg = msg + "\n7. Practicar en los juegos - todos ellos, cada juego exige más que el anterior"
+            
 
             subj = "DTone - Notificación de Registro - " + userId
         else:
