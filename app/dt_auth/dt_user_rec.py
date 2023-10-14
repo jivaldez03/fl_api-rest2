@@ -445,8 +445,8 @@ async def s_pay_validation(code:str):
     for gia, paid in enumerate(paidscompleted[::-1]):
         print(f"paid {gia + 1}: {paid}")
         neo4j_statement = "match (plink:PaymentLink {plId:'"+ paid["plink"] + "'}) \n" + \
-                        "// CREAR REGISTRO DE GENERACIÓN DE LICENCIA - NODOS INDEPENDIENTES \n" + \
-                        "create (k:KoL {csId:'" + paid["csId"] + "', KoLic:plink.KoLic, userId:plink.userId}) \n" + \
+                        "// CREAR REGISTRO DE GENERACIÓN DE PAGO DE LICENCIA - NODOS INDEPENDIENTES \n" + \
+                        "create (k:KoL {csId:'" + paid["csId"] + "', plink:plink.plId, KoLic:plink.KoLic, userId:plink.userId}) \n" + \
                         "set k.ctInsert = datetime(), \n" + \
                         "   k.email = '" + paid["email"] + "',  \n" + \
                         "   k.paym_st = '"+ paid["paym_st"] + "',  \n" + \
@@ -492,9 +492,12 @@ async def s_pay_validation(code:str):
                         "set rupc.ctInsert = datetime() \n" + \
                         "// CREAR HISTORIAL DE LAS RENOVACIONES DE LIC POR CADA USUARIO \n" + \
                         "merge (uk:UserKoL {userId:u.userId}) \n" + \
-                        "on create set uk.ctInsert = datetime(), uk.kolseq=[] \n" + \
+                        "on create set uk.ctInsert = datetime(), \n" + \
+                        " uk.koldateseq=[], uk.kolseq=[], uk.kollimdateseq=[] \n" + \
                         "on match set uk.ctUpdate = datetime() \n" + \
-                        "set uk.kolseq = uk.kolseq + [[datetime(), pc.KoLic, u.kol_lim_date]] \n" + \
+                        "set uk.koldateseq = uk.koldateseq + [datetime()], \n" + \
+                        " uk.kolseq = uk.kolseq + [pc.KoLic], \n" + \
+                        " uk.kollimdateseq = uk.kollimdateseq + [u.kol_lim_date] \n" + \
                         "merge (u)<-[rkols:U_KOLSEQ]-(uk) \n" + \
                         " set rkols.ctInsert = datetime() \n" + \
                         "return pc.csId as csId, pc.KoLic as KoLic, u.userId as userId, pc.ctInsert as ctInsert " 
@@ -548,7 +551,7 @@ async def s_pay_validation(code:str):
         # "with pl, pc \n" + \
         # "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
         # "set r.ctInsert = datetime() \n" + \
-        #print("neo4j_statement:", neo4j_statement)
+        print("neo4j_statement:", neo4j_statement)
         awsleep(0)
 
         nodes, log = neo4j_exec(session, 'admin',
