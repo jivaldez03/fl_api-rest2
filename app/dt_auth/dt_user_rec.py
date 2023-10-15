@@ -551,7 +551,7 @@ async def s_pay_validation(code:str):
         # "with pl, pc \n" + \
         # "merge (pl)<-[r:CONFIRMED_LINK]-(pc) \n" + \
         # "set r.ctInsert = datetime() \n" + \
-        print("neo4j_statement:", neo4j_statement)
+        #print("neo4j_statement:", neo4j_statement)
         awsleep(0)
 
         nodes, log = neo4j_exec(session, 'admin',
