@@ -638,7 +638,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "with og, idCat, sc, u, wordsarcM, we \n" + \
                     "//order by we.wordranking, we.word \n" + \
                     "// limit " + str(datas.starton) + " \n" + \
-                    "with og, idCat, sc, u, wordsarcM, we \n" + \
+                    "//with og, idCat, sc, u, wordsarcM, we \n" + \
                     "match (we) \n" + \
                     "where not we.word in wordsarcM \n" + \
                     " and exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
@@ -653,12 +653,37 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "on create set arcM.ctInsert = datetime() \n" + \
                     "on match set arcM.ctUpdate = datetime(),  \n" + \
                         "arcM.wordsBack=[toString(datetime())] + arcM.words \n" + \
-                    "set arcM.words = words, arcM.month_qty = size(words) \n" + \
+                    "set arcM.words = words, arcM.month_qty = size(words), arcM.sentences=[] \n" + \
                     "merge (u)<-[rua:ARCHIVED_M]-(arcM)-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
-                    "return arcM.words, arcM.wordsBack  \n"
+                    "//return arcM.words, arcM.wordsBack  \n" + \
+                    "// TO INCLUDE EXAMPLE SENTENCES \n" + \
+                    "with words as pwords, arcM, sc \n" + \
+                    "unwind pwords as word \n" + \
+                    "match (we:Word:" + source + " {word:word})-[:PRONUNCIATION]->\n" + \
+                    "(wss:WordSound:" + source + ") \n" + \
+                    "where exists {(wss)-[:SUBCAT]-(sc)} or \n" + \
+                    " (wss.idCat = sc.idCat and wss.idSCat = sc.idSCat) \n" + \
+                    "with arcM, sc, wss.example as wssexample \n" + \
+                    ", replace( \n" + \
+                    "              replace( \n" + \
+                    "                    replace( \n" + \
+                    "                            wss.example  \n" + \
+                    "                            , '" + '"' + "' + word + " + "'" + '". ' + "' \n" + \
+                    "                                , '' \n" + \
+                    "                            )  \n" + \
+                    "                    , '“' + word + '”' \n" + \
+                    "                        , '' \n" + \
+                    "                    ) \n" + \
+                    '            , "' + "'" + '" + word + ' + '"' + "'. " + '" \n' + \
+                    "            , '' \n" + \
+                    "        )  \n" + \
+                    "        as sentence2 \n" + \
+                    "with arcM, sc, collect(wssexample) as wssexamples, collect(sentence2) as sentences2 " + \
+                    "set arcM.sentences = arcM.sentences + [ele in sentences2 where not ele in arcM.sentences] \n" + \
+                    "return arcM.words, arcM.wordsBack \n"
     
     await awsleep(0)
-    
+    #print("\n\nstatement leval:\n", statement)
     print(f"====================================================================\nstatement pronun: ") #{statement}")
     print(f"datas: ", datas, "\n", _getdatime_T(),"\n") 
     print(f"====================================================================\nstatement pronun: ") #{statement}")

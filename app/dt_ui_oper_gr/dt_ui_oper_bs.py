@@ -948,7 +948,7 @@ async def get_user_words(pkgname:str, Authorization: Optional[str] = Header(None
     pkgdescriptor = get_words(userId, pkgname, 'words')
 
     diftime = str(dt.now() - tm1)
-    print("==> ",startinat, ' - antes de neo4j:', '---', '- despues de neo4j:', '---', \
+    #print("==> ",startinat, ' - antes de neo4j:', '---', '- despues de neo4j:', '---', \
           " termina a ", _getdatime_T(), " tiempo exec: = ", diftime)
         
     #print("        ->   ========== ending get_user_words id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
