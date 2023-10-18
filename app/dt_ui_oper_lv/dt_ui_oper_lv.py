@@ -199,7 +199,7 @@ def set_archived_package(packagename, userId):
                         "return p.packageId as packageId , p.label as slabel, p.status as status " 
     # filter (x in n.A where x<>"newValue")
     # "ArcM.words = ArcM.words + p.words \n" + \
-    print('=============================\narchiving:', neo4j_statement)
+    #print('=============================\narchiving:', neo4j_statement)
     #await awsleep(0)
     nodes, log = neo4j_exec(session, userId,
                         log_description="archive package" + packagename,
