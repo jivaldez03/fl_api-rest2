@@ -691,7 +691,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "return arcM.words, arcM.wordsBack \n"
     
     await awsleep(0)
-    print("\n\nstatement leval:\n", statement)
+    #print("\n\nstatement leval:\n", statement)
     print(f"====================================================================\nstatement pronun: ") #{statement}")
     print(f"datas: ", datas, "\n", _getdatime_T(),"\n") 
     print(f"====================================================================\nstatement pronun: ") #{statement}")
