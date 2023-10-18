@@ -177,6 +177,7 @@ def set_archived_package(packagename, userId):
                         " (wss.idCat = sc.idCat and wss.idSCat = sc.idSCat) \n" + \
                         "with p, ArcM, sc, wss.example as wssexample \n" + \
                         ", replace( \n" + \
+                        "       replace( \n" + \
                         "              replace( \n" + \
                         "                    replace( \n" + \
                         "                            wss.example  \n" + \
@@ -189,7 +190,10 @@ def set_archived_package(packagename, userId):
                         '            , "' + "'" + '" + word + ' + '"' + "'. " + '" \n' + \
                         "            , '' \n" + \
                         "        )  \n" + \
-                        "        as sentence2 \n" + \
+                        "        , word + ' - ' \n" + \
+                        "        , ''\n" + \
+                        ") \n" + \
+                        "as sentence2 \n" + \
                         "with p, ArcM, sc, collect(wssexample) as wssexamples, collect(sentence2) as sentences2 " + \
                         "set ArcM.sentences = ArcM.sentences + [ele in sentences2 where not ele in ArcM.sentences] \n" + \
                         "return p.packageId as packageId , p.label as slabel, p.status as status " 

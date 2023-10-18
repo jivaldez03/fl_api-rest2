@@ -664,7 +664,9 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "where exists {(wss)-[:SUBCAT]-(sc)} or \n" + \
                     " (wss.idCat = sc.idCat and wss.idSCat = sc.idSCat) \n" + \
                     "with arcM, sc, wss.example as wssexample \n" + \
-                    ", replace( \n" + \
+                    ",replace( \n" + \
+                    "    replace( \n" + \
+                    "       replace( \n" + \
                     "              replace( \n" + \
                     "                    replace( \n" + \
                     "                            wss.example  \n" + \
@@ -677,13 +679,19 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     '            , "' + "'" + '" + word + ' + '"' + "'. " + '" \n' + \
                     "            , '' \n" + \
                     "        )  \n" + \
-                    "        as sentence2 \n" + \
+                    "        , word + ' - ' \n" + \
+                    "        , ''\n" + \
+                    "     ) \n" + \
+                    ", word + ' - ' \n" + \
+                    ", ''\n" + \
+                    ") \n" + \
+                    "as sentence2 \n" + \
                     "with arcM, sc, collect(wssexample) as wssexamples, collect(sentence2) as sentences2 " + \
                     "set arcM.sentences = arcM.sentences + [ele in sentences2 where not ele in arcM.sentences] \n" + \
                     "return arcM.words, arcM.wordsBack \n"
     
     await awsleep(0)
-    #print("\n\nstatement leval:\n", statement)
+    print("\n\nstatement leval:\n", statement)
     print(f"====================================================================\nstatement pronun: ") #{statement}")
     print(f"datas: ", datas, "\n", _getdatime_T(),"\n") 
     print(f"====================================================================\nstatement pronun: ") #{statement}")
