@@ -119,6 +119,12 @@ def set_archived_package(packagename, userId):
     wSCat = get_w_SCat (userId, packagename)
     source, target = wSCat[0], wSCat[1]  # [source, target, idCat, idSCat] del paquete
     #source = wSCat[1]
+    if wSCat[2] == 1 and wSCat[3] == 1:
+        subcat = 'Word'
+        relationship = "PRONUNCIATION"
+    else:
+        subcat = 'ElemSubCat'
+        relationship = "PRONUNCIATION_PV"
 
     dtimenow = _getdatetime()
     yearr = dtimenow.year
@@ -171,9 +177,9 @@ def set_archived_package(packagename, userId):
                         "// TO INCLUDE EXAMPLE SENTENCES \n" + \
                         "with p, ArcM, sc \n" + \
                         "unwind p.words as word \n" + \
-                        "match (we:Word:" + source + " {word:word})-[:PRONUNCIATION]->\n" + \
+                        "match (we:" + subcat + ":" + source + " {word:word})-[:" + relationship +"]->\n" + \
                         "(wss:WordSound:" + source + ") \n" + \
-                        "where exists {(wss)-[:SUBCAT]-(sc)} or \n" + \
+                        "where // exists {(wss)-[:SUBCAT]-(sc)} or \n" + \
                         " (wss.idCat = sc.idCat and wss.idSCat = sc.idSCat) \n" + \
                         "with p, ArcM, sc, wss.example as wssexample \n" + \
                         ", replace( \n" + \
