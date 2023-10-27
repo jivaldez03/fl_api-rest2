@@ -590,9 +590,13 @@ async def stripe_checkout(datas:ForLicense, request:Request
     # SI ESTÁ ACTIVO, REGRESA ESE URL AL USUARIO DE LO CONTRARIO GENERA UN NUEVO PAYLINK
 
     #print('\n\n *********************** \nauthorization STRIPE : ', Authorization)
-    token=validating_token(Authorization)
-    userId = token['userId']
     
+    #token=validating_token(Authorization)
+    #userId = token['userId']
+
+
+    userId = datas.userId
+    print("\ndatas for sp:", datas, "\n\nUsirid:", userId)
 
     # lista de productos declarados en STRIPE
     product = None
@@ -713,7 +717,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
                         "merge (u)<-[rupl:USER_PAYMENTLINK]-(plink) \n" + \
                         " set rupl.ctInsert = datetime() \n" + \
                         "return plink.url as url, elementId(plink) as eleId, plink.plId as plId"                    
-        #print("neo4j_statement: ", neo4j_statement )
+        print("neo4j_statement: ", neo4j_statement )
 
         nodes, log = neo4j_exec(session, 'admin', 
                             log_description="paymenlink saving",
