@@ -594,8 +594,7 @@ async def stripe_checkout(datas:ForLicense, request:Request
     #token=validating_token(Authorization)
     #userId = token['userId']
 
-
-    userId = datas.userId
+    userId = datas.userId.lower().strip()
     print("\ndatas for sp:", datas, "\n\nUsirid:", userId)
 
     # lista de productos declarados en STRIPE
