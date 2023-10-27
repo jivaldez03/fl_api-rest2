@@ -335,13 +335,13 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                     {
                     "KoLic": "01M",
                     "value": {
-                        "es": "01M - 1 MES DE ACCESO",
-                        "en": "01M - ACCESING FOR 1 MONTH"
-                    },
+                            "es": "01M - 1 MES DE ACCESO",
+                            "en": "01M - ACCESING FOR 1 MONTH"
+                        },
                     "description": {
-                        "es": "Por lanzamiento obten 50% de descuento",
-                        "en": "50% Free"
-                    },
+                            "es": "Por lanzamiento obten 50% de descuento",
+                            "en": "50% Free"
+                        },
                     "cupon": "RIGHTNOW",
                     "price": 60,
                     "price_cupon": 30
@@ -387,24 +387,27 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                     "cupon": "RIGHTNOW",
                     "price": 550,
                     "price_cupon": 275
-                    },
-                    {
-                    "KoLic": "00U",
-                    "value": {
-                        "es": "00U - NO LIMITADA",
-                        "en": "00U -UNLIMMITED ACCESS"
-                    },
-                    "description": {
-                        "es": "Por lanzamiento obten 50% de descuento",
-                        "en": "50% Free"
-                    },
-                    "cupon": "RIGHTNOW",
-                    "price": 600,
-                    "price_cupon": 300
-                    }
+                    } 
                 ]
     }
     return sdict
+
+""" ,
+{
+"KoLic": "00U",
+"value": {
+        "es": "00U - NO LIMITADA",
+        "en": "00U -UNLIMMITED ACCESS"
+    },
+"description": {
+        "es": "Por lanzamiento obten 50% de descuento",
+        "en": "50% Free"
+    },
+"cupon": "RIGHTNOW",
+"price": 600,
+"price_cupon": 300
+} 
+"""
 
 @router.get("/s_pay_validation/{code}")
 async def s_pay_validation(code:str):

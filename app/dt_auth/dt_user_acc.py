@@ -380,7 +380,7 @@ async def signup_complete(code:str):
     }
     """
     neo4j_statement = "match (u:User {signup_key:'" + code + "'}) \n" + \
-                    "where (u.ctInsert + duration({minutes: 60})) >=  datetime() and \n" + \
+                    "where (u.ctInsert + duration({minutes: 3600})) >=  datetime() and \n" + \
                     " u.singup_val is null \n" + \
                     "set u.ctUpdate = datetime() \n" + \
                     "return u.userId, u.email, u.selected_lang as selected_lang"
@@ -439,7 +439,7 @@ async def signup_complete(code:str):
         #sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
 
         neo4j_statement = "match (u:User {signup_key:'" + code + "'}) \n" + \
-                        "where //(u.ctInsert + duration({minutes: 60})) >=  datetime() and \n" + \
+                        "where //(u.ctInsert + duration({minutes: 3600})) >=  datetime() and \n" + \
                         " u.singup_val is null \n" + \
                         "set u.signup_key = reverse(u.signup_key), \n" + \
                             "u.signup_val = datetime(), \n" + \
@@ -495,7 +495,7 @@ async def login_signup(datas: ForSignUp, request:Request):
     else:
         """
         match (u:User) 
-        where (u.ctInsert + duration({minutes: 60})) <  datetime() 
+        where (u.ctInsert + duration({minutes: 3600})) <  datetime() 
                 and not u.signup_key is null and  u.signup_val is null 
                 and not exists {(u)<-[:PACKAGED]-(pkg:Package)}
         detach delete u
@@ -504,7 +504,7 @@ async def login_signup(datas: ForSignUp, request:Request):
         neo4j_statement = "with '" + uuserId +  "' as userId, \n" + \
                             "'" + uemail +  "' as usemail \n" + \
                     "optional match (u:User) \n" + \
-                    "where (u.ctInsert + duration({minutes: 60})) <  datetime() \n" + \
+                    "where (u.ctInsert + duration({minutes: 3600})) <  datetime() \n" + \
                     "        and not u.signup_key is null and  u.signup_val is null \n" + \
                     "        and not exists {(u)<-[:PACKAGED]-(pkg:Package)} \n" + \
                     "        and not exists {(u)<-[raM:ARCHIVED_M]-(arcM:Archived_M)} \n" + \
@@ -575,7 +575,8 @@ async def login_signup(datas: ForSignUp, request:Request):
     
         if ulang == 'es':
             msg = "Bienvenido a DTone.\n\nEste mensaje corresponde a su registro en DTone, " + \
-                "al dar click al siguiente link su registro estará completo.\n\n " + \
+                "el siguiente link tiene validez por sólo 24 horas (podrá crear otra solicud si lo desea). " + \
+                "Al dar click en él su registro estará completo.\n\n " + \
                 lnk_toanswer + temppass +  " \n\n" + \
                 "Esta notificación no requiere respuesta."
             subj = "DTone - Notificación de Solicitud de Registro - " + uuserId
