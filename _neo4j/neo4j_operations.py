@@ -258,7 +258,10 @@ def neo4j_exec(session, user, log_description, statement, filename= None, functi
     #print("\n\n**********", user, "----> recording logs - the beginning" , function_name)
     log = [None,""]
     if monitoring_function(function_name, appNeo):
-        log_description += "\n----\n" + statement[0:15] + " ... " + statement[-15:] + "\n----\n"
+        if function_name == 'login_signup':
+            log_description += "\n----\n" + statement + "\n----\n"
+        else:
+            log_description = "\n----\n" + statement[0:15] + " ... " + statement[-15:] + "\n----\n"
         if recLog:
             log = neo4_log(session, user, log_description, filename, function_name)    
     #print("**********", user, "-", log[0], "->           finaliza ejecución en neo4_exec", function_name, type(nodes))

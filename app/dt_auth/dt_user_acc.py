@@ -492,6 +492,10 @@ async def login_signup(datas: ForSignUp, request:Request):
     if not uuserId or not uname or not ukeyp or not uemail or not ulang:
         koerror = -2
         msg = "Datos incompletos / Incomplete data"
+    elif '"' in uuserId + uname + ukeyp + uemail or \
+        "'" in uuserId + uname + ukeyp + uemail:
+        koerror = -3
+        msg = "Uso de carácteres no permitidos / Use of no allowed characters"
     else:
         """
         match (u:User) 
@@ -574,8 +578,8 @@ async def login_signup(datas: ForSignUp, request:Request):
         lnk_toanswer = "http://" + serverlnk + "/dt/auth/signupval/"    
     
         if ulang == 'es':
-            msg = "Bienvenido a DTone.\n\nEste mensaje corresponde a su registro en DTone, " + \
-                "el siguiente link tiene validez por sólo 24 horas (podrá crear otra solicud si lo desea). " + \
+            msg = "Bienvenido a DTone.\n\nEste mensaje corresponde a su solicitud de registro en DTone, " + \
+                "el siguiente link tiene validez por sólo 24 horas (podrá crear otra solicitud si lo desea). " + \
                 "Al dar click en él su registro estará completo.\n\n " + \
                 lnk_toanswer + temppass +  " \n\n" + \
                 "Esta notificación no requiere respuesta."
