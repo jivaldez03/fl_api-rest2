@@ -562,7 +562,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                         " gm.average = average, \n" + \
                         " gm.ctInsert = datetime() \n" + \
                     "return u.userId as userId, size(gm.words) as qtywords "
-    print("puzzle - neo4_statement:", neo4j_statement)
+    #print("puzzle - neo4_statement:", neo4j_statement)
     await awsleep(0)
     
     #print(f"statement pronun: {statement}")
