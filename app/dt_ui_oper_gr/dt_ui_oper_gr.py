@@ -620,7 +620,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "limit " + str(datas.limit) + "\n" + \
                     "return we.word as word, we.wordranking as prevmax"        
     else:
-        if datas.starton == 0: 
+        if datas.starton <= 10: 
             statement = "with '" + datas.orgId + "' as org \n" + \
                         "match (u:User {userId:'" + userId + "'}) \n" + \
                         "-[ruo:RIGHTS_TO]-> \n" + \
