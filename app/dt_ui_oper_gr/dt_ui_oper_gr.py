@@ -501,9 +501,9 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
 
         neo4j_statement = "with '" + datas.org + "' as org \n" + \
                     " , '" + userId + "' as userId \n" + \
-                    ", 1 as idCat, 1 as idSCat \n" + \
+                    "//, 1 as idCat, 1 as idSCat \n" + \
                     "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-\n" + \
-                    "[rc:SUBJECT]-(c:Category {idCat:idCat})-[rsc:CAT_SUBCAT]-(sc:SubCategory {idSCat:idSCat}) \n" + \
+                    "[rc:SUBJECT]-(c:Category)-[rsc:CAT_SUBCAT]-(sc:SubCategory) \n" + \
                     "with u,o.lSource as Source, o.lTarget as Target, o, sc \n" + \
                     "// *** SE LOCALIZAN LAS SENTENCIAS QUE YA SE HAN EJERCITADO \n" + \
                     "optional match (u)<-[r:PUZZLEWORDS]-(gm:Game)  \n" + \
@@ -533,7 +533,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                     "return we as sentence, apoc.coll.shuffle(split(we, ' ')) as wordstouser \n" + \
                     " , 'elementIdtoSound' as eletoshow, 0 as idSCat, ' ' as word, ' ' as exTarget \n" + \
                     " , we as original_sentence"
-                    #"return we"
+                    #"return we" Cat {idCat:idCat}  {idSCat:idSCat}
 
     else:        
         neo4j_statement = "with " + "'" + datas.org + "' as org, \n" + \
