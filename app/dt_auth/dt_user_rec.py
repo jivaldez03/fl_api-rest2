@@ -145,7 +145,7 @@ async def user_change_pass_notification(datas:ForResetPass, request:Request):
         refmail = datas.user_email.split('@')
         sentmail = sentmail + " ... (" + refmail[0][:2] + "..." + refmail[0][-2:] + '@' + refmail[1] + ")"
     else:
-        sentmail = "email has been sent to " + userId
+        sentmail = "sorry, email hasn't been sent to " + userId
 
     return sentmail
 

@@ -183,6 +183,8 @@ def set_archived_package(packagename, userId):
                         " (wss.idCat = sc.idCat and wss.idSCat = sc.idSCat) \n" + \
                         "with p, ArcM, sc, wss.example as wssexample \n" + \
                         ", replace( \n" + \
+                        "  replace( \n" + \
+                        "    replace( \n" + \
                         "       replace( \n" + \
                         "              replace( \n" + \
                         "                    replace( \n" + \
@@ -198,6 +200,12 @@ def set_archived_package(packagename, userId):
                         "        )  \n" + \
                         "        , word + ' - ' \n" + \
                         "        , ''\n" + \
+                        "    ) \n" + \
+                        "    , apoc.text.capitalize(word) + '.' \n" + \
+                        "    , ''\n" + \
+                        "    ) \n" + \
+                        "    , apoc.text.capitalizeAll(word) + '.' \n" + \
+                        "    , ''\n" + \
                         ") \n" + \
                         "as sentence2 \n" + \
                         "with p, ArcM, sc, collect(wssexample) as wssexamples, collect(sentence2) as sentences2 " + \

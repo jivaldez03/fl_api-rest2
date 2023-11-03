@@ -620,81 +620,107 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "limit " + str(datas.limit) + "\n" + \
                     "return we.word as word, we.wordranking as prevmax"        
     else:
-        statement = "with '" + datas.orgId + "' as org, \n" + \
-                    "'" + str(datas.word) + "' as word \n" + \
-                    "match (u:User {userId:'" + userId + "'}) \n" + \
-                    "-[ruo:RIGHTS_TO]-> \n" + \
-                    "(og:Organization {idOrg:org}) \n" + \
-                    "<-[rc:SUBJECT]-(c:Category {idCat:"+ str(idCat) + "}) \n" + \
-                    "<-[rcs:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
-                    "with og, c.idCat as idCat, sc, u \n" + \
-                    "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM2:Archived_M:" + source + ":" + target + ")-\n" + \
-                        "[:ARCHIVED_M]->(u) \n" + \
-                    "where arcM2.reference is null " + \
-                    "with og, idCat, sc, u, coalesce(arcM2.words,['.']) as words \n" + \
-                    "unwind words as word \n" + \
-                    "with og, idCat, sc, u, collect(word) as wordsarcM \n" + \
-                    "match (we:Word:" + source + ") \n" + \
-                    "with og, idCat, sc, u, wordsarcM, we \n" + \
-                    "//order by we.wordranking, we.word \n" + \
-                    "// limit " + str(datas.starton) + " \n" + \
-                    "//with og, idCat, sc, u, wordsarcM, we \n" + \
-                    "match (we) \n" + \
-                    "where not we.word in wordsarcM \n" + \
-                    " and exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
-                    " and exists {(we)-[r:PRONUNCIATION]->(wss:WordSound:" + source + ")} \n" + \
-                    "with og, idCat, sc, u, wordsarcM, we \n" + \
-                    "order by we.wordranking, we.word \n" + \
-                    "limit " + str(datas.starton) + " \n" + \
-                    "with og, idCat, sc, u, collect(we.word) as words \n"  + \
-                    "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
-                    "    source:og.lSource, target:og.lTarget, \n" + \
-                    "    idCat:idCat, idSCat:sc.idSCat, reference:'Initial_Level'}) \n" + \
-                    "on create set arcM.ctInsert = datetime() \n" + \
-                    "on match set arcM.ctUpdate = datetime(),  \n" + \
-                        "arcM.wordsBack=[toString(datetime())] + arcM.words \n" + \
-                    "set arcM.words = words, arcM.month_qty = size(words), arcM.sentences=[] \n" + \
-                    "merge (u)<-[rua:ARCHIVED_M]-(arcM)-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
-                    "//return arcM.words, arcM.wordsBack  \n" + \
-                    "// TO INCLUDE EXAMPLE SENTENCES \n" + \
-                    "with words as pwords, arcM, sc \n" + \
-                    "unwind pwords as word \n" + \
-                    "match (we:Word:" + source + " {word:word})-[:PRONUNCIATION]->\n" + \
-                    "(wss:WordSound:" + source + ") \n" + \
-                    "where exists {(wss)-[:SUBCAT]-(sc)} or \n" + \
-                    " (wss.idCat = sc.idCat and wss.idSCat = sc.idSCat) \n" + \
-                    "with arcM, sc, wss.example as wssexample \n" + \
-                    ",replace( \n" + \
-                    "    replace( \n" + \
-                    "       replace( \n" + \
-                    "              replace( \n" + \
-                    "                    replace( \n" + \
-                    "                            wss.example  \n" + \
-                    "                            , '" + '"' + "' + word + " + "'" + '". ' + "' \n" + \
-                    "                                , '' \n" + \
-                    "                            )  \n" + \
-                    "                    , '“' + word + '”' \n" + \
-                    "                        , '' \n" + \
-                    "                    ) \n" + \
-                    '            , "' + "'" + '" + word + ' + '"' + "'. " + '" \n' + \
-                    "            , '' \n" + \
-                    "        )  \n" + \
-                    "        , word + ' - ' \n" + \
-                    "        , ''\n" + \
-                    "     ) \n" + \
-                    ", word + ' - ' \n" + \
-                    ", ''\n" + \
-                    ") \n" + \
-                    "as sentence2 \n" + \
-                    "with arcM, sc, collect(wssexample) as wssexamples, collect(sentence2) as sentences2 " + \
-                    "set arcM.sentences = arcM.sentences + [ele in sentences2 where not ele in arcM.sentences] \n" + \
-                    "return arcM.words, arcM.wordsBack \n"
+        if datas.starton == 0: 
+            statement = "with '" + datas.orgId + "' as org \n" + \
+                        "match (u:User {userId:'" + userId + "'}) \n" + \
+                        "-[ruo:RIGHTS_TO]-> \n" + \
+                        "(og:Organization {idOrg:org}) \n" + \
+                        "<-[rc:SUBJECT]-(c:Category {idCat:"+ str(idCat) + "}) \n" + \
+                        "<-[rcs:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
+                        "with og, c.idCat as idCat, sc, u \n" + \
+                        "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
+                        "    source:og.lSource, target:og.lTarget, \n" + \
+                        "    idCat:idCat, idSCat:sc.idSCat, reference:'Initial_Level'}) \n" + \
+                        "on create set arcM.ctInsert = datetime() \n" + \
+                        "on match set arcM.ctUpdate = datetime(),  \n" + \
+                            "arcM.wordsBack=[toString(datetime())] + arcM.words \n" + \
+                        "set arcM.words = [], arcM.month_qty = 0, arcM.sentences=[] \n" + \
+                        "merge (u)<-[rua:ARCHIVED_M]-(arcM)-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+                        "return arcM.words[1..10], arcM.wordsBack[1..10] \n"
+        else:
+            statement = "with '" + datas.orgId + "' as org, \n" + \
+                        "'" + str(datas.word) + "' as word \n" + \
+                        "match (u:User {userId:'" + userId + "'}) \n" + \
+                        "-[ruo:RIGHTS_TO]-> \n" + \
+                        "(og:Organization {idOrg:org}) \n" + \
+                        "<-[rc:SUBJECT]-(c:Category {idCat:"+ str(idCat) + "}) \n" + \
+                        "<-[rcs:CAT_SUBCAT]-(sc:SubCategory {idSCat:" + str(idSCat) + "}) \n" + \
+                        "with og, c.idCat as idCat, sc, u \n" + \
+                        "optional match (sc)<-[:SUBCAT_ARCHIVED_M]-(arcM2:Archived_M:" + source + ":" + target + ")-\n" + \
+                            "[:ARCHIVED_M]->(u) \n" + \
+                        "where arcM2.reference is null " + \
+                        "with og, idCat, sc, u, coalesce(arcM2.words,['.']) as words \n" + \
+                        "unwind words as word \n" + \
+                        "with og, idCat, sc, u, collect(word) as wordsarcM \n" + \
+                        "match (we:Word:" + source + ") \n" + \
+                        "with og, idCat, sc, u, wordsarcM, we \n" + \
+                        "//order by we.wordranking, we.word \n" + \
+                        "// limit " + str(datas.starton) + " \n" + \
+                        "//with og, idCat, sc, u, wordsarcM, we \n" + \
+                        "match (we) \n" + \
+                        "where not we.word in wordsarcM \n" + \
+                        " and exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
+                        " and exists {(we)-[r:PRONUNCIATION]->(wss:WordSound:" + source + ")} \n" + \
+                        "with og, idCat, sc, u, wordsarcM, we \n" + \
+                        "order by we.wordranking, we.word \n" + \
+                        "limit " + str(datas.starton) + " \n" + \
+                        "with og, idCat, sc, u, collect(we.word) as words \n"  + \
+                        "merge (arcM:Archived_M:" + source + ":" + target + " {userId:'" + userId + "', \n" + \
+                        "    source:og.lSource, target:og.lTarget, \n" + \
+                        "    idCat:idCat, idSCat:sc.idSCat, reference:'Initial_Level'}) \n" + \
+                        "on create set arcM.ctInsert = datetime() \n" + \
+                        "on match set arcM.ctUpdate = datetime(),  \n" + \
+                            "arcM.wordsBack=[toString(datetime())] + arcM.words \n" + \
+                        "set arcM.words = words, arcM.month_qty = size(words), arcM.sentences=[] \n" + \
+                        "merge (u)<-[rua:ARCHIVED_M]-(arcM)-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
+                        "//return arcM.words, arcM.wordsBack  \n" + \
+                        "// TO INCLUDE EXAMPLE SENTENCES \n" + \
+                        "with words as pwords, arcM, sc \n" + \
+                        "unwind pwords as word \n" + \
+                        "match (we:Word:" + source + " {word:word})-[:PRONUNCIATION]->\n" + \
+                        "(wss:WordSound:" + source + ") \n" + \
+                        "where exists {(wss)-[:SUBCAT]-(sc)} or \n" + \
+                        " (wss.idCat = sc.idCat and wss.idSCat = sc.idSCat) \n" + \
+                        "with arcM, sc, wss.example as wssexample \n" + \
+                        ",replace( \n" + \
+                        "  replace( \n" + \
+                        "   replace( \n" + \
+                        "    replace( \n" + \
+                        "       replace( \n" + \
+                        "              replace( \n" + \
+                        "                    replace( \n" + \
+                        "                            wss.example  \n" + \
+                        "                            , '" + '"' + "' + word + " + "'" + '". ' + "' \n" + \
+                        "                                , '' \n" + \
+                        "                            )  \n" + \
+                        "                    , '“' + word + '”' \n" + \
+                        "                        , '' \n" + \
+                        "                    ) \n" + \
+                        '            , "' + "'" + '" + word + ' + '"' + "'. " + '" \n' + \
+                        "            , '' \n" + \
+                        "        )  \n" + \
+                        "        , word + ' - ' \n" + \
+                        "        , ''\n" + \
+                        "     ) \n" + \
+                        "    , word + ' - ' \n" + \
+                        ", ''\n" + \
+                        "    ) \n" + \
+                        "    , apoc.text.capitalize(word) + '.' \n" + \
+                        "    , ''\n" + \
+                        "    ) \n" + \
+                        "    , apoc.text.capitalizeAll(word) + '.' \n" + \
+                        "    , ''\n" + \
+                        ") \n" + \
+                        "as sentence2 \n" + \
+                        "with arcM, sc, collect(wssexample) as wssexamples, collect(sentence2) as sentences2 " + \
+                        "set arcM.sentences = arcM.sentences + [ele in sentences2 where not ele in arcM.sentences] \n" + \
+                        "return arcM.words[1..10], arcM.wordsBack[1..10] \n"
     
     await awsleep(0)
     #print("\n\nstatement leval:\n", statement)
-    print(f"====================================================================\nstatement pronun: ") #{statement}")
-    print(f"datas: ", datas, "\n", _getdatime_T(),"\n") 
-    print(f"====================================================================\nstatement pronun: ") #{statement}")
+    print("====================================================================\n") #{statement}")
+    print("datas: ", datas, "\n", _getdatime_T(),"\n") 
+    print("====================================================================\n") #{statement}")
 
     nodes, log = neo4j_exec(session, userId,
                         log_description="getting words for evaluation: ",

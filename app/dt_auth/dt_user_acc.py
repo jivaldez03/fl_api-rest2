@@ -41,7 +41,7 @@ async def login_user(datas: ForLogin):
     """
     global session
     duserId = datas.userId
-    duserId = duserId.lower().strip()
+    duserId = duserId.lower().strip().replace("'","_").replace('"','_')
 
     neo4j_statement = "with '" + duserId +  "' as userId \n" + \
                 "match (us:User {userId:userId}) \n" +  \
@@ -57,11 +57,11 @@ async def login_user(datas: ForLogin):
     result = {}
     for elem in nodes:
         result=dict(elem) #print(f"elem: {type(elem)} {elem}")   
-    #result = login_validate_user_pass_trx(session, datas.userId.lower()) # , datas.password)
+    #result = login_validate_user_pass_trx(session, duserId) # , datas.password)
     # FIN DE VIGENCIA DE LICENCIA
     if len(result) == 0:  # incorrect user
-        print("no records - fname__name__and more:",__name__)
-        #log = neo4_log(session, datas.userId, 'login - invalid user or password - us', __name__, myfunctionname())
+        print("no records for ",duserId)
+        #log = neo4_log(session, duserId, 'login - invalid user or password - us', __name__, myfunctionname())
         merror = 'Usuario-Password Incorrecto / Invalid User-Password'
         resp_dict ={'status': 'ERROR', 'text': merror, "userId":"",  "username": "", 
                     "age":0, 
@@ -75,12 +75,12 @@ async def login_user(datas: ForLogin):
                     "set l.ctClosed = datetime(), l.additionalResult = '" + merror + "' \n" + \
                     "return count(l)"
         await awsleep(0)
-        nodes, log = neo4j_exec(session, datas.userId.lower() ,
+        nodes, log = neo4j_exec(session, duserId,
                         log_description=merror
                         , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
                         , recLog=False)
         
-        #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
+        #print("========== id: ", duserId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=merror
@@ -116,7 +116,7 @@ async def login_user(datas: ForLogin):
         #if datas.password == result["us.keypass"]:
         if not result["kol_lim_date"] is None \
             and passaccess: #passtocompare == result["us.keypass"]:   # success access
-            #log = neo4_log(session, datas.userId.lower(), 'login - success access', __name__, myfunctionname())
+            #log = neo4_log(session, duserId, 'login - success access', __name__, myfunctionname())
             kol_lim_date = str(result["kol_lim_date"])
             kol_lim_date = dt.strptime(kol_lim_date.split('.')[0], '%Y-%m-%dT%H:%M:%S')
             print("\n\nKOL:", duserId, result["kol"], result["kol_lim_date"],"\n\n")
@@ -124,7 +124,7 @@ async def login_user(datas: ForLogin):
             #print(kol_lim_date, str(kol_lim_date), type(kol_lim_date))
             resp_dict ={'status': 'OK', 
                         'text': 'successful access',
-                        "userId":datas.userId.lower(),
+                        "userId": duserId,
                         "username": result["us.name"], 
                         "useremail": result["us.email"],
                         "useremail_alt": result["us.email_alt"],
@@ -148,7 +148,7 @@ async def login_user(datas: ForLogin):
                         "selected_lang" : result["selected_lang"]
             }
             if kol_lim_date < _getdatetime():
-                print("\n\nKOL:", datas.userId.lower(), result["kol"], type(result["kol_lim_date"]), result["kol_lim_date"],"\n\n")
+                print("\n\nKOL:", duserId, result["kol"], type(result["kol_lim_date"]), result["kol_lim_date"],"\n\n")
                 merror = "License Permission Error"
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -161,7 +161,7 @@ async def login_user(datas: ForLogin):
                         "return count(l)"
             await awsleep(0)
 
-            nodes, log = neo4j_exec(session, datas.userId.lower() ,
+            nodes, log = neo4j_exec(session, duserId,
                             log_description="validate login user"
                             , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
                             , recLog=False)
@@ -179,7 +179,7 @@ async def login_user(datas: ForLogin):
             return  result_tk
         
         else: # incorrect pass
-            #log = neo4_log(session, datas.userId.lower(), 'login - invalid user or password', __name__, myfunctionname())        
+            #log = neo4_log(session, duserId, 'login - invalid user or password', __name__, myfunctionname())        
             merror = "Usuario-Password Incorrecto - Invalid User-Password"
             resp_dict ={'status': 'ERROR', 'text': merror, "username": "",  
                         "age":0, 
@@ -197,15 +197,15 @@ async def login_user(datas: ForLogin):
                             , statement=neo4j_statement, filename=__name__, function_name=myfunctionname()
                             , recLog=False)        
 
-            #print("========== id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
+            #print("========== id: ", duserId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), " - raise_HttpException-user/pass")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,            
                 detail =merror
                 #headers={"WWW-Authenticate": "Basic"},
             )
-    print("id: ", datas.userId.lower(), " dt: ", _getdatime_T(), " -> ", myfunctionname())
+    print("id: ", duserId, " dt: ", _getdatime_T(), " -> ", myfunctionname())
     return resp_dict
-#kol_lim_date
+#kol_lim_date datas.userId
 
 @router.post("/change_pass/")
 async def user_change_pass(datas:ForChangePass, Authorization: Optional[str] = Header(None)):
@@ -520,7 +520,7 @@ async def login_signup(datas: ForSignUp, request:Request):
                     "return us.userId as uuserId, us.name as uname, \n" + \
                             "usmail.userId as ususerId, usmail.email as usemail limit 1"
         await awsleep(0)
-        nodes, log = neo4j_exec(session, datas.userId.lower(),
+        nodes, log = neo4j_exec(session, uuserId, #datas.userId.lower(),
                             log_description="validate user and email",
                             statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
         #print("statement neo4j:", neo4j_statement)
@@ -616,7 +616,7 @@ async def login_signup(datas: ForSignUp, request:Request):
                         "return u.userId, u.name, u.email, u.selected_lang "
             #print("statement neo4j:", neo4j_statement)
             await awsleep(0)
-            nodes, log = neo4j_exec(session, datas.userId.lower(),
+            nodes, log = neo4j_exec(session, uuserId, #datas.userId.lower(),
                                     log_description="insert user sign up",
                                     statement=neo4j_statement, filename=__name__, function_name=myfunctionname())
                 
