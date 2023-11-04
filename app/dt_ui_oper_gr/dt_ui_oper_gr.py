@@ -429,13 +429,18 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
     ulev = 20
 
     rlimit = str(datas.hms)
+    
+    org = datas.org
 
-    if datas.org== 'DTL-01':
+    if userId == 'jagr':   # usuario de jiduma para probar aleman
+        org = 'DTL-02'        
+
+    if org == 'DTL-01':
         source = 'English'
         target = 'Spanish'
         idCat = 1
         idSCat = 1
-    elif datas.org == 'DTL-02':
+    elif org == 'DTL-02':
         source = 'German'
         target = 'Spanish'
         idCat = 101
@@ -444,7 +449,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
         source = None
         target = None
 
-
+    
     swords_complete = str(datas.words)
     swords_ap = datas.words
 
@@ -499,7 +504,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                     "       , eletoshow, idSCat, word, exTarget, sentence as original_sentence limit " + rlimit        
         """
 
-        neo4j_statement = "with '" + datas.org + "' as org \n" + \
+        neo4j_statement = "with '" + org + "' as org \n" + \
                     " , '" + userId + "' as userId \n" + \
                     "//, 1 as idCat, 1 as idSCat \n" + \
                     "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-\n" + \
@@ -536,7 +541,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
                     #"return we" Cat {idCat:idCat}  {idSCat:idSCat}
 
     else:        
-        neo4j_statement = "with " + "'" + datas.org + "' as org, \n" + \
+        neo4j_statement = "with " + "'" + org + "' as org, \n" + \
                                 "'" + userId + "' as userId, \n" + \
                                 "'" + kogame + "' as kogame, \n" + \
                                 str(yearr) + " as yearr, \n" + \
@@ -576,7 +581,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
     for ele in nodes:
         elems = dict(ele)
         listEle.append(elems)
-
+    # datas.org
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return {'userId':userId, 'sentences': listEle}
 
@@ -595,12 +600,18 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
-    if datas.orgId == 'DTL-01':
+    orgId = datas.org
+
+    if userId == 'jagr':   # usuario de jiduma para probar aleman
+        orgId = 'DTL-02'        
+    
+
+    if orgId == 'DTL-01':
         source = 'English'
         target = 'Spanish'
         idCat = 1
         idSCat = 1
-    elif datas.orgId == 'DTL-02':
+    elif orgId == 'DTL-02':
         source = 'German'
         target = 'Spanish'
         idCat = 101
@@ -610,7 +621,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
         target = None
 
     if datas.setlevel == False:
-        statement = "with '" + datas.orgId + "' as org \n" + \
+        statement = "with '" + orgId + "' as org \n" + \
                     "match (og:Organization {idOrg:org}) \n" + \
                     "match (we:Word:" + source + ") \n" + \
                     "where exists {(we)-[r:TRANSLATOR]->(ws:Word:" + target + ")} \n" + \
@@ -621,7 +632,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                     "return we.word as word, we.wordranking as prevmax"        
     else:
         if datas.starton <= 10: 
-            statement = "with '" + datas.orgId + "' as org \n" + \
+            statement = "with '" + orgId + "' as org \n" + \
                         "match (u:User {userId:'" + userId + "'}) \n" + \
                         "-[ruo:RIGHTS_TO]-> \n" + \
                         "(og:Organization {idOrg:org}) \n" + \
@@ -638,7 +649,7 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
                         "merge (u)<-[rua:ARCHIVED_M]-(arcM)-[:SUBCAT_ARCHIVED_M]->(sc) \n" + \
                         "return arcM.words[1..10], arcM.wordsBack[1..10] \n"
         else:
-            statement = "with '" + datas.orgId + "' as org, \n" + \
+            statement = "with '" + orgId + "' as org, \n" + \
                         "'" + str(datas.word) + "' as word \n" + \
                         "match (u:User {userId:'" + userId + "'}) \n" + \
                         "-[ruo:RIGHTS_TO]-> \n" + \
