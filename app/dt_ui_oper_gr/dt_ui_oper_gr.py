@@ -199,6 +199,14 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
     "GUESS_TW"
     """
 
+    if userId == 'jagr':
+        datas.orgId = 'DTL-02'
+        idCat = 101
+        idSCat = 1
+    else:
+        idCat = '1'
+        idSCat = '1'
+
     statement = "with " + str(datas.adj) + " as adj, \n" + \
                             str(datas.verb) + " as verb, \n" + \
                             str(datas.pt_verb) + " as ptense, \n" + \
@@ -207,7 +215,7 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                             " True as prep, True as conj, True as pron, \n" + \
                             "'" + datas.orgId + "' as org, \n" + \
                             "'" + userId + "' as userId, \n" + \
-                            "1 as idCat, 1 as idSCat \n" + \
+                            idCat + " as idCat, " + idSCat + " as idSCat \n" + \
                 "match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-\n" + \
                 "[rc:SUBJECT]-(c:Category {idCat:idCat})-[rsc:CAT_SUBCAT]-(sc:SubCategory {idSCat:idSCat}) \n" + \
                 "with u,o.lSource as Source, o.lTarget as Target, o, sc, \n" + \
