@@ -201,8 +201,8 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
 
     if userId == 'jagr':
         datas.orgId = 'DTL-02'
-        idCat = 101
-        idSCat = 1
+        idCat = '101'
+        idSCat = '1'
     else:
         idCat = '1'
         idSCat = '1'
