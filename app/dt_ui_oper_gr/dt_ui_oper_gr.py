@@ -389,7 +389,10 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
-    print("game archive - datas:", datas)
+    #print("game archive - datas:", datas)
+
+    if userId == 'jagr':
+        datas.orgId = 'DTL-02'
 
     dtimenow = _getdatetime()
     yearr = dtimenow.year
@@ -452,7 +455,7 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
         elems = dict(ele)
         listEle.append(elems)
 
-    print(f"result game archive: {listEle}")
+    #print(f"result game archive: {listEle}")
 
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
