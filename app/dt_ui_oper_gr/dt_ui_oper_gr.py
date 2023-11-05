@@ -319,14 +319,33 @@ async def valuesforgames_AA(datas:ForGames_KOW, Authorization: Optional[str] = H
                 "where o.lSource in labels(we) and not we.word contains ' ' \n" + \
                 "   and we.idCat = idCat and we.idSCat = idSCat \n" + \
                 "with distinct u, o, we, adj, verb, noun, adv, prep, ptense, conj, pron, prioridad, \n" + \
-                "     elementId(we) as soundId, we.word as worde, \n" + \
-                "     ' ' as ckow, we.word as words \n" + \
-                "order by prioridad, // worde in swords desc, \n" + \
-                    " worde \n" + \
-                "with u, soundId, prioridad, worde, ckow, collect(words) as words \n" + \
-                "order by u, prioridad, rand() \n" + \
+                "     we.word as worde \n" + \
+                "order by prioridad, worde // worde in swords desc, \n" + \
+                "with we, u, o, prioridad, worde \n" + \
+                "order by u, o, prioridad, rand() \n" + \
                 "limit "  + str(datas.limit) + " \n" + \
-                "return worde, words, ckow, soundId " #// order by rand() // limit "  + str(datas.limit) 
+                "// FUNCIONES PARA OBTENER LA TRADUCCIÓN DE LA PALABRA o SUBCATEGORIA \n" + \
+                    "CALL { \n" + \
+                        "with we, o \n" + \
+                        "match (we)<-[rp:PRONUNCIATION]-(w:Word)-[rt:TRANSLATOR]->(ws:Word) \n" + \
+                        "where o.lSource in labels(w) and o.lTarget in labels(ws) and we.idSCat = 1 \n" + \
+                        "with ws.word as sword \n" + \
+                        "order by rt.sorted \n" + \
+                        "return collect(sword) as swordcollect \n" + \
+                    "} \n" + \
+                    "CALL { \n" + \
+                        "with we, o \n" + \
+                        "match (we)<-[rp:PRONUNCIATION_PV]-(w:ElemSubCat)-[rt:TRANSLATOR]->(ws:ElemSubCat) \n" + \
+                        "where o.lSource in labels(w) and o.lTarget in labels(ws) and we.idSCat <> 1 \n" + \
+                        "with ws.word as sword     \n" + \
+                        "return collect(sword) as swordcollectES \n" + \
+                    "} \n" + \
+                "with worde, elementId(we) as soundId, \n" + \
+                     " case when we.idSCat = 1 then swordcollect else swordcollectES end as swords \n" + \
+                "//with worde, words, soundId, \n" + \
+                "//  case when swordcollect = [] then swordcollectES else swordcollect end as swords \n" + \
+                "return worde, swords as words, ' ' as ckow, soundId " 
+                # "return worde, words, ' ' as ckow, soundId " #// order by rand() // limit "  + str(datas.limit) 
     
     print(f"statement AAAgames: {statement}")
 
@@ -905,3 +924,60 @@ async def asksupport(datas:ForAskSupport, Authorization: Optional[str] = Header(
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
 
+"""
+
+with True as adj, 
+True as verb, 
+False as ptense, 
+True as noun, 
+True as adv, 
+ True as prep, True as conj, True as pron, 
+'DTL-01' as org, 
+'jaiv' as userId 
+match (u:User {userId:userId})-[ro:RIGHTS_TO]-(o:Organization {idOrg:org})-
+[rc:SUBJECT]-(c:Category)-[rsc:CAT_SUBCAT]-(sc:SubCategory) 
+with u,o.lSource as Source, o.lTarget as Target, o, sc, 
+    adj, verb, noun, adv, prep, ptense, conj, pron 
+// *** SE LOCALIZAN LAS PALABRAS QUE YA SE HAN EJERCITADO 
+optional match (u)<-[r:TRY_TW]-(gm:Game) 
+where not type(r) in ['PUZZLEWORDS'] 
+with u, Source, Target, o, sc, coalesce(gm.words,['']) as wordsgame, 
+    adj, verb, noun, adv, prep, ptense, conj, pron 
+unwind wordsgame as word 
+with u, Source, Target, o, sc,  word, 
+adj, verb, noun, adv, prep, ptense, conj, pron 
+order by word 
+with u, Source, Target, o, sc, collect(distinct word) as wordsgame, 
+    adj, verb, noun, adv, prep, ptense, conj, pron 
+with u, Source, Target, o, sc, wordsgame, apoc.coll.shuffle(wordsgame) as wordsgameSh, 
+    adj, verb, noun, adv, prep, ptense, conj, pron 
+// SE LOCALIZAN LAS PALABRAS ARCHIVADAS 
+match (u)<-[r:ARCHIVED_M]-(rM:Archived_M)-[rsm:SUBCAT_ARCHIVED_M]->(sc) 
+where o.lSource in labels(rM) and o.lTarget in labels(rM) 
+// Y SE ELIMINAN LAS QUE FUERON LLEVADAS A JUEGOS 
+with u, o, sc, apoc.coll.subtract(rM.words, wordsgame) as words, wordsgame, rM.words as rmwords, 
+  adj, verb, noun, adv, prep, ptense, conj, pron, wordsgameSh 
+with u, o, sc, (case when words = [] then rmwords else words end) as words, wordsgame,  
+  adj, verb, noun, adv, prep, ptense, conj, pron, wordsgameSh 
+unwind words as sword 
+with u, o, sc, collect(sword) as swords, adj, verb, noun, adv, prep, ptense, conj, pron, wordsgameSh 
+with u, o, sc, swords + wordsgameSh[0..6] as swordsC, 
+ adj, verb, noun, adv, prep, ptense, conj, pron, wordsgameSh 
+unwind swordsC as sword 
+with u, o, sword, adj, verb, noun, adv, prep, ptense, conj, pron, 
+   sc.idCat as idCat, sc.idSCat as idSCat, 
+   case when sword in wordsgameSh then 1 else 0 end as prioridad 
+// SE OBTIENE LA PRONUNCIACION 
+match (we:WordSound {word:sword}) 
+where o.lSource in labels(we) and not we.word contains ' ' 
+   and we.idCat = idCat and we.idSCat = idSCat 
+with distinct u, o, we, adj, verb, noun, adv, prep, ptense, conj, pron, prioridad, 
+     elementId(we) as soundId, we.word as worde, 
+     ' ' as ckow, we.word as words 
+order by prioridad, // worde in swords desc, 
+ worde 
+with u, soundId, prioridad, worde, ckow, collect(words) as words 
+order by u, prioridad, rand() 
+limit 3 
+return worde, words, ckow, soundId 
+"""
