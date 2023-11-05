@@ -389,6 +389,8 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
+    print("game archive - datas:", datas)
+
     dtimenow = _getdatetime()
     yearr = dtimenow.year
     monthh = dtimenow.month
@@ -435,7 +437,8 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
                     " gm.average = average, \n" + \
                     " gm.ctInsert = datetime() \n" + \
                 "return u.userId as userId, size(gm.words) as qtywords "
-    #print(f"statement pronun: {statement}")
+    
+    print(f"statement game archive: {statement}")
 
     await awsleep(0)
 
@@ -448,6 +451,9 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     for ele in nodes:
         elems = dict(ele)
         listEle.append(elems)
+
+    print(f"result game archive: {listEle}")
+
     print("========== id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(),"\n\n")
     return listEle
 
