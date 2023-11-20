@@ -690,12 +690,11 @@ async def levaluation(datas:ForLevelEval, Authorization: Optional[str] = Header(
     token=funcs.validating_token(Authorization)
     userId = token['userId']
 
-    orgId = datas.org
+    orgId = datas.orgId
 
     if userId == 'jagr':   # usuario de jiduma para probar aleman
         orgId = 'DTL-02'        
     
-
     if orgId == 'DTL-01':
         source = 'English'
         target = 'Spanish'
