@@ -318,7 +318,8 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
     #print('\n\n *********************** \nauthorization', Authorization)
     token=validating_token(Authorization)
     userId = token['userId']
-    sdict = {
+    """
+    sdictLaunc = {
                 "title": {
                     "es": "La vigencia de acceso ha concluído",
                     "en": "Your license period has finished"
@@ -389,7 +390,81 @@ async def s_available_products(Authorization: Optional[str] = Header(None)):
                     "price_cupon": 275
                     } 
                 ]
+    }    
+    """
+    sdict = {
+                "title": {
+                    "es": "La vigencia de acceso ha concluído",
+                    "en": "Your license period has finished"
+                },
+                "title02": {
+                    "es": "Lo invitamos a continuar con nosotros, le ofrecemos las siguientes opciones",
+                    "en": "We invite you to continue with us, you have some fantastic options"
+                },
+                "label01": { 
+                    "es": "Productos disponibles",
+                    "en": "Available products"
+                },
+                "Options": [ 
+                    {
+                    "KoLic": "01M",
+                    "value": {
+                            "es": "01M - 1 MES DE ACCESO",
+                            "en": "01M - ACCESING FOR 1 MONTH"
+                        },
+                    "description": {
+                            "es": "No aplica descuento",
+                            "en": "No discount"
+                        },
+                    "cupon": "",
+                    "price": 100,
+                    "price_cupon": 100
+                    },
+                    {
+                    "KoLic": "03M",
+                    "value": {
+                        "es": "03M - 3 MESES DE ACCESO",
+                        "en": "03M - ACCESING FOR 3 MONTHS"
+                    },
+                    "description": {
+                        "es": "10% de descuento",
+                        "en": "10% Free"
+                    },
+                    "cupon": "AAD",
+                    "price": 280,
+                    "price_cupon": 252
+                    },
+                    {
+                    "KoLic": "06M",
+                    "value": {
+                        "es": "06M - 6 MESES DE ACCESO",
+                        "en": "06M - ACCESING FOR 6 MONTHS"
+                    },
+                    "description": {
+                        "es": "10% de descuento",
+                        "en": "10% Free"
+                    },
+                    "cupon": "AAD",
+                    "price": 530,
+                    "price_cupon": 477
+                    },
+                    {
+                    "KoLic": "12M",
+                    "value": {
+                        "es": "12M - 12 MESES DE ACCESO",
+                        "en": "12M - ACCESING FOR 12 MONTHS"
+                    },
+                    "description": {
+                        "es": "10% de descuento",
+                        "en": "10% Free"
+                    },
+                    "cupon": "AAD",
+                    "price": 950,
+                    "price_cupon": 855
+                    } 
+                ]
     }
+    
     return sdict
 
 """ ,
