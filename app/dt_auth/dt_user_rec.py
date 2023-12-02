@@ -573,9 +573,9 @@ async def s_pay_validation(code:str):
                         "on create set uk.ctInsert = datetime(), \n" + \
                         " uk.koldateseq=[], uk.kolseq=[], uk.kollimdateseq=[] \n" + \
                         "on match set uk.ctUpdate = datetime() \n" + \
-                        "set uk.koldateseq = uk.koldateseq + [datetime()], \n" + \
+                        "set uk.koldateseq = uk.koldateseq + [toString(datetime())], \n" + \
                         " uk.kolseq = uk.kolseq + [pc.KoLic], \n" + \
-                        " uk.kollimdateseq = uk.kollimdateseq + [u.kol_lim_date] \n" + \
+                        " uk.kollimdateseq = uk.kollimdateseq + [toString(u.kol_lim_date)] \n" + \
                         "merge (u)<-[rkols:U_KOLSEQ]-(uk) \n" + \
                         " set rkols.ctInsert = datetime() \n" + \
                         "return pc.csId as csId, pc.KoLic as KoLic, u.userId as userId, pc.ctInsert as ctInsert " 
