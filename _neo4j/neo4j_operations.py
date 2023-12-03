@@ -132,6 +132,8 @@ def execution(function_name, statement, user, log_exec):
             elif trying == 6:
                 raise Exception
             """
+            
+            session = appNeo.driver.session(database="neo4j")            
             nodes = session.run(Query(statement, timeout=timeout_const), name='query')
 
             statuserror = 200            
