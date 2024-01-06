@@ -129,7 +129,7 @@ def set_archived_package(packagename, userId):
     dtimenow = _getdatetime()
     yearr = dtimenow.year
     monthh = dtimenow.month
-    weekk = dtimenow.strftime("%W") # , status:'open'
+    weekk = int(dtimenow.strftime("%W")) # , status:'open'
 
     neo4j_statement = "with '" + packagename + "' as pkgname, \n" + \
                         "'" + userId + "' as userId, \n" + \

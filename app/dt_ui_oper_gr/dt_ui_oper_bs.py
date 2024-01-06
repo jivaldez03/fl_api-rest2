@@ -163,7 +163,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     dtimenow = dt.now()
     yearr = dtimenow.year
     monthh = dtimenow.month
-    weekk = dtimenow.strftime("%W")     
+    weekk = int(dtimenow.strftime("%W"))     
 
     neo4j_statement =  "/* section to get words */ \n" + \
         "with " + str(yearr) + " as yearr, \n" + \
@@ -317,7 +317,7 @@ async def get_dashboard_table(Authorization: Optional[str] = Header(None)):
     diftime = str(dt.now() - tm1)
     #print("==> ",startinat, '\n antes de neo4j:', beforeNeo4, 'despues de neo4j:', afterNeo4, " termina a ", _getdatime_T(), " = ", diftime)
     print("        ->   ========== ending get_dashboard_table id: ", userId, " dt: ", _getdatime_T(), " -> ", myfunctionname(), msg)
-    return {'message': listBasicK + listcat}
+    return {'message': listBasicK + listcat} # weekk
 
 
 @router.get("/get_/config_uid/")

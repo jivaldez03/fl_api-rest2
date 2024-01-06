@@ -397,7 +397,7 @@ async def valuesforgames_AA_archive(datas:ForGames_archive, Authorization: Optio
     dtimenow = _getdatetime()
     yearr = dtimenow.year
     monthh = dtimenow.month
-    weekk = dtimenow.strftime("%W") # , status:'open'
+    weekk = int(dtimenow.strftime("%W")) # , status:'open'
 
     kogame = datas.kogame.upper()
     #if kogame in ["GUESS_TW", "TRY_TW","PUT_TOGETHER_WORD"] :kogame' = "PUT_TOGETHER_WORD"
@@ -489,7 +489,7 @@ async def puzzlewords(#org:str, ulevel:str, kog: str, hms:int, avg:float, recs:i
     dtimenow = _getdatetime()
     yearr = dtimenow.year
     monthh = dtimenow.month
-    weekk = dtimenow.strftime("%W") # , status:'open'
+    weekk = int(dtimenow.strftime("%W")) # , status:'open'
 
     print("datas PUZZLEWORD:", datas)
     kogame = datas.kog.upper()
