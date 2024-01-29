@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: fl_api-rest2
+  annotations:
+    github.com/project-slug: jivaldez03/fl_api-rest2
+spec:
+  type: other
+  lifecycle: unknown
+  owner: jivaldez03
